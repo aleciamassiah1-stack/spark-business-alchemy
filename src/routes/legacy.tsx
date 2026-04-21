@@ -1,10 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Scroll, Users, FileText, Phone, ChevronRight, AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Scroll, Users, FileText, Phone, ChevronRight, AlertTriangle, CheckCircle2, Circle, Plus, Loader2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
-import { trustAccounts, estateDocs, attorney } from "@/lib/mock-data";
+import { trustAccounts, attorney } from "@/lib/mock-data";
+import { listEstateDocuments } from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
+
+type EstateDoc = {
+  id: string;
+  document_type: string;
+  title: string;
+  status: string | null;
+  signed_date: string | null;
+  expiration_date: string | null;
+  document_url: string | null;
+  updated_at: string;
+};
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+  will: "Last Will & Testament",
+  healthcare_directive: "Healthcare Directive",
+  power_of_attorney: "Power of Attorney",
+  trust: "Trust Document",
+  other: "Other",
+};
 
 export const Route = createFileRoute("/legacy")({
   head: () => ({
