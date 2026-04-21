@@ -24,7 +24,7 @@ function MorePage() {
         </NavGroup>
 
         <NavGroup title="Connections">
-          <NavRow to="/more" icon={LinkIcon} label="Linked Institutions" desc="12 connected accounts" />
+          <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
           <NavRow to="/more" icon={Building2} label="Banking" desc="Manage cash & transfers" />
         </NavGroup>
 
