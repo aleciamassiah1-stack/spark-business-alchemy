@@ -116,7 +116,7 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
 // 5. Read aggregated data for the UI
 export const getAggregatedData = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const [itemsRes, accountsRes, holdingsRes, syncRes] = await Promise.all([
+    const [itemsRes, accountsRes, holdingsRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at")
@@ -134,6 +134,11 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         .select("*")
         .order("created_at", { ascending: false })
         .limit(10),
+      supabaseAdmin
+        .from("aggregated_transactions")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(50),
     ]);
 
     return {
@@ -141,11 +146,19 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       accounts: accountsRes.data ?? [],
       holdings: holdingsRes.data ?? [],
       syncLog: syncRes.data ?? [],
+      transactions: txRes.data ?? [],
       error: itemsRes.error?.message ?? accountsRes.error?.message ?? null,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load data";
-    return { items: [], accounts: [], holdings: [], syncLog: [], error: message };
+    return {
+      items: [],
+      accounts: [],
+      holdings: [],
+      syncLog: [],
+      transactions: [],
+      error: message,
+    };
   }
 });
 
