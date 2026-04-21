@@ -314,17 +314,6 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   );
 }
 
-// Tiny self-contained countdown hook colocated to avoid touching other files.
-function useEffectCountdown(value: number, set: (n: number) => void) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useTickEffect(() => {
-    const id = window.setTimeout(() => set(value - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [value]);
-}
-
-// Re-export of useEffect aliased to keep the file self-contained.
-import { useEffect as useTickEffect } from "react";
 
 /* ───────────────────────── Screen: Biometric ───────────────────────── */
 
