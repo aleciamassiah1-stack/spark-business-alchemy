@@ -1,8 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
+import { AuthProvider } from "@/lib/auth-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
-import { Onboarding } from "@/components/Onboarding";
 
 import appCss from "../styles.css?url";
 
@@ -73,12 +73,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <OnboardingProvider>
-      <WealthProvider>
-        <SyncStatusBar />
-        <Outlet />
-        <Onboarding />
-      </WealthProvider>
-    </OnboardingProvider>
+    <AuthProvider>
+      <OnboardingProvider>
+        <WealthProvider>
+          <SyncStatusBar />
+          <Outlet />
+        </WealthProvider>
+      </OnboardingProvider>
+    </AuthProvider>
   );
 }

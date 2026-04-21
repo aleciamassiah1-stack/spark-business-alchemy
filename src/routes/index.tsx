@@ -5,6 +5,8 @@ import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet,
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { CompletionBanner } from "@/components/CompletionBanner";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
 import { useWealth } from "@/lib/wealth-context";
@@ -18,8 +20,16 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Your private wealth, in one elegant view." },
     ],
   }),
-  component: HomePage,
+  component: HomeRoute,
 });
+
+function HomeRoute() {
+  return (
+    <RequireOnboarding>
+      <HomePage />
+    </RequireOnboarding>
+  );
+}
 
 type AccountRow = {
   id: string;
@@ -157,6 +167,7 @@ function HomePage() {
 
   return (
     <MobileShell>
+      <CompletionBanner />
       <div className="px-5 pt-8">
         <div className="flex items-center justify-between">
           <div>
