@@ -74,6 +74,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    installAuthFetch();
+  }, []);
   return (
     <AuthProvider>
       <OnboardingProvider>
