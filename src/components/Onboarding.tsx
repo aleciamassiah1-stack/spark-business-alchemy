@@ -71,7 +71,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
         }}
       />
 
-      <div className="relative mx-auto flex w-full max-w-[430px] flex-col">
+      <div className="relative mx-auto flex h-full min-h-0 w-full max-w-[430px] flex-col">
         <div className="flex items-center justify-between gap-3 px-6 pb-2 pt-8">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             Step {stepNumber} of {STEPS.length}
@@ -112,7 +112,7 @@ function ScreenWrap({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="flex flex-1 flex-col px-6"
+      className="flex min-h-0 flex-1 flex-col px-6"
     >
       {children}
     </motion.section>
@@ -524,7 +524,7 @@ function ScreenPersonalize({ onNext }: { onNext: () => void }) {
 
   return (
     <ScreenWrap>
-      <div className="flex-1 overflow-y-auto pb-2">
+      <div className="flex-1 overflow-y-auto pb-4">
         <div className="pt-4 text-center">
           <p className="label-mono mb-3">Personalize</p>
           <h2 className="font-serif text-[30px] leading-tight text-foreground">
@@ -604,7 +604,7 @@ function ScreenPersonalize({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <div className="pb-2 pt-4">
+      <div className="sticky bottom-0 mt-4 border-t border-white/[0.06] bg-background/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PrimaryCta
           disabled={!valid}
           onClick={() => {
