@@ -1,11 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Scroll, Users, FileText, Phone, ChevronRight, AlertTriangle, CheckCircle2, Circle, Plus, Loader2 } from "lucide-react";
+import {
+  Scroll,
+  Users,
+  FileText,
+  Phone,
+  ChevronRight,
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
+  Plus,
+  Loader2,
+  Pencil,
+  ExternalLink,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts, attorney } from "@/lib/mock-data";
-import { listEstateDocuments } from "@/lib/wealth.functions";
+import { listEstateDocuments, upsertEstateDocument } from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
 
 type EstateDoc = {
@@ -27,6 +42,28 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   other: "Other",
 };
 
+const DOC_TYPES: Array<{ value: EditableDocType; label: string }> = [
+  { value: "will", label: "Last Will & Testament" },
+  { value: "healthcare_directive", label: "Healthcare Directive" },
+  { value: "power_of_attorney", label: "Power of Attorney" },
+  { value: "trust", label: "Trust Document" },
+  { value: "other", label: "Other" },
+];
+
+type EditableDocType =
+  | "will"
+  | "healthcare_directive"
+  | "power_of_attorney"
+  | "trust"
+  | "other";
+type EditableStatus = "current" | "needs_review" | "expired";
+
+const STATUSES: Array<{ value: EditableStatus; label: string }> = [
+  { value: "current", label: "Current" },
+  { value: "needs_review", label: "Needs Review" },
+  { value: "expired", label: "Expired" },
+];
+
 export const Route = createFileRoute("/legacy")({
   head: () => ({
     meta: [
@@ -45,6 +82,12 @@ function LegacyPage() {
   const trustTotal = trustAccounts.reduce((s, t) => s + t.value, 0);
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<EstateDoc | null>(null);
+
+  async function reload() {
+    const res = await listEstateDocuments();
+    setDocs((res.documents ?? []) as EstateDoc[]);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -126,27 +169,40 @@ function LegacyPage() {
                 month: "short",
                 year: "numeric",
               });
-              const row = (
-                <div className="flex items-center gap-3 px-4 py-3.5">
+              return (
+                <div key={d.id} className="flex items-center gap-3 px-4 py-3.5">
                   <DocIcon status={status} />
-                  <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(d)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="truncate text-sm text-foreground">{d.title || label}</p>
                     <p className="font-mono text-[11px] text-muted-foreground">
                       {label} · Updated {updated}
                     </p>
-                  </div>
+                  </button>
                   <DocStatusBadge status={status} />
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  {d.document_url ? (
+                    <a
+                      href={d.document_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                      aria-label="Open document"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setEditing(d)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                    aria-label="Edit document"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              );
-              return d.document_url ? (
-                <a key={d.id} href={d.document_url} target="_blank" rel="noreferrer" className="block">
-                  {row}
-                </a>
-              ) : (
-                <Link key={d.id} to="/connections" className="block">
-                  {row}
-                </Link>
               );
             })}
           </LuxCard>
@@ -189,7 +245,194 @@ function LegacyPage() {
           </div>
         </LuxCard>
       </div>
+
+      {editing ? (
+        <EditEstateDocModal
+          doc={editing}
+          onClose={() => setEditing(null)}
+          onSaved={async () => {
+            setEditing(null);
+            await reload();
+          }}
+        />
+      ) : null}
     </MobileShell>
+  );
+}
+
+function EditEstateDocModal({
+  doc,
+  onClose,
+  onSaved,
+}: {
+  doc: EstateDoc;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+}) {
+  const initialType = (DOC_TYPES.find((t) => t.value === doc.document_type)?.value ??
+    "other") as EditableDocType;
+  const initialStatus = (STATUSES.find(
+    (s) => s.value === (doc.status ?? "current").toLowerCase(),
+  )?.value ?? "current") as EditableStatus;
+
+  const [title, setTitle] = useState(doc.title ?? "");
+  const [docType, setDocType] = useState<EditableDocType>(initialType);
+  const [status, setStatus] = useState<EditableStatus>(initialStatus);
+  const [signedDate, setSignedDate] = useState(doc.signed_date ?? "");
+  const [expirationDate, setExpirationDate] = useState(doc.expiration_date ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await upsertEstateDocument({
+        data: {
+          id: doc.id,
+          document_type: docType,
+          title: title.trim(),
+          status,
+          signed_date: signedDate || null,
+          expiration_date: expirationDate || null,
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error ?? "Couldn't save changes");
+        return;
+      }
+      toast.success("Document updated");
+      await onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <form
+        onSubmit={handleSave}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md overflow-hidden rounded-t-3xl border border-white/[0.06] bg-background p-5 shadow-2xl sm:rounded-3xl"
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="label-mono">Edit document</p>
+            <p className="mt-1 font-serif text-lg text-foreground">Update details</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <Field label="Title">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={160}
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/40"
+              placeholder="e.g. Last Will & Testament"
+              autoFocus
+            />
+          </Field>
+
+          <Field label="Type">
+            <select
+              value={docType}
+              onChange={(e) => setDocType(e.target.value as EditableDocType)}
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/40"
+            >
+              {DOC_TYPES.map((t) => (
+                <option key={t.value} value={t.value} className="bg-background">
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Status">
+            <div className="grid grid-cols-3 gap-2">
+              {STATUSES.map((s) => {
+                const active = s.value === status;
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setStatus(s.value)}
+                    className={`rounded-xl border px-2 py-2 text-xs transition-colors ${
+                      active
+                        ? "border-primary/50 bg-primary/15 text-foreground"
+                        : "border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Signed">
+              <input
+                type="date"
+                value={signedDate}
+                onChange={(e) => setSignedDate(e.target.value)}
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/40"
+              />
+            </Field>
+            <Field label="Expires">
+              <input
+                type="date"
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary/40"
+              />
+            </Field>
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-foreground hover:bg-white/[0.06]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full gradient-violet px-4 py-2.5 text-sm font-medium text-foreground glow-violet disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="label-mono mb-1.5 block">{label}</span>
+      {children}
+    </label>
   );
 }
 
@@ -219,4 +462,3 @@ function DocStatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
