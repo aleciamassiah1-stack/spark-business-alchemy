@@ -351,6 +351,7 @@ function ConnectionsPage() {
               await deleteProperty({ data: { id } });
               await loadAll();
             }}
+            onShowHistory={(p) => setHistoryProperty(p)}
           />
         )}
         {tab === "insurance" && (
