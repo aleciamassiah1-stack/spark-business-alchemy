@@ -9,8 +9,9 @@ export type OnboardingProfile = {
   personas?: string[];
   trackingPrefs?: string[];
   firstAccountConnected?: boolean;
+  phoneVerified?: boolean;
   bannerDismissed?: string; // ISO date of last dismissal session
-  completedSteps: string[]; // step keys: "account" | "biometric" | "personalize" | "connect"
+  completedSteps: string[]; // step keys: "account" | "verify" | "biometric" | "personalize" | "connect"
 };
 
 const EMPTY: OnboardingProfile = { completedSteps: [] };
@@ -29,8 +30,8 @@ type OnboardingCtx = {
 
 const Ctx = createContext<OnboardingCtx | null>(null);
 
-const REQUIRED_FOR_GATE = ["account", "biometric", "personalize"] as const;
-const ALL_STEPS = ["account", "biometric", "personalize", "connect"] as const;
+const REQUIRED_FOR_GATE = ["account", "verify", "biometric", "personalize"] as const;
+const ALL_STEPS = ["account", "verify", "biometric", "personalize", "connect"] as const;
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);

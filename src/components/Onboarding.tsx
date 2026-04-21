@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -19,11 +19,12 @@ import {
   ScrollText,
   Sparkles,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 
-const STEPS = ["biometric", "personalize", "connect"] as const;
+const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
 
 /**
@@ -38,7 +39,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
 
   // Resume on the first incomplete step.
   const initialStep: StepKey =
-    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "biometric";
+    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "verify";
   const [step, setStep] = useState<StepKey>(initialStep);
 
   if (!forceOpen && (!ready || onboarded)) return null;
@@ -89,6 +90,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
         </div>
 
         <AnimatePresence mode="wait">
+          {step === "verify" && <ScreenVerify key="verify" onNext={goNext} />}
           {step === "biometric" && <ScreenBiometric key="bio" onNext={goNext} />}
           {step === "personalize" && <ScreenPersonalize key="pers" onNext={goNext} />}
           {step === "connect" && <ScreenConnect key="conn" onNext={goNext} />}
@@ -149,6 +151,169 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick: (
     </button>
   );
 }
+
+/* ───────────────────────── Screen: Verify (Simulated SMS OTP) ───────────────────────── */
+
+const SIM_OTP = "123456";
+
+function maskPhone(raw?: string): string {
+  if (!raw) return "your phone";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 4) return raw;
+  const last4 = digits.slice(-4);
+  return `••• ••• ${last4}`;
+}
+
+function ScreenVerify({ onNext }: { onNext: () => void }) {
+  const { user } = useAuth();
+  const { update } = useOnboarding();
+  const phone = (user?.user_metadata as { phone?: string } | undefined)?.phone;
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [resendIn, setResendIn] = useState(30);
+  const [hintShown, setHintShown] = useState(false);
+
+  // Countdown for resend
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = window.setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [resendIn]);
+
+  const handleChange = (val: string) => {
+    const next = val.replace(/\D/g, "").slice(0, 6);
+    setCode(next);
+    setError(null);
+  };
+
+  const handleVerify = () => {
+    if (code.length !== 6) return;
+    setVerifying(true);
+    setError(null);
+    // Simulate network delay
+    setTimeout(() => {
+      if (code === SIM_OTP) {
+        update({ phoneVerified: true });
+        onNext();
+      } else {
+        setError("Incorrect code. Try 123456 (simulated).");
+        setVerifying(false);
+        setCode("");
+      }
+    }, 700);
+  };
+
+  const handleResend = () => {
+    if (resendIn > 0) return;
+    setResendIn(30);
+    setHintShown(true);
+  };
+
+  return (
+    <ScreenWrap>
+      <div className="flex flex-1 flex-col items-center text-center">
+        <div className="pt-4">
+          <p className="label-mono mb-3">Verify Identity</p>
+          <h2 className="font-serif text-[32px] leading-tight text-foreground">
+            We sent a code to
+            <br />
+            <span className="text-gradient-violet">{maskPhone(phone)}</span>
+          </h2>
+          <p className="mt-3 max-w-[320px] text-sm text-muted-foreground">
+            Enter the 6-digit code to confirm this number is yours.
+          </p>
+        </div>
+
+        <div className="relative my-9">
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: "radial-gradient(circle, oklch(0.78 0.16 295 / 0.28) 0%, transparent 65%)",
+            }}
+            animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0.75, 0.4] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10">
+            <Shield className="h-10 w-10 text-primary" strokeWidth={1.4} />
+          </div>
+        </div>
+
+        <div className="relative w-full">
+          <div className="flex justify-center gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className={`flex h-14 w-11 items-center justify-center rounded-2xl border text-2xl font-mono transition-all ${
+                  code.length === i
+                    ? "border-primary bg-primary/10 glow-violet"
+                    : code.length > i
+                      ? "border-primary/40 bg-primary/5 text-foreground"
+                      : "border-white/[0.08] bg-white/[0.02]"
+                }`}
+              >
+                {code[i] ?? ""}
+              </div>
+            ))}
+          </div>
+          <input
+            autoFocus
+            type="tel"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => handleChange(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            aria-label="One-time code"
+          />
+        </div>
+
+        {error && (
+          <p className="mt-4 text-xs text-destructive" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+          <MessageSquare className="h-3.5 w-3.5" />
+          {resendIn > 0 ? (
+            <span>Resend code in {resendIn}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-primary transition-colors hover:text-foreground"
+            >
+              Resend code
+            </button>
+          )}
+        </div>
+
+        {hintShown && (
+          <p className="mt-3 text-[11px] text-muted-foreground/80">
+            Demo mode — use code <span className="font-mono text-foreground">123456</span>.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6 space-y-3 pb-2">
+        <PrimaryCta disabled={code.length !== 6 || verifying} onClick={handleVerify}>
+          {verifying ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Verifying…
+            </span>
+          ) : (
+            "Verify code"
+          )}
+        </PrimaryCta>
+        <p className="text-center text-[11px] text-muted-foreground/70">
+          Standard messaging rates may apply.
+        </p>
+      </div>
+    </ScreenWrap>
+  );
+}
+
 
 /* ───────────────────────── Screen: Biometric ───────────────────────── */
 
