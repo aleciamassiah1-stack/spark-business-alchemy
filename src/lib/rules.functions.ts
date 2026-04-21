@@ -95,20 +95,20 @@ export const upsertRule = createServerFn({ method: "POST" })
       enabled: data.enabled,
     };
 
-    let savedId = data.id;
+    let savedId: string | undefined = data.id;
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("transaction_rules")
         .update(payload)
         .eq("id", data.id);
-      if (error) return { ok: false as const, error: error.message, updated: 0 };
+      if (error) return { ok: false as const, error: error.message, updated: 0, id: undefined };
     } else {
       const { data: inserted, error } = await supabaseAdmin
         .from("transaction_rules")
         .insert(payload)
         .select("id")
         .single();
-      if (error) return { ok: false as const, error: error.message, updated: 0 };
+      if (error) return { ok: false as const, error: error.message, updated: 0, id: undefined };
       savedId = inserted?.id;
     }
 
