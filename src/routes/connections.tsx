@@ -49,6 +49,15 @@ import {
   seedDemoData,
   clearDemoData,
 } from "@/lib/wealth.functions";
+import {
+  listRules,
+  upsertRule,
+  deleteRule,
+  reapplyAllRules,
+  quickCreateRule,
+  listCategorySuggestions,
+  type TransactionRule,
+} from "@/lib/rules.functions";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
