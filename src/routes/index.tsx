@@ -164,6 +164,14 @@ function HomePage() {
             <h1 className="font-serif text-2xl text-foreground">James Whitfield</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              aria-label="Refresh data"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground transition-all hover:bg-white/[0.08] hover:text-foreground disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-primary" : ""}`} />
+            </button>
             <HideToggle />
             <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
               JW
