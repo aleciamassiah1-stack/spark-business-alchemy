@@ -14,13 +14,18 @@ import {
   Pencil,
   ExternalLink,
   X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts, attorney } from "@/lib/mock-data";
-import { listEstateDocuments, upsertEstateDocument } from "@/lib/wealth.functions";
+import {
+  listEstateDocuments,
+  upsertEstateDocument,
+  deleteEstateDocument,
+} from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
 
 type EstateDoc = {
