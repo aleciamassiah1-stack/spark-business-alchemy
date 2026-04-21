@@ -105,7 +105,7 @@ function loadPlaidScript(): Promise<void> {
   });
 }
 
-type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity";
+type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity" | "rules";
 
 const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "accounts", label: "Accounts", icon: Building2 },
@@ -113,12 +113,13 @@ const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "insurance", label: "Insurance", icon: Shield },
   { key: "estate", label: "Estate", icon: Scroll },
   { key: "activity", label: "Activity", icon: Receipt },
+  { key: "rules", label: "Rules", icon: Tag },
 ];
 
 type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string };
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
-type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; logo_url: string | null };
+type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
 type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number };
 type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
 type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; signed_date: string | null };
