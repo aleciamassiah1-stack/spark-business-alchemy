@@ -122,7 +122,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
         document_path: document_path ?? null,
         document_url: document_url ?? null,
         parsed_by_ai: parsed_by_ai ?? false,
-        raw_extraction: (raw_extraction ?? null) as Record<string, unknown> | null,
+        raw_extraction: (raw_extraction ?? null) as unknown,
         ...parsed,
       };
     },
@@ -140,7 +140,8 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       document_path: data.document_path,
       document_url: data.document_url,
       parsed_by_ai: data.parsed_by_ai,
-      raw_extraction: data.raw_extraction,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      raw_extraction: data.raw_extraction as any,
     };
     if (data.id) {
       const { error } = await supabaseAdmin
