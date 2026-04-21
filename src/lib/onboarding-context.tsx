@@ -1,58 +1,102 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-const STORAGE_KEY = "aether.onboarding.completed";
+const STORAGE_KEY = "aether.onboarding.v2";
+
+export type OnboardingProfile = {
+  fullName?: string;
+  biometricEnabled?: boolean;
+  passcodeSet?: boolean;
+  personas?: string[];
+  trackingPrefs?: string[];
+  firstAccountConnected?: boolean;
+  bannerDismissed?: string; // ISO date of last dismissal session
+  completedSteps: string[]; // step keys: "account" | "biometric" | "personalize" | "connect"
+};
+
+const EMPTY: OnboardingProfile = { completedSteps: [] };
 
 type OnboardingCtx = {
-  /** True once we've read localStorage (avoids SSR/first-paint flash). */
   ready: boolean;
-  /** True if the user has completed (or skipped) onboarding. */
-  completed: boolean;
-  /** Marks onboarding complete and persists it. */
-  complete: () => void;
-  /** Resets onboarding so the flow shows again (used by "Replay tour"). */
+  profile: OnboardingProfile;
+  /** Onboarding finished (account + biometric + personalize done) */
+  onboarded: boolean;
+  /** % toward a fully complete profile (all 4 steps) */
+  completionPct: number;
+  update: (patch: Partial<OnboardingProfile>) => void;
+  markStep: (step: string) => void;
   reset: () => void;
 };
 
 const Ctx = createContext<OnboardingCtx | null>(null);
 
+const REQUIRED_FOR_GATE = ["account", "biometric", "personalize"] as const;
+const ALL_STEPS = ["account", "biometric", "personalize", "connect"] as const;
+
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [profile, setProfile] = useState<OnboardingProfile>(EMPTY);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const done = window.localStorage.getItem(STORAGE_KEY);
-    setCompleted(Boolean(done));
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) setProfile({ ...EMPTY, ...JSON.parse(raw) });
+    } catch {
+      /* ignore corrupt storage */
+    }
     setReady(true);
   }, []);
 
-  const complete = useCallback(() => {
+  const persist = useCallback((next: OnboardingProfile) => {
+    setProfile(next);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
-    setCompleted(true);
   }, []);
+
+  const update = useCallback(
+    (patch: Partial<OnboardingProfile>) => {
+      persist({ ...profile, ...patch });
+    },
+    [profile, persist],
+  );
+
+  const markStep = useCallback(
+    (step: string) => {
+      if (profile.completedSteps.includes(step)) return;
+      persist({ ...profile, completedSteps: [...profile.completedSteps, step] });
+    },
+    [profile, persist],
+  );
 
   const reset = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-    setCompleted(false);
-  }, []);
+    persist(EMPTY);
+  }, [persist]);
 
-  return <Ctx.Provider value={{ ready, completed, complete, reset }}>{children}</Ctx.Provider>;
+  const onboarded = REQUIRED_FOR_GATE.every((s) => profile.completedSteps.includes(s));
+  const completionPct = Math.round(
+    (profile.completedSteps.filter((s) => (ALL_STEPS as readonly string[]).includes(s)).length /
+      ALL_STEPS.length) *
+      100,
+  );
+
+  return (
+    <Ctx.Provider value={{ ready, profile, onboarded, completionPct, update, markStep, reset }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
-/** Fallback used if a consumer renders outside the provider (e.g. during
- *  isolated SSR of a route component before the root shell wraps it). It
- *  reports "not ready" so gates render their loading state instead of crashing. */
-const noopCtx: OnboardingCtx = {
+const noop: OnboardingCtx = {
   ready: false,
-  completed: false,
-  complete: () => {},
+  profile: EMPTY,
+  onboarded: false,
+  completionPct: 0,
+  update: () => {},
+  markStep: () => {},
   reset: () => {},
 };
 
 export function useOnboarding() {
-  return useContext(Ctx) ?? noopCtx;
+  return useContext(Ctx) ?? noop;
 }
