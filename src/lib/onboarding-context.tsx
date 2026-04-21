@@ -30,8 +30,8 @@ type OnboardingCtx = {
 
 const Ctx = createContext<OnboardingCtx | null>(null);
 
-const REQUIRED_FOR_GATE = ["account", "biometric", "personalize"] as const;
-const ALL_STEPS = ["account", "biometric", "personalize", "connect"] as const;
+const REQUIRED_FOR_GATE = ["account", "verify", "biometric", "personalize"] as const;
+const ALL_STEPS = ["account", "verify", "biometric", "personalize", "connect"] as const;
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
