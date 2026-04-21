@@ -1,29 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Lock, EyeOff, Check, X, Eye, Wallet, TrendingUp, KeyRound, Ban, Fingerprint, Timer, ChevronRight } from "lucide-react";
+import { useOnboarding } from "@/lib/onboarding-context";
 
-const STORAGE_KEY = "aether.onboarding.completed";
-
-export function Onboarding() {
-  const [open, setOpen] = useState(false);
+/**
+ * `forceOpen` — render the flow regardless of completion state. Used by
+ * `RequireOnboarding` to gate protected routes. When omitted, the component
+ * shows itself only on first visit (until `complete()` is called).
+ */
+export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) {
+  const { ready, completed, complete } = useOnboarding();
   const [step, setStep] = useState(0);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const done = window.localStorage.getItem(STORAGE_KEY);
-    if (!done) setOpen(true);
-  }, []);
-
-  const finish = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    }
-    setOpen(false);
-  };
-
+  const finish = () => complete();
   const next = () => setStep((s) => s + 1);
 
-  if (!open) return null;
+  // When not gating a route, hide until we've checked storage and only show
+  // for users who haven't completed it yet.
+  if (!forceOpen && (!ready || completed)) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-stretch justify-center bg-background">
