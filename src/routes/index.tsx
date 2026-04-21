@@ -74,9 +74,6 @@ function HomePage() {
   const holdings: HoldingRow[] = (aggregated?.holdings as HoldingRow[] | undefined) ?? [];
   const transactions: TransactionRow[] =
     (aggregated?.transactions as TransactionRow[] | undefined) ?? [];
-  const properties = props.data?.properties ?? [];
-  const policies = insurance.data?.policies ?? [];
-  const documents = estate.data?.documents ?? [];
 
   // Buckets
   const investmentsBalance = accounts
@@ -116,7 +113,7 @@ function HomePage() {
   const docsTotal = documents.length;
   const docsNeedReview = documents.filter((d) => d.status !== "current").length;
 
-  const isLoading = aggregated.isLoading || props.isLoading;
+  const isLoading = loading;
   const hasNoData = !isLoading && total === 0 && accounts.length === 0;
 
   // Activity — prefer real Plaid transactions, fall back to mock
