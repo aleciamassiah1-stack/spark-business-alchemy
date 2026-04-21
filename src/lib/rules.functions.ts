@@ -1,10 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-// =================================================================
-// Transaction Rules — pattern-based merchant → category mapping
-// =================================================================
+import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 
 export type TransactionRule = {
   id: string;
@@ -33,11 +30,13 @@ const ruleInputSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-// ---------- LIST ----------
 export const listRules = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { rules: [] as TransactionRule[], error: null as string | null };
   const { data, error } = await supabaseAdmin
     .from("transaction_rules")
     .select("*")
+    .eq("user_id", userId)
     .order("priority", { ascending: true })
     .order("created_at", { ascending: true });
   return {
@@ -46,7 +45,6 @@ export const listRules = createServerFn({ method: "GET" }).handler(async () => {
   };
 });
 
-// ---------- UPSERT (with backfill) ----------
 export const upsertRule = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
@@ -68,7 +66,6 @@ export const upsertRule = createServerFn({ method: "POST" })
         match_type: rest.match_type ?? "contains",
         enabled: rest.enabled ?? true,
       });
-      // At least one matching condition is required
       if (
         !parsed.merchant_pattern &&
         !parsed.description_keyword &&
@@ -83,7 +80,9 @@ export const upsertRule = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
+    const userId = await requireUserId();
     const payload = {
+      user_id: userId,
       name: data.name,
       category: data.category,
       priority: data.priority,
@@ -100,7 +99,8 @@ export const upsertRule = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("transaction_rules")
         .update(payload)
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .eq("user_id", userId);
       if (error) return { ok: false as const, error: error.message, updated: 0, id: undefined };
     } else {
       const { data: inserted, error } = await supabaseAdmin
@@ -112,7 +112,6 @@ export const upsertRule = createServerFn({ method: "POST" })
       savedId = inserted?.id;
     }
 
-    // Always re-apply ALL rules so priority/conflict resolution is correct
     const { data: appliedCount, error: rpcErr } = await supabaseAdmin.rpc(
       "apply_transaction_rules",
       {},
@@ -133,35 +132,34 @@ export const upsertRule = createServerFn({ method: "POST" })
     };
   });
 
-// ---------- DELETE ----------
 export const deleteRule = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) =>
     z.object({ id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }) => {
-    // First clear matches for this rule
+    const userId = await requireUserId();
     await supabaseAdmin
       .from("aggregated_transactions")
       .update({ custom_category: null, applied_rule_id: null })
-      .eq("applied_rule_id", data.id);
+      .eq("applied_rule_id", data.id)
+      .eq("user_id", userId);
     const { error } = await supabaseAdmin
       .from("transaction_rules")
       .delete()
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("user_id", userId);
     if (error) return { ok: false as const, error: error.message };
-    // Re-apply remaining rules in case other rules now match these transactions
     await supabaseAdmin.rpc("apply_transaction_rules", {});
     return { ok: true as const, error: null as string | null };
   });
 
-// ---------- REAPPLY (manual) ----------
 export const reapplyAllRules = createServerFn({ method: "POST" }).handler(async () => {
+  await requireUserId();
   const { data, error } = await supabaseAdmin.rpc("apply_transaction_rules", {});
   if (error) return { ok: false as const, error: error.message, updated: 0 };
   return { ok: true as const, error: null as string | null, updated: (data as number) ?? 0 };
 });
 
-// ---------- QUICK CREATE (inline from a transaction) ----------
 export const quickCreateRule = createServerFn({ method: "POST" })
   .inputValidator(
     (input: { merchant: string; category: string; matchType?: "exact" | "contains" }) =>
@@ -174,7 +172,9 @@ export const quickCreateRule = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data }) => {
+    const userId = await requireUserId();
     const payload = {
+      user_id: userId,
       name: `${data.merchant} → ${data.category}`,
       category: data.category,
       priority: 100,
@@ -197,25 +197,29 @@ export const quickCreateRule = createServerFn({ method: "POST" })
     };
   });
 
-// ---------- CATEGORY SUGGESTIONS ----------
-// Pull distinct categories from existing transactions + rules so the user has autocomplete
 export const listCategorySuggestions = createServerFn({ method: "GET" }).handler(async () => {
-  const [txRes, ruleRes] = await Promise.all([
-    supabaseAdmin
-      .from("aggregated_transactions")
-      .select("category, custom_category")
-      .limit(1000),
-    supabaseAdmin.from("transaction_rules").select("category"),
-  ]);
+  const userId = await getCurrentUserId();
   const set = new Set<string>();
-  for (const r of txRes.data ?? []) {
-    if (r.category) set.add(r.category);
-    if (r.custom_category) set.add(r.custom_category);
+  if (userId) {
+    const [txRes, ruleRes] = await Promise.all([
+      supabaseAdmin
+        .from("aggregated_transactions")
+        .select("category, custom_category")
+        .eq("user_id", userId)
+        .limit(1000),
+      supabaseAdmin
+        .from("transaction_rules")
+        .select("category")
+        .eq("user_id", userId),
+    ]);
+    for (const r of txRes.data ?? []) {
+      if (r.category) set.add(r.category);
+      if (r.custom_category) set.add(r.custom_category);
+    }
+    for (const r of ruleRes.data ?? []) {
+      if (r.category) set.add(r.category);
+    }
   }
-  for (const r of ruleRes.data ?? []) {
-    if (r.category) set.add(r.category);
-  }
-  // Add a few sensible defaults
   ["Food & Dining", "Groceries", "Transport", "Travel", "Subscriptions", "Utilities", "Income", "Transfer", "Shopping", "Healthcare", "Entertainment"].forEach(
     (c) => set.add(c),
   );

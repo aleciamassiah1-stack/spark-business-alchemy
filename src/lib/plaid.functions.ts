@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 import {
   createLinkToken,
   exchangePublicToken,
@@ -13,7 +14,8 @@ import {
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
 export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(async () => {
   try {
-    const { link_token, expiration } = await createLinkToken();
+    const userId = await requireUserId();
+    const { link_token, expiration } = await createLinkToken(userId);
     return { link_token, expiration, error: null as string | null };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create link token";
@@ -35,13 +37,14 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     try {
+      const userId = await requireUserId();
       const { access_token, item_id } = await exchangePublicToken(data.public_token);
 
-      // Insert the item (or refresh access_token if same item_id)
       const { data: inserted, error: insertErr } = await supabaseAdmin
         .from("plaid_items")
         .upsert(
           {
+            user_id: userId,
             item_id,
             access_token,
             institution_id: data.institution_id ?? null,
@@ -57,8 +60,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
         throw new Error(`Failed to persist item: ${insertErr?.message ?? "no row returned"}`);
       }
 
-      // Immediately sync this new item
-      const sync = await syncItemInternal(inserted.id, access_token);
+      const sync = await syncItemInternal(inserted.id, access_token, userId);
 
       return { ok: true as const, itemId: inserted.id, ...sync, error: null as string | null };
     } catch (err) {
@@ -75,14 +77,18 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
     }
   });
 
-// 3. Manual refresh — sync ALL connected items (or a single one if itemId provided)
+// 3. Manual refresh — sync ALL connected items for current user (or a single one)
 export const plaidSyncAll = createServerFn({ method: "POST" })
   .inputValidator((input: { itemId?: string } | undefined) =>
     z.object({ itemId: z.string().uuid().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data }) => {
     try {
-      let query = supabaseAdmin.from("plaid_items").select("id, access_token, institution_name");
+      const userId = await requireUserId();
+      let query = supabaseAdmin
+        .from("plaid_items")
+        .select("id, access_token, institution_name")
+        .eq("user_id", userId);
       if (data.itemId) query = query.eq("id", data.itemId);
       const { data: items, error } = await query;
       if (error) throw new Error(error.message);
@@ -92,7 +98,9 @@ export const plaidSyncAll = createServerFn({ method: "POST" })
 
       const results = [];
       for (const item of items) {
-        const r = await syncItemInternal(item.id, item.access_token);
+        // Skip demo items (no real Plaid token)
+        if (item.access_token === "demo-no-token") continue;
+        const r = await syncItemInternal(item.id, item.access_token, userId);
         results.push({ itemId: item.id, institution: item.institution_name, ...r });
       }
       return { ok: true as const, results, error: null as string | null };
@@ -109,35 +117,72 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
     z.object({ itemId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("plaid_items").delete().eq("id", data.itemId);
+    const userId = await requireUserId();
+    // Cascade delete children explicitly (schema has no cascade configured)
+    const { data: accts } = await supabaseAdmin
+      .from("aggregated_accounts")
+      .select("id")
+      .eq("item_id", data.itemId)
+      .eq("user_id", userId);
+    const acctIds = (accts ?? []).map((a) => a.id);
+    if (acctIds.length > 0) {
+      await supabaseAdmin.from("aggregated_holdings").delete().in("account_id", acctIds);
+      await supabaseAdmin.from("aggregated_transactions").delete().in("account_id", acctIds);
+    }
+    await supabaseAdmin
+      .from("aggregated_accounts")
+      .delete()
+      .eq("item_id", data.itemId)
+      .eq("user_id", userId);
+    const { error } = await supabaseAdmin
+      .from("plaid_items")
+      .delete()
+      .eq("id", data.itemId)
+      .eq("user_id", userId);
     if (error) return { ok: false as const, error: error.message };
     return { ok: true as const, error: null as string | null };
   });
 
-// 5. Read aggregated data for the UI
+// 5. Read aggregated data for the UI — current user only
 export const getAggregatedData = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return {
+        items: [],
+        accounts: [],
+        holdings: [],
+        syncLog: [],
+        transactions: [],
+        error: null,
+      };
+    }
     const [itemsRes, accountsRes, holdingsRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabaseAdmin
         .from("aggregated_accounts")
         .select("*")
+        .eq("user_id", userId)
         .order("current_balance", { ascending: false, nullsFirst: false }),
       supabaseAdmin
         .from("aggregated_holdings")
         .select("*")
+        .eq("user_id", userId)
         .order("institution_value", { ascending: false, nullsFirst: false }),
       supabaseAdmin
         .from("sync_log")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(10),
       supabaseAdmin
         .from("aggregated_transactions")
         .select("*")
+        .eq("user_id", userId)
         .order("date", { ascending: false })
         .limit(50),
     ]);
@@ -164,13 +209,11 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
 });
 
 // --- internal helper: sync a single item ---
-async function syncItemInternal(itemRowId: string, access_token: string) {
+async function syncItemInternal(itemRowId: string, access_token: string, userId: string) {
   const startedAt = Date.now();
   try {
-    // Pull accounts
     const acctRes = await getAccounts(access_token);
 
-    // Resolve institution name if we have an id and we don't already have it stored
     if (acctRes.item.institution_id) {
       try {
         const inst = await getInstitution(acctRes.item.institution_id);
@@ -186,10 +229,12 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       }
     }
 
-    // Upsert accounts
+    // Upsert accounts (namespace plaid_account_id by user to avoid collisions
+    // when sandbox returns the same ids for different test users)
     const accountRows = acctRes.accounts.map((a) => ({
+      user_id: userId,
       item_id: itemRowId,
-      plaid_account_id: a.account_id,
+      plaid_account_id: `${userId}_${a.account_id}`,
       name: a.name,
       official_name: a.official_name,
       mask: a.mask,
@@ -208,17 +253,17 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       if (error) throw new Error(`accounts upsert: ${error.message}`);
     }
 
-    // Map plaid_account_id -> our row id for holdings FK
     const { data: accountRowsBack, error: accBackErr } = await supabaseAdmin
       .from("aggregated_accounts")
       .select("id, plaid_account_id")
       .eq("item_id", itemRowId);
     if (accBackErr) throw new Error(`accounts read-back: ${accBackErr.message}`);
 
+    // Map raw plaid id -> our row id (account ids in the map use the prefixed form)
     const acctIdMap = new Map<string, string>();
     (accountRowsBack ?? []).forEach((r) => acctIdMap.set(r.plaid_account_id, r.id));
 
-    // Pull holdings (best-effort — sandbox investments accounts only)
+    // Holdings
     let holdingsCount = 0;
     try {
       const holdRes = await getHoldings(access_token);
@@ -226,10 +271,11 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
 
       const holdingRows = holdRes.holdings
         .map((h) => {
-          const ourAcctId = acctIdMap.get(h.account_id);
+          const ourAcctId = acctIdMap.get(`${userId}_${h.account_id}`);
           if (!ourAcctId) return null;
           const sec = secMap.get(h.security_id);
           return {
+            user_id: userId,
             account_id: ourAcctId,
             security_id: h.security_id,
             ticker: sec?.ticker_symbol ?? null,
@@ -245,7 +291,6 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
         })
         .filter((r): r is NonNullable<typeof r> => r !== null);
 
-      // Replace holdings for these accounts (clean slate per sync)
       const accountIds = Array.from(acctIdMap.values());
       if (accountIds.length > 0) {
         await supabaseAdmin.from("aggregated_holdings").delete().in("account_id", accountIds);
@@ -256,17 +301,16 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       }
       holdingsCount = holdingRows.length;
     } catch (holdErr) {
-      // Holdings unsupported for this institution — not fatal
       console.warn("holdings skipped:", holdErr instanceof Error ? holdErr.message : holdErr);
     }
 
-    // Pull transactions (best-effort)
+    // Transactions
     let transactionsCount = 0;
     try {
-      // Sandbox sometimes needs a moment before transactions are ready
       let cursor: string | undefined = undefined;
       let hasMore = true;
       const allAdded: Array<{
+        user_id: string;
         plaid_transaction_id: string;
         account_id: string;
         amount: number;
@@ -284,10 +328,11 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       while (hasMore && pages < 5) {
         const txRes = await syncTransactions(access_token, cursor);
         for (const t of txRes.added) {
-          const ourAcctId = acctIdMap.get(t.account_id);
+          const ourAcctId = acctIdMap.get(`${userId}_${t.account_id}`);
           if (!ourAcctId) continue;
           allAdded.push({
-            plaid_transaction_id: t.transaction_id,
+            user_id: userId,
+            plaid_transaction_id: `${userId}_${t.transaction_id}`,
             account_id: ourAcctId,
             amount: t.amount,
             iso_currency_code: t.iso_currency_code ?? "USD",
@@ -322,6 +367,7 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       .eq("id", itemRowId);
 
     await supabaseAdmin.from("sync_log").insert({
+      user_id: userId,
       item_id: itemRowId,
       status: "success",
       accounts_updated: accountRows.length,
@@ -337,6 +383,7 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync error";
     await supabaseAdmin.from("sync_log").insert({
+      user_id: userId,
       item_id: itemRowId,
       status: "error",
       error_message: message,

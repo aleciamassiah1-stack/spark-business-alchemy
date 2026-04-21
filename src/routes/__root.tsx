@@ -1,8 +1,10 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
+import { installAuthFetch } from "@/lib/auth-fetch";
 
 import appCss from "../styles.css?url";
 
@@ -72,6 +74,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    installAuthFetch();
+  }, []);
   return (
     <AuthProvider>
       <OnboardingProvider>

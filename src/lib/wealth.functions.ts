@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 
 // =================================================================
-// Properties (real estate)
+// Properties (real estate) — scoped to authenticated user
 // =================================================================
 
 const propertyInputSchema = z.object({
@@ -17,9 +18,12 @@ const propertyInputSchema = z.object({
 });
 
 export const listProperties = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { properties: [], error: null as string | null };
   const { data, error } = await supabaseAdmin
     .from("properties")
     .select("*")
+    .eq("user_id", userId)
     .order("estimated_value", { ascending: false });
   return { properties: data ?? [], error: error?.message ?? null };
 });
@@ -46,7 +50,9 @@ export const upsertProperty = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
+    const userId = await requireUserId();
     const payload = {
+      user_id: userId,
       name: data.name,
       address: data.address,
       property_type: data.property_type,
@@ -57,7 +63,11 @@ export const upsertProperty = createServerFn({ method: "POST" })
       last_valued_at: new Date().toISOString(),
     };
     if (data.id) {
-      const { error } = await supabaseAdmin.from("properties").update(payload).eq("id", data.id);
+      const { error } = await supabaseAdmin
+        .from("properties")
+        .update(payload)
+        .eq("id", data.id)
+        .eq("user_id", userId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("properties").insert(payload);
@@ -67,7 +77,12 @@ export const upsertProperty = createServerFn({ method: "POST" })
 export const deleteProperty = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("properties").delete().eq("id", data.id);
+    const userId = await requireUserId();
+    const { error } = await supabaseAdmin
+      .from("properties")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
     return { ok: !error, error: error?.message ?? null };
   });
 
@@ -76,9 +91,12 @@ export const deleteProperty = createServerFn({ method: "POST" })
 // =================================================================
 
 export const listInsurancePolicies = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { policies: [], error: null as string | null };
   const { data, error } = await supabaseAdmin
     .from("insurance_policies")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   return { policies: data ?? [], error: error?.message ?? null };
 });
@@ -128,7 +146,9 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
+    const userId = await requireUserId();
     const payload = {
+      user_id: userId,
       policy_type: data.policy_type,
       insurer_name: data.insurer_name,
       policy_number: data.policy_number ?? null,
@@ -147,7 +167,8 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("insurance_policies")
         .update(payload)
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .eq("user_id", userId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("insurance_policies").insert(payload);
@@ -157,7 +178,12 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
 export const deleteInsurancePolicy = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("insurance_policies").delete().eq("id", data.id);
+    const userId = await requireUserId();
+    const { error } = await supabaseAdmin
+      .from("insurance_policies")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
     return { ok: !error, error: error?.message ?? null };
   });
 
@@ -174,6 +200,7 @@ export const parseInsurancePdf = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data }) => {
+    await requireUserId(); // gate the AI call behind auth
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -320,9 +347,12 @@ export type InsuranceExtraction = {
 // =================================================================
 
 export const listEstateDocuments = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { documents: [], error: null as string | null };
   const { data, error } = await supabaseAdmin
     .from("estate_documents")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   return { documents: data ?? [], error: error?.message ?? null };
 });
@@ -356,7 +386,9 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
         .parse({ ...input, status: input.status ?? "current" }),
   )
   .handler(async ({ data }) => {
+    const userId = await requireUserId();
     const payload = {
+      user_id: userId,
       document_type: data.document_type,
       title: data.title,
       status: data.status,
@@ -370,7 +402,8 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("estate_documents")
         .update(payload)
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .eq("user_id", userId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("estate_documents").insert(payload);
@@ -380,12 +413,17 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
 export const deleteEstateDocument = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("estate_documents").delete().eq("id", data.id);
+    const userId = await requireUserId();
+    const { error } = await supabaseAdmin
+      .from("estate_documents")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
     return { ok: !error, error: error?.message ?? null };
   });
 
 // =================================================================
-// Document upload (server-side, accepts base64)
+// Document upload (server-side, accepts base64) — stored under user folder
 // =================================================================
 
 export const uploadWealthDocument = createServerFn({ method: "POST" })
@@ -402,8 +440,10 @@ export const uploadWealthDocument = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     try {
+      const userId = await requireUserId();
       const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${data.folder}/${Date.now()}_${safeName}`;
+      // Storage RLS requires `${user_id}/...` as the top-level folder
+      const path = `${userId}/${data.folder}/${Date.now()}_${safeName}`;
       const buf = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
       const { error } = await supabaseAdmin.storage
         .from("wealth-documents")
@@ -425,7 +465,7 @@ export const uploadWealthDocument = createServerFn({ method: "POST" })
   });
 
 // =================================================================
-// Demo mode — seed mock institutions / clear demo
+// Demo mode — seed mock institutions / clear demo (per user)
 // =================================================================
 
 const DEMO_INSTITUTIONS = [
@@ -476,13 +516,16 @@ const DEMO_INSTITUTIONS = [
 
 export const seedDemoData = createServerFn({ method: "POST" }).handler(async () => {
   try {
+    const userId = await requireUserId();
     for (const inst of DEMO_INSTITUTIONS) {
-      // upsert item with unique demo prefix
+      // Per-user demo item id so multiple users can each have their own demo
+      const demoItemId = `demo_${userId}_${inst.id}`;
       const { data: item, error: itemErr } = await supabaseAdmin
         .from("plaid_items")
         .upsert(
           {
-            item_id: `demo_${inst.id}`,
+            user_id: userId,
+            item_id: demoItemId,
             access_token: "demo-no-token",
             institution_id: inst.id,
             institution_name: `${inst.name} (Demo)`,
@@ -497,8 +540,9 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
 
       // accounts
       const accountRows = inst.accounts.map((a, idx) => ({
+        user_id: userId,
         item_id: item.id,
-        plaid_account_id: `${inst.id}_acct_${idx}`,
+        plaid_account_id: `${userId}_${inst.id}_acct_${idx}`,
         name: a.name,
         official_name: `${inst.name} ${a.name}`,
         mask: a.mask,
@@ -513,7 +557,6 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
         .from("aggregated_accounts")
         .upsert(accountRows, { onConflict: "plaid_account_id" });
 
-      // holdings (need our account ids)
       if (inst.holdings && inst.holdings.length > 0) {
         const { data: acctsBack } = await supabaseAdmin
           .from("aggregated_accounts")
@@ -528,6 +571,7 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
             .delete()
             .eq("account_id", firstInvestmentAcct.id);
           const holdingRows = inst.holdings.map((h) => ({
+            user_id: userId,
             account_id: firstInvestmentAcct.id,
             security_id: `${inst.id}_${h.ticker}`,
             ticker: h.ticker,
@@ -545,12 +589,13 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
       }
     }
 
-    // Demo transactions
+    // Demo transactions on the first depository account
     const { data: depositoryAccts } = await supabaseAdmin
       .from("aggregated_accounts")
       .select("id, plaid_account_id")
+      .eq("user_id", userId)
       .eq("type", "depository")
-      .like("plaid_account_id", "demo_%");
+      .like("plaid_account_id", `${userId}_%`);
 
     if (depositoryAccts && depositoryAccts.length > 0) {
       const acctId = depositoryAccts[0].id;
@@ -569,7 +614,8 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
         const d = new Date(today);
         d.setDate(d.getDate() - t.days);
         return {
-          plaid_transaction_id: `demo_tx_${idx}_${Date.now()}`,
+          user_id: userId,
+          plaid_transaction_id: `demo_${userId}_tx_${idx}`,
           account_id: acctId,
           amount: t.amount,
           iso_currency_code: "USD",
@@ -597,14 +643,14 @@ export const seedDemoData = createServerFn({ method: "POST" }).handler(async () 
 
 export const clearDemoData = createServerFn({ method: "POST" }).handler(async () => {
   try {
-    // Find demo items
+    const userId = await requireUserId();
     const { data: demoItems } = await supabaseAdmin
       .from("plaid_items")
       .select("id")
-      .like("item_id", "demo_%");
+      .eq("user_id", userId)
+      .like("item_id", `demo_${userId}_%`);
     const ids = (demoItems ?? []).map((i) => i.id);
     if (ids.length === 0) return { ok: true as const, error: null };
-    // delete cascades not set; clear children explicitly
     const { data: accts } = await supabaseAdmin
       .from("aggregated_accounts")
       .select("id")
