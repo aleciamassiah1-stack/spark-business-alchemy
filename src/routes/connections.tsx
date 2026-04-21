@@ -451,6 +451,18 @@ function ConnectionsPage() {
         />
       )}
 
+      {historyProperty && (
+        <ValuationHistoryModal
+          property={historyProperty}
+          onClose={() => setHistoryProperty(null)}
+          onError={(m) => showToast("err", m)}
+          onSaved={async () => {
+            await loadAll();
+            showToast("ok", "Valuation saved to history");
+          }}
+        />
+      )}
+
       {showEstateForm && (
         <EstateFormModal
           onClose={() => setShowEstateForm(false)}
