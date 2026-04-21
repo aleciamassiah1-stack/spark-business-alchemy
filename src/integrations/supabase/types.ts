@@ -130,9 +130,11 @@ export type Database = {
         Row: {
           account_id: string
           amount: number
+          applied_rule_id: string | null
           category: string | null
           category_detailed: string | null
           created_at: string
+          custom_category: string | null
           date: string
           id: string
           iso_currency_code: string | null
@@ -147,9 +149,11 @@ export type Database = {
         Insert: {
           account_id: string
           amount: number
+          applied_rule_id?: string | null
           category?: string | null
           category_detailed?: string | null
           created_at?: string
+          custom_category?: string | null
           date: string
           id?: string
           iso_currency_code?: string | null
@@ -164,9 +168,11 @@ export type Database = {
         Update: {
           account_id?: string
           amount?: number
+          applied_rule_id?: string | null
           category?: string | null
           category_detailed?: string | null
           created_at?: string
+          custom_category?: string | null
           date?: string
           id?: string
           iso_currency_code?: string | null
@@ -404,12 +410,60 @@ export type Database = {
           },
         ]
       }
+      transaction_rules: {
+        Row: {
+          amount_max: number | null
+          amount_min: number | null
+          category: string
+          created_at: string
+          description_keyword: string | null
+          enabled: boolean
+          id: string
+          match_type: string
+          merchant_pattern: string | null
+          name: string
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          amount_max?: number | null
+          amount_min?: number | null
+          category: string
+          created_at?: string
+          description_keyword?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          merchant_pattern?: string | null
+          name: string
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_max?: number | null
+          amount_min?: number | null
+          category?: string
+          created_at?: string
+          description_keyword?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          merchant_pattern?: string | null
+          name?: string
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_transaction_rules: {
+        Args: { target_rule_id?: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
