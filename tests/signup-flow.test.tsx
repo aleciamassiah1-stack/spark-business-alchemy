@@ -13,7 +13,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMockSupabase } from "./mocks/supabase";
 
 // vi.mock is hoisted to top, so we use vi.hoisted to safely create the mock
 // before any imports of @/integrations/supabase/client are resolved.
