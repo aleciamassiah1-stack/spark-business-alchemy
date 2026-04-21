@@ -19,11 +19,12 @@ import {
   ScrollText,
   Sparkles,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 
-const STEPS = ["biometric", "personalize", "connect"] as const;
+const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
 
 /**
