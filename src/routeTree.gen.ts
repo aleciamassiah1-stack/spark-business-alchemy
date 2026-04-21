@@ -15,6 +15,7 @@ import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as FamilyRouteImport } from './routes/family'
+import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -48,6 +49,11 @@ const FamilyRoute = FamilyRouteImport.update({
   path: '/family',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectionsRoute = ConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BeneficiariesRoute = BeneficiariesRouteImport.update({
   id: '/beneficiaries',
   path: '/beneficiaries',
@@ -62,6 +68,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
+  '/connections': typeof ConnectionsRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
+  '/connections': typeof ConnectionsRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
+  '/connections': typeof ConnectionsRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/beneficiaries'
+    | '/connections'
     | '/family'
     | '/legacy'
     | '/more'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/beneficiaries'
+    | '/connections'
     | '/family'
     | '/legacy'
     | '/more'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/beneficiaries'
+    | '/connections'
     | '/family'
     | '/legacy'
     | '/more'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BeneficiariesRoute: typeof BeneficiariesRoute
+  ConnectionsRoute: typeof ConnectionsRoute
   FamilyRoute: typeof FamilyRoute
   LegacyRoute: typeof LegacyRoute
   MoreRoute: typeof MoreRoute
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamilyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connections': {
+      id: '/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof ConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/beneficiaries': {
       id: '/beneficiaries'
       path: '/beneficiaries'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BeneficiariesRoute: BeneficiariesRoute,
+  ConnectionsRoute: ConnectionsRoute,
   FamilyRoute: FamilyRoute,
   LegacyRoute: LegacyRoute,
   MoreRoute: MoreRoute,
@@ -208,3 +229,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
