@@ -73,10 +73,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <WealthProvider>
-      <SyncStatusBar />
-      <Outlet />
-      <Onboarding />
-    </WealthProvider>
+    <OnboardingProvider>
+      <WealthProvider>
+        <SyncStatusBar />
+        <Outlet />
+        <Onboarding />
+      </WealthProvider>
+    </OnboardingProvider>
   );
 }
