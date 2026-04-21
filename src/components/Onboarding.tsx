@@ -702,7 +702,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
-  const { update } = useOnboarding();
+  const { update, markStep } = useOnboarding();
 
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
 
