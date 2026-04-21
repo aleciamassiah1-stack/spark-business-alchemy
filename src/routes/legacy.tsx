@@ -43,6 +43,21 @@ export const Route = createFileRoute("/legacy")({
 
 function LegacyPage() {
   const trustTotal = trustAccounts.reduce((s, t) => s + t.value, 0);
+  const [docs, setDocs] = useState<EstateDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    listEstateDocuments()
+      .then((res) => {
+        if (!mounted) return;
+        setDocs((res.documents ?? []) as EstateDoc[]);
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <MobileShell title="Legacy" subtitle="Trust & Estate">
@@ -73,22 +88,69 @@ function LegacyPage() {
         </div>
       </div>
 
-      {/* Estate docs vault */}
+      {/* Estate docs vault — real data */}
       <div className="mt-6 px-5">
-        <p className="label-mono mb-2">Estate documents vault</p>
-        <LuxCard className="divide-y divide-white/[0.04]">
-          {estateDocs.map((d) => (
-            <div key={d.id} className="flex items-center gap-3 px-4 py-3.5">
-              <DocIcon status={d.status} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-foreground">{d.name}</p>
-                <p className="font-mono text-[11px] text-muted-foreground">Updated {d.updated}</p>
-              </div>
-              <DocStatusBadge status={d.status} />
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </div>
-          ))}
-        </LuxCard>
+        <div className="mb-2 flex items-center justify-between">
+          <p className="label-mono">Estate documents vault</p>
+          <Link
+            to="/connections"
+            className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-foreground"
+          >
+            <Plus className="h-3 w-3" /> Upload
+          </Link>
+        </div>
+        {loading ? (
+          <LuxCard className="flex items-center justify-center p-6">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </LuxCard>
+        ) : docs.length === 0 ? (
+          <LuxCard className="p-6 text-center">
+            <FileText className="mx-auto h-6 w-6 text-muted-foreground" />
+            <p className="mt-2 font-serif text-base text-foreground">No documents yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Upload your will, healthcare directive or POA — we&apos;ll keep them safe.
+            </p>
+            <Link
+              to="/connections"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full gradient-violet px-4 py-2 text-xs font-medium text-foreground glow-violet"
+            >
+              <Plus className="h-3.5 w-3.5" /> Upload first document
+            </Link>
+          </LuxCard>
+        ) : (
+          <LuxCard className="divide-y divide-white/[0.04]">
+            {docs.map((d) => {
+              const label = DOC_TYPE_LABEL[d.document_type] ?? d.document_type;
+              const status = (d.status ?? "current").toLowerCase();
+              const updated = new Date(d.updated_at).toLocaleDateString(undefined, {
+                month: "short",
+                year: "numeric",
+              });
+              const row = (
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <DocIcon status={status} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-foreground">{d.title || label}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      {label} · Updated {updated}
+                    </p>
+                  </div>
+                  <DocStatusBadge status={status} />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              );
+              return d.document_url ? (
+                <a key={d.id} href={d.document_url} target="_blank" rel="noreferrer" className="block">
+                  {row}
+                </a>
+              ) : (
+                <Link key={d.id} to="/connections" className="block">
+                  {row}
+                </Link>
+              );
+            })}
+          </LuxCard>
+        )}
       </div>
 
       {/* Beneficiary CTA */}
