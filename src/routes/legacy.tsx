@@ -324,6 +324,21 @@ function EditEstateDocModal({
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await deleteEstateDocument({ data: { id: doc.id } });
+      if (!res.ok) {
+        toast.error(res.error ?? "Couldn't delete document");
+        return;
+      }
+      toast.success("Document deleted");
+      await onDeleted();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
