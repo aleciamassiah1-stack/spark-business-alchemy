@@ -147,6 +147,7 @@ function ConnectionsPage() {
   const [linking, setLinking] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
   const [showPropForm, setShowPropForm] = useState(false);
+  const [historyProperty, setHistoryProperty] = useState<Property | null>(null);
   const [showEstateForm, setShowEstateForm] = useState(false);
   const [rules, setRules] = useState<TransactionRule[]>([]);
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
