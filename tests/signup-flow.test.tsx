@@ -277,11 +277,18 @@ describe("Signup flow → onboarding gate → dashboard", () => {
     await user.type(screen.getByPlaceholderText("Your password"), "wrong");
     const btn = screen.getByRole("button", { name: /sign in/i });
 
-    for (let i = 0; i < 5; i++) {
+    // First 4 attempts → "N attempts remaining" message
+    for (let i = 1; i <= 4; i++) {
       await waitFor(() => expect(btn).not.toBeDisabled());
       await user.click(btn);
+      await waitFor(() => {
+        expect(screen.getByText(new RegExp(`${5 - i} attempts? remaining`, "i"))).toBeInTheDocument();
+      });
     }
 
+    // 5th attempt → lockout
+    await waitFor(() => expect(btn).not.toBeDisabled());
+    await user.click(btn);
     await waitFor(() => {
       expect(screen.getByText(/Locked for 15 minutes/i)).toBeInTheDocument();
     });
