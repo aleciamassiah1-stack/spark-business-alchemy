@@ -14,13 +14,18 @@ import {
   Pencil,
   ExternalLink,
   X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts, attorney } from "@/lib/mock-data";
-import { listEstateDocuments, upsertEstateDocument } from "@/lib/wealth.functions";
+import {
+  listEstateDocuments,
+  upsertEstateDocument,
+  deleteEstateDocument,
+} from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
 
 type EstateDoc = {
@@ -254,6 +259,10 @@ function LegacyPage() {
             setEditing(null);
             await reload();
           }}
+          onDeleted={async () => {
+            setEditing(null);
+            await reload();
+          }}
         />
       ) : null}
     </MobileShell>
@@ -264,10 +273,12 @@ function EditEstateDocModal({
   doc,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   doc: EstateDoc;
   onClose: () => void;
   onSaved: () => void | Promise<void>;
+  onDeleted: () => void | Promise<void>;
 }) {
   const initialType = (DOC_TYPES.find((t) => t.value === doc.document_type)?.value ??
     "other") as EditableDocType;
@@ -281,6 +292,8 @@ function EditEstateDocModal({
   const [signedDate, setSignedDate] = useState(doc.signed_date ?? "");
   const [expirationDate, setExpirationDate] = useState(doc.expiration_date ?? "");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -308,6 +321,21 @@ function EditEstateDocModal({
       await onSaved();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await deleteEstateDocument({ data: { id: doc.id } });
+      if (!res.ok) {
+        toast.error(res.error ?? "Couldn't delete document");
+        return;
+      }
+      toast.success("Document deleted");
+      await onDeleted();
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -415,12 +443,53 @@ function EditEstateDocModal({
           </button>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || deleting}
             className="flex flex-1 items-center justify-center gap-2 rounded-full gradient-violet px-4 py-2.5 text-sm font-medium text-foreground glow-violet disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             {saving ? "Saving…" : "Save changes"}
           </button>
+        </div>
+
+        <div className="mt-3 border-t border-white/[0.04] pt-3">
+          {confirmDelete ? (
+            <div className="flex items-center gap-2">
+              <p className="flex-1 text-xs text-muted-foreground">
+                Delete this document? This cannot be undone.
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-foreground hover:bg-white/[0.06] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 rounded-full bg-destructive/15 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/25 disabled:opacity-60"
+              >
+                {deleting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3 w-3" />
+                )}
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={saving}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-60"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete document
+            </button>
+          )}
         </div>
       </form>
     </div>
