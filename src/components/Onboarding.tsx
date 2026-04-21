@@ -175,12 +175,11 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   const [hintShown, setHintShown] = useState(false);
 
   // Countdown for resend
-  useState(() => {});
-  // Use effect via lazy interval
-  if (typeof window !== "undefined" && resendIn > 0) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffectCountdown(resendIn, setResendIn);
-  }
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = window.setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [resendIn]);
 
   const handleChange = (val: string) => {
     const next = val.replace(/\D/g, "").slice(0, 6);
