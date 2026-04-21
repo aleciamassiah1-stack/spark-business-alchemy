@@ -32,9 +32,9 @@ async function plaidPost<T>(path: string, body: Record<string, unknown>): Promis
 export type PlaidLinkTokenResp = { link_token: string; expiration: string };
 export type PlaidExchangeResp = { access_token: string; item_id: string };
 
-export async function createLinkToken(): Promise<PlaidLinkTokenResp> {
+export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResp> {
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
-    user: { client_user_id: "aether-demo-user" },
+    user: { client_user_id: userId },
     client_name: "Æther Wealth",
     products: ["auth", "transactions", "investments"],
     country_codes: ["US"],
