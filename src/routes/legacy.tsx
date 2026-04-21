@@ -273,10 +273,12 @@ function EditEstateDocModal({
   doc,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   doc: EstateDoc;
   onClose: () => void;
   onSaved: () => void | Promise<void>;
+  onDeleted: () => void | Promise<void>;
 }) {
   const initialType = (DOC_TYPES.find((t) => t.value === doc.document_type)?.value ??
     "other") as EditableDocType;
@@ -290,6 +292,8 @@ function EditEstateDocModal({
   const [signedDate, setSignedDate] = useState(doc.signed_date ?? "");
   const [expirationDate, setExpirationDate] = useState(doc.expiration_date ?? "");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
