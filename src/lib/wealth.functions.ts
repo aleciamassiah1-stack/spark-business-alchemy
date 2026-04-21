@@ -68,10 +68,14 @@ export const upsertProperty = createServerFn({ method: "POST" })
         .update(payload)
         .eq("id", data.id)
         .eq("user_id", userId);
-      return { ok: !error, error: error?.message ?? null };
+      return { ok: !error, error: error?.message ?? null, id: data.id as string | null };
     }
-    const { error } = await supabaseAdmin.from("properties").insert(payload);
-    return { ok: !error, error: error?.message ?? null };
+    const { data: inserted, error } = await supabaseAdmin
+      .from("properties")
+      .insert(payload)
+      .select("id")
+      .single();
+    return { ok: !error, error: error?.message ?? null, id: inserted?.id ?? null };
   });
 
 export const deleteProperty = createServerFn({ method: "POST" })
