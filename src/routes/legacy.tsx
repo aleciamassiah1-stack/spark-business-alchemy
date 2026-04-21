@@ -259,6 +259,10 @@ function LegacyPage() {
             setEditing(null);
             await reload();
           }}
+          onDeleted={async () => {
+            setEditing(null);
+            await reload();
+          }}
         />
       ) : null}
     </MobileShell>
