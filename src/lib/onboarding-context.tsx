@@ -43,8 +43,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={{ ready, completed, complete, reset }}>{children}</Ctx.Provider>;
 }
 
+/** Fallback used if a consumer renders outside the provider (e.g. during
+ *  isolated SSR of a route component before the root shell wraps it). It
+ *  reports "not ready" so gates render their loading state instead of crashing. */
+const noopCtx: OnboardingCtx = {
+  ready: false,
+  completed: false,
+  complete: () => {},
+  reset: () => {},
+};
+
 export function useOnboarding() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useOnboarding must be used inside OnboardingProvider");
-  return ctx;
+  return useContext(Ctx) ?? noopCtx;
 }
