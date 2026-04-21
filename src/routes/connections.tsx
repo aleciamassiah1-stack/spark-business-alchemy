@@ -18,6 +18,9 @@ import {
   Upload,
   X,
   Wand2,
+  Tag,
+  GripVertical,
+  Pencil,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
