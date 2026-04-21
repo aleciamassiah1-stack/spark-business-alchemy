@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus } from "lucide-react";
+import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
-import { getAggregatedData } from "@/lib/plaid.functions";
+import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { useWealth } from "@/lib/wealth-context";
 import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 
@@ -48,27 +49,51 @@ function HomePage() {
   const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const { setSyncing } = useWealth();
+
+  const loadAll = useCallback(async () => {
+    const [agg, props, ins, est] = await Promise.all([
+      getAggregatedData(),
+      listProperties(),
+      listInsurancePolicies(),
+      listEstateDocuments(),
+    ]);
+    setAggregated(agg);
+    setProperties((props.properties ?? []) as typeof properties);
+    setPolicies((ins.policies ?? []) as typeof policies);
+    setDocuments((est.documents ?? []) as typeof documents);
+    setLastRefreshed(new Date());
+  }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [agg, props, ins, est] = await Promise.all([
-        getAggregatedData(),
-        listProperties(),
-        listInsurancePolicies(),
-        listEstateDocuments(),
-      ]);
-      if (!alive) return;
-      setAggregated(agg);
-      setProperties((props.properties ?? []) as typeof properties);
-      setPolicies((ins.policies ?? []) as typeof policies);
-      setDocuments((est.documents ?? []) as typeof documents);
-      setLoading(false);
+      await loadAll();
+      if (alive) setLoading(false);
     })();
     return () => {
       alive = false;
     };
-  }, []);
+  }, [loadAll]);
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setSyncing(true, "Refreshing balances…");
+    try {
+      const result = await plaidSyncAll({ data: {} });
+      await loadAll();
+      const totalAccounts = result.results?.reduce((s, r) => s + (r.accountsUpdated ?? 0), 0) ?? 0;
+      setSyncing(false, totalAccounts > 0 ? `${totalAccounts} accounts updated` : null);
+    } catch (err) {
+      console.error("Refresh failed:", err);
+      setSyncing(false, "Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const accounts: AccountRow[] = (aggregated?.accounts as AccountRow[] | undefined) ?? [];
   const holdings: HoldingRow[] = (aggregated?.holdings as HoldingRow[] | undefined) ?? [];
