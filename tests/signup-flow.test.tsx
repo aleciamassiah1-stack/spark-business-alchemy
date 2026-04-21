@@ -274,7 +274,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
     );
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "j@x.com");
-    await user.type(screen.getByPlaceholderText("Your password"), "wrong");
+    await user.type(screen.getByPlaceholderText("Your password"), "wrongpassword");
     const btn = screen.getByRole("button", { name: /sign in/i });
 
     // First 4 attempts → "N attempts remaining" message
