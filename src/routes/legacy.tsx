@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Scroll, Users, FileText, Phone, ChevronRight, AlertTriangle, CheckCircle2, Circle } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts, estateDocs, attorney } from "@/lib/mock-data";
 import { fmtCurrency } from "@/lib/format";
 
@@ -12,7 +13,11 @@ export const Route = createFileRoute("/legacy")({
       { name: "description", content: "Your legacy, structured and protected." },
     ],
   }),
-  component: LegacyPage,
+  component: () => (
+    <RequireOnboarding>
+      <LegacyPage />
+    </RequireOnboarding>
+  ),
 });
 
 function LegacyPage() {

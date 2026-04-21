@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Users, BarChart3, Settings, HelpCircle, Bell, LogOut, ChevronRight, Building2, Link as LinkIcon } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 
 export const Route = createFileRoute("/more")({
   head: () => ({
@@ -10,7 +11,11 @@ export const Route = createFileRoute("/more")({
       { name: "description", content: "Settings and additional tools." },
     ],
   }),
-  component: MorePage,
+  component: () => (
+    <RequireOnboarding>
+      <MorePage />
+    </RequireOnboarding>
+  ),
 });
 
 function MorePage() {

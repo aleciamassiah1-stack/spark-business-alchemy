@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle, Plus, Pencil } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { beneficiaries, conflicts } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/beneficiaries")({
@@ -12,7 +13,11 @@ export const Route = createFileRoute("/beneficiaries")({
       { name: "description", content: "Unified beneficiary view across all accounts." },
     ],
   }),
-  component: BeneficiariesPage,
+  component: () => (
+    <RequireOnboarding>
+      <BeneficiariesPage />
+    </RequireOnboarding>
+  ),
 });
 
 function BeneficiariesPage() {

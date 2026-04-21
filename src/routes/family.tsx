@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ChevronDown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { family } from "@/lib/mock-data";
 import { fmtCurrency } from "@/lib/format";
 
@@ -14,7 +15,11 @@ export const Route = createFileRoute("/family")({
       { name: "description", content: "Linked accounts for every member of your family." },
     ],
   }),
-  component: FamilyPage,
+  component: () => (
+    <RequireOnboarding>
+      <FamilyPage />
+    </RequireOnboarding>
+  ),
 });
 
 function FamilyPage() {

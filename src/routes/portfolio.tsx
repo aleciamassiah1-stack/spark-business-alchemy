@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight, ChevronDown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { Sparkline } from "@/components/Sparkline";
 import { holdings } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
@@ -15,7 +16,11 @@ export const Route = createFileRoute("/portfolio")({
       { name: "description", content: "Your investment portfolio at a glance." },
     ],
   }),
-  component: PortfolioPage,
+  component: () => (
+    <RequireOnboarding>
+      <PortfolioPage />
+    </RequireOnboarding>
+  ),
 });
 
 const FILTERS = ["All", "ETF", "Stock", "Bond", "REIT"] as const;

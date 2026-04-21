@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { timelines } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 
@@ -15,7 +16,11 @@ export const Route = createFileRoute("/timeline")({
       { name: "description", content: "Wealth growth over time, by category." },
     ],
   }),
-  component: TimelinePage,
+  component: () => (
+    <RequireOnboarding>
+      <TimelinePage />
+    </RequireOnboarding>
+  ),
 });
 
 const RANGES = ["1M", "6M", "1Y", "All"] as const;
