@@ -44,12 +44,10 @@ describe("onboarding-context", () => {
   it("does NOT require connect step for gating, but counts it in completion %", () => {
     const { result } = renderHook(() => useOnboarding(), { wrapper });
 
-    act(() => {
-      result.current.markStep("account");
-      result.current.markStep("verify");
-      result.current.markStep("biometric");
-      result.current.markStep("personalize");
-    });
+    act(() => result.current.markStep("account"));
+    act(() => result.current.markStep("verify"));
+    act(() => result.current.markStep("biometric"));
+    act(() => result.current.markStep("personalize"));
     expect(result.current.onboarded).toBe(true);
     expect(result.current.completionPct).toBe(80); // 4/5 steps
 
@@ -59,10 +57,8 @@ describe("onboarding-context", () => {
 
   it("persists profile across remounts via localStorage", () => {
     const first = renderHook(() => useOnboarding(), { wrapper });
-    act(() => {
-      first.result.current.markStep("account");
-      first.result.current.update({ fullName: "James Whitfield" });
-    });
+    act(() => first.result.current.update({ fullName: "James Whitfield" }));
+    act(() => first.result.current.markStep("account"));
     first.unmount();
 
     const second = renderHook(() => useOnboarding(), { wrapper });
@@ -82,12 +78,10 @@ describe("onboarding-context", () => {
 
   it("reset clears profile and gating", () => {
     const { result } = renderHook(() => useOnboarding(), { wrapper });
-    act(() => {
-      result.current.markStep("account");
-      result.current.markStep("verify");
-      result.current.markStep("biometric");
-      result.current.markStep("personalize");
-    });
+    act(() => result.current.markStep("account"));
+    act(() => result.current.markStep("verify"));
+    act(() => result.current.markStep("biometric"));
+    act(() => result.current.markStep("personalize"));
     expect(result.current.onboarded).toBe(true);
 
     act(() => result.current.reset());
