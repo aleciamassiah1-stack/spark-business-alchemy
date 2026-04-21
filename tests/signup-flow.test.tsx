@@ -80,7 +80,7 @@ const { supabase, helpers } = vi.hoisted(() => {
     ),
     signInWithPassword: vi.fn(
       async ({ password }: { email: string; password: string }) => {
-        if (password === "wrong") {
+        if (password.startsWith("wrong")) {
           return {
             data: { user: null, session: null },
             error: { message: "Invalid credentials" },
