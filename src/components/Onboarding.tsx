@@ -702,7 +702,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
-  const { update } = useOnboarding();
+  const { update, markStep } = useOnboarding();
 
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
 
@@ -741,7 +741,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       const { supabase } = await import("@/integrations/supabase/client");
 
       if (mode === "signup") {
-        const { error: err } = await supabase.auth.signUp({
+        const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -754,11 +754,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         });
         if (err) throw err;
         update({ fullName });
-        // markStep("account") happens via onboarded = false → flow continues
-        // Actually mark account complete now since the signup screen doubles for it.
-        const { useOnboarding: hook } = await import("@/lib/onboarding-context");
-        // Falling through is fine; we trigger step mark below.
-        void hook;
+        markStep("account");
+        // If email confirmation is required, no session is created. Surface that.
+        if (!data.session) {
+          setError("Check your email to confirm your account, then sign in.");
+          return;
+        }
+        // Session is live — RequireOnboarding will pick up and continue the flow.
         navigate({ to: "/" });
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
