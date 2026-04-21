@@ -9,8 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as ProtectRouteImport } from './routes/protect'
+import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as MoreRouteImport } from './routes/more'
+import { Route as LegacyRouteImport } from './routes/legacy'
+import { Route as FamilyRouteImport } from './routes/family'
+import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectRoute = ProtectRouteImport.update({
+  id: '/protect',
+  path: '/protect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioRoute = PortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegacyRoute = LegacyRouteImport.update({
+  id: '/legacy',
+  path: '/legacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamilyRoute = FamilyRouteImport.update({
+  id: '/family',
+  path: '/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BeneficiariesRoute = BeneficiariesRouteImport.update({
+  id: '/beneficiaries',
+  path: '/beneficiaries',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +61,130 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/beneficiaries': typeof BeneficiariesRoute
+  '/family': typeof FamilyRoute
+  '/legacy': typeof LegacyRoute
+  '/more': typeof MoreRoute
+  '/portfolio': typeof PortfolioRoute
+  '/protect': typeof ProtectRoute
+  '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/beneficiaries': typeof BeneficiariesRoute
+  '/family': typeof FamilyRoute
+  '/legacy': typeof LegacyRoute
+  '/more': typeof MoreRoute
+  '/portfolio': typeof PortfolioRoute
+  '/protect': typeof ProtectRoute
+  '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/beneficiaries': typeof BeneficiariesRoute
+  '/family': typeof FamilyRoute
+  '/legacy': typeof LegacyRoute
+  '/more': typeof MoreRoute
+  '/portfolio': typeof PortfolioRoute
+  '/protect': typeof ProtectRoute
+  '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/beneficiaries'
+    | '/family'
+    | '/legacy'
+    | '/more'
+    | '/portfolio'
+    | '/protect'
+    | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/beneficiaries'
+    | '/family'
+    | '/legacy'
+    | '/more'
+    | '/portfolio'
+    | '/protect'
+    | '/timeline'
+  id:
+    | '__root__'
+    | '/'
+    | '/beneficiaries'
+    | '/family'
+    | '/legacy'
+    | '/more'
+    | '/portfolio'
+    | '/protect'
+    | '/timeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BeneficiariesRoute: typeof BeneficiariesRoute
+  FamilyRoute: typeof FamilyRoute
+  LegacyRoute: typeof LegacyRoute
+  MoreRoute: typeof MoreRoute
+  PortfolioRoute: typeof PortfolioRoute
+  ProtectRoute: typeof ProtectRoute
+  TimelineRoute: typeof TimelineRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/protect': {
+      id: '/protect'
+      path: '/protect'
+      fullPath: '/protect'
+      preLoaderRoute: typeof ProtectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio': {
+      id: '/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legacy': {
+      id: '/legacy'
+      path: '/legacy'
+      fullPath: '/legacy'
+      preLoaderRoute: typeof LegacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/family': {
+      id: '/family'
+      path: '/family'
+      fullPath: '/family'
+      preLoaderRoute: typeof FamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beneficiaries': {
+      id: '/beneficiaries'
+      path: '/beneficiaries'
+      fullPath: '/beneficiaries'
+      preLoaderRoute: typeof BeneficiariesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +197,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BeneficiariesRoute: BeneficiariesRoute,
+  FamilyRoute: FamilyRoute,
+  LegacyRoute: LegacyRoute,
+  MoreRoute: MoreRoute,
+  PortfolioRoute: PortfolioRoute,
+  ProtectRoute: ProtectRoute,
+  TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

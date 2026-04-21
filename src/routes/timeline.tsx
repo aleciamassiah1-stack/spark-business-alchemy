@@ -80,7 +80,7 @@ function TimelinePage() {
                   }}
                   labelStyle={{ color: "oklch(0.66 0.03 280)" }}
                   itemStyle={{ color: "oklch(0.96 0.01 280)" }}
-                  formatter={(v: number) => fmtCurrency(v)}
+                  formatter={(v) => fmtCurrency(Number(v))}
                 />
                 <Area
                   type="monotone"
@@ -139,7 +139,7 @@ function TimelinePage() {
                 <YAxis hide />
                 <Tooltip
                   contentStyle={{ background: "oklch(0.20 0.025 280)", border: "1px solid oklch(1 0 0 / 0.08)", borderRadius: 12, fontSize: 11 }}
-                  formatter={(v: number) => fmtCurrency(v, { compact: true })}
+                  formatter={(v) => fmtCurrency(Number(v), { compact: true })}
                 />
                 <Area type="monotone" dataKey="investments" stackId="1" stroke="oklch(0.68 0.13 295)" fill="url(#invG)" />
                 <Area type="monotone" dataKey="banking" stackId="1" stroke="oklch(0.78 0.16 295)" fill="url(#bnkG)" />
