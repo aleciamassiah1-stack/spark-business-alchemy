@@ -29,6 +29,7 @@ export type Database = {
           plaid_account_id: string
           subtype: string | null
           type: string
+          user_id: string | null
         }
         Insert: {
           available_balance?: number | null
@@ -44,6 +45,7 @@ export type Database = {
           plaid_account_id: string
           subtype?: string | null
           type: string
+          user_id?: string | null
         }
         Update: {
           available_balance?: number | null
@@ -59,6 +61,7 @@ export type Database = {
           plaid_account_id?: string
           subtype?: string | null
           type?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -85,6 +88,7 @@ export type Database = {
           security_id: string | null
           ticker: string | null
           type: string | null
+          user_id: string | null
         }
         Insert: {
           account_id: string
@@ -100,6 +104,7 @@ export type Database = {
           security_id?: string | null
           ticker?: string | null
           type?: string | null
+          user_id?: string | null
         }
         Update: {
           account_id?: string
@@ -115,6 +120,7 @@ export type Database = {
           security_id?: string | null
           ticker?: string | null
           type?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -145,6 +151,7 @@ export type Database = {
           payment_channel: string | null
           pending: boolean | null
           plaid_transaction_id: string
+          user_id: string | null
         }
         Insert: {
           account_id: string
@@ -164,6 +171,7 @@ export type Database = {
           payment_channel?: string | null
           pending?: boolean | null
           plaid_transaction_id: string
+          user_id?: string | null
         }
         Update: {
           account_id?: string
@@ -183,6 +191,7 @@ export type Database = {
           payment_channel?: string | null
           pending?: boolean | null
           plaid_transaction_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -199,6 +208,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -212,6 +222,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -225,6 +236,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -247,6 +259,7 @@ export type Database = {
           renewal_date: string | null
           status: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           beneficiaries?: Json | null
@@ -266,6 +279,7 @@ export type Database = {
           renewal_date?: string | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           beneficiaries?: Json | null
@@ -285,6 +299,7 @@ export type Database = {
           renewal_date?: string | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -299,6 +314,7 @@ export type Database = {
           last_synced_at: string | null
           status: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           access_token: string
@@ -310,6 +326,7 @@ export type Database = {
           last_synced_at?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           access_token?: string
@@ -321,6 +338,7 @@ export type Database = {
           last_synced_at?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -338,6 +356,7 @@ export type Database = {
           purchase_date: string | null
           purchase_price: number | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address: string
@@ -352,6 +371,7 @@ export type Database = {
           purchase_date?: string | null
           purchase_price?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string
@@ -366,6 +386,7 @@ export type Database = {
           purchase_date?: string | null
           purchase_price?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -379,6 +400,7 @@ export type Database = {
           id: string
           item_id: string | null
           status: string
+          user_id: string | null
         }
         Insert: {
           accounts_updated?: number | null
@@ -389,6 +411,7 @@ export type Database = {
           id?: string
           item_id?: string | null
           status: string
+          user_id?: string | null
         }
         Update: {
           accounts_updated?: number | null
@@ -399,6 +422,7 @@ export type Database = {
           id?: string
           item_id?: string | null
           status?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -424,6 +448,7 @@ export type Database = {
           name: string
           priority: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           amount_max?: number | null
@@ -438,6 +463,7 @@ export type Database = {
           name: string
           priority?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           amount_max?: number | null
@@ -452,6 +478,7 @@ export type Database = {
           name?: string
           priority?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
