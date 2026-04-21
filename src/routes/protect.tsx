@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Shield, ChevronDown, FileText, AlertCircle } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { policies } from "@/lib/mock-data";
 import { fmtCurrency } from "@/lib/format";
 
