@@ -15,8 +15,103 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMockSupabase } from "./mocks/supabase";
 
-// Mock the Supabase client BEFORE importing anything that uses it.
-const { supabase, helpers } = createMockSupabase();
+// vi.mock is hoisted to top, so we use vi.hoisted to safely create the mock
+// before any imports of @/integrations/supabase/client are resolved.
+const { supabase, helpers } = vi.hoisted(() => {
+  // Inline the factory body since vi.hoisted runs before module imports.
+  const listeners: Array<(event: string, session: unknown) => void> = [];
+  let session: unknown = null;
+
+  const fakeUser = (email: string, fullName: string, phone: string) => ({
+    id: "user-test-id",
+    aud: "authenticated",
+    email,
+    app_metadata: {},
+    user_metadata: { full_name: fullName, phone },
+    created_at: new Date().toISOString(),
+  });
+
+  const fakeSession = (user: unknown) => ({
+    access_token: "fake.jwt",
+    refresh_token: "fake.refresh",
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    token_type: "bearer",
+    user,
+  });
+
+  const setSession = (next: unknown) => {
+    session = next;
+    listeners.forEach((l) => l(next ? "SIGNED_IN" : "SIGNED_OUT", next));
+  };
+
+  const auth = {
+    onAuthStateChange: vi.fn((cb: (event: string, session: unknown) => void) => {
+      listeners.push(cb);
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {
+              const idx = listeners.indexOf(cb);
+              if (idx >= 0) listeners.splice(idx, 1);
+            },
+          },
+        },
+      };
+    }),
+    getSession: vi.fn(async () => ({ data: { session } })),
+    signUp: vi.fn(
+      async ({
+        email,
+        options,
+      }: {
+        email: string;
+        password: string;
+        options?: { data?: { full_name?: string; phone?: string } };
+      }) => {
+        const user = fakeUser(
+          email,
+          options?.data?.full_name ?? "",
+          options?.data?.phone ?? "",
+        );
+        const s = fakeSession(user);
+        setSession(s);
+        return { data: { user, session: s }, error: null };
+      },
+    ),
+    signInWithPassword: vi.fn(
+      async ({ password }: { email: string; password: string }) => {
+        if (password === "wrong") {
+          return {
+            data: { user: null, session: null },
+            error: { message: "Invalid credentials" },
+          };
+        }
+        const user = fakeUser("returning@x.com", "Returning User", "+15555550100");
+        const s = fakeSession(user);
+        setSession(s);
+        return { data: { user, session: s }, error: null };
+      },
+    ),
+    signOut: vi.fn(async () => {
+      setSession(null);
+      return { error: null };
+    }),
+  };
+
+  return {
+    supabase: { auth },
+    helpers: {
+      setSession,
+      currentSession: () => session,
+      reset: () => {
+        listeners.length = 0;
+        session = null;
+      },
+    },
+  };
+});
+
 vi.mock("@/integrations/supabase/client", () => ({ supabase }));
 
 // Mock TanStack Router navigate — we assert state, not URL transitions.
