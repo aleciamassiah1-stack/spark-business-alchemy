@@ -41,31 +41,39 @@ type TransactionRow = {
 };
 
 function HomePage() {
-  const aggregated = useQuery({
-    queryKey: ["aggregated-data"],
-    queryFn: () => getAggregatedData(),
-    refetchOnWindowFocus: false,
-  });
-  const props = useQuery({
-    queryKey: ["properties"],
-    queryFn: () => listProperties(),
-    refetchOnWindowFocus: false,
-  });
-  const insurance = useQuery({
-    queryKey: ["insurance"],
-    queryFn: () => listInsurancePolicies(),
-    refetchOnWindowFocus: false,
-  });
-  const estate = useQuery({
-    queryKey: ["estate"],
-    queryFn: () => listEstateDocuments(),
-    refetchOnWindowFocus: false,
-  });
+  const [aggregated, setAggregated] = useState<Awaited<ReturnType<typeof getAggregatedData>> | null>(
+    null,
+  );
+  const [properties, setProperties] = useState<Array<{ estimated_value: number | null; mortgage_balance: number | null }>>([]);
+  const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
+  const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
 
-  const accounts: AccountRow[] = (aggregated.data?.accounts as AccountRow[] | undefined) ?? [];
-  const holdings: HoldingRow[] = (aggregated.data?.holdings as HoldingRow[] | undefined) ?? [];
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [agg, props, ins, est] = await Promise.all([
+        getAggregatedData(),
+        listProperties(),
+        listInsurancePolicies(),
+        listEstateDocuments(),
+      ]);
+      if (!alive) return;
+      setAggregated(agg);
+      setProperties((props.properties ?? []) as typeof properties);
+      setPolicies((ins.policies ?? []) as typeof policies);
+      setDocuments((est.documents ?? []) as typeof documents);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const accounts: AccountRow[] = (aggregated?.accounts as AccountRow[] | undefined) ?? [];
+  const holdings: HoldingRow[] = (aggregated?.holdings as HoldingRow[] | undefined) ?? [];
   const transactions: TransactionRow[] =
-    (aggregated.data?.transactions as TransactionRow[] | undefined) ?? [];
+    (aggregated?.transactions as TransactionRow[] | undefined) ?? [];
   const properties = props.data?.properties ?? [];
   const policies = insurance.data?.policies ?? [];
   const documents = estate.data?.documents ?? [];
