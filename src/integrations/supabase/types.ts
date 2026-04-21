@@ -390,6 +390,74 @@ export type Database = {
         }
         Relationships: []
       }
+      property_valuations: {
+        Row: {
+          assumptions: string | null
+          comps: Json
+          confidence: string
+          created_at: string
+          estimated_value: number
+          id: string
+          input_address: string | null
+          input_baths: number | null
+          input_beds: number | null
+          input_sqft: number | null
+          market_summary: string | null
+          price_per_sqft: number | null
+          property_id: string
+          source: string
+          user_id: string
+          value_high: number
+          value_low: number
+        }
+        Insert: {
+          assumptions?: string | null
+          comps?: Json
+          confidence: string
+          created_at?: string
+          estimated_value: number
+          id?: string
+          input_address?: string | null
+          input_baths?: number | null
+          input_beds?: number | null
+          input_sqft?: number | null
+          market_summary?: string | null
+          price_per_sqft?: number | null
+          property_id: string
+          source?: string
+          user_id: string
+          value_high: number
+          value_low: number
+        }
+        Update: {
+          assumptions?: string | null
+          comps?: Json
+          confidence?: string
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          input_address?: string | null
+          input_baths?: number | null
+          input_beds?: number | null
+          input_sqft?: number | null
+          market_summary?: string | null
+          price_per_sqft?: number | null
+          property_id?: string
+          source?: string
+          user_id?: string
+          value_high?: number
+          value_low?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_valuations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_log: {
         Row: {
           accounts_updated: number | null
