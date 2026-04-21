@@ -87,6 +87,189 @@ export const deleteProperty = createServerFn({ method: "POST" })
   });
 
 // =================================================================
+// AI Property Valuation (Zillow alternative — Lovable AI / Gemini)
+// =================================================================
+
+export type PropertyValuation = {
+  estimated_value: number;
+  value_low: number;
+  value_high: number;
+  confidence: "low" | "medium" | "high";
+  price_per_sqft: number | null;
+  comps: Array<{
+    address: string;
+    sold_price: number;
+    distance_mi: number | null;
+    beds: number | null;
+    baths: number | null;
+    sqft: number | null;
+    note: string | null;
+  }>;
+  market_summary: string;
+  assumptions: string;
+};
+
+export const estimatePropertyValue = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      address: string;
+      beds?: number | null;
+      baths?: number | null;
+      sqft?: number | null;
+      property_type?: string;
+    }) =>
+      z
+        .object({
+          address: z.string().trim().min(5).max(300),
+          beds: z.number().min(0).max(50).optional().nullable(),
+          baths: z.number().min(0).max(50).optional().nullable(),
+          sqft: z.number().min(0).max(1_000_000).optional().nullable(),
+          property_type: z.string().trim().max(40).optional(),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    await requireUserId();
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error: "AI valuation not configured",
+        valuation: null as PropertyValuation | null,
+      };
+    }
+
+    const detail = [
+      data.property_type ? `Type: ${data.property_type}` : null,
+      data.beds ? `${data.beds} bed` : null,
+      data.baths ? `${data.baths} bath` : null,
+      data.sqft ? `${data.sqft} sqft` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const systemPrompt = `You are a US residential real-estate valuation assistant. Given an address (and optionally beds/baths/sqft), produce a realistic AVM-style estimate using your knowledge of the location, recent comparable sales, and local price-per-sqft norms. Always return a numeric estimate even when the address is vague — bias toward the median for the city/ZIP. Provide 3-5 plausible recent comparable sales (real-sounding street names in the same neighborhood; mark these as illustrative if you are not certain). Keep numbers realistic (no symbols). Confidence reflects how specific the address is and how well-known the area is.`;
+
+    const userPrompt = `Estimate the current market value for this property:\n\nAddress: ${data.address}${detail ? `\nDetails: ${detail}` : ""}\n\nReturn the structured valuation via the tool call.`;
+
+    const body = {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "return_property_valuation",
+            description: "Return a structured AVM-style property valuation",
+            parameters: {
+              type: "object",
+              properties: {
+                estimated_value: { type: "number", description: "Best estimate in USD" },
+                value_low: { type: "number", description: "Low end of likely range, USD" },
+                value_high: { type: "number", description: "High end of likely range, USD" },
+                confidence: { type: "string", enum: ["low", "medium", "high"] },
+                price_per_sqft: { type: ["number", "null"] },
+                comps: {
+                  type: "array",
+                  minItems: 0,
+                  maxItems: 5,
+                  items: {
+                    type: "object",
+                    properties: {
+                      address: { type: "string" },
+                      sold_price: { type: "number" },
+                      distance_mi: { type: ["number", "null"] },
+                      beds: { type: ["number", "null"] },
+                      baths: { type: ["number", "null"] },
+                      sqft: { type: ["number", "null"] },
+                      note: { type: ["string", "null"] },
+                    },
+                    required: ["address", "sold_price"],
+                    additionalProperties: false,
+                  },
+                },
+                market_summary: {
+                  type: "string",
+                  description: "1-2 sentences on the local market trend",
+                },
+                assumptions: {
+                  type: "string",
+                  description: "What you assumed (e.g. typical sqft, condition)",
+                },
+              },
+              required: [
+                "estimated_value",
+                "value_low",
+                "value_high",
+                "confidence",
+                "comps",
+                "market_summary",
+                "assumptions",
+              ],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "return_property_valuation" } },
+    };
+
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          return {
+            ok: false as const,
+            error: "Rate limit reached. Please try again in a moment.",
+            valuation: null,
+          };
+        }
+        if (res.status === 402) {
+          return {
+            ok: false as const,
+            error: "AI credits exhausted. Add credits in workspace settings.",
+            valuation: null,
+          };
+        }
+        const text = await res.text();
+        console.error("AI valuation error:", res.status, text);
+        return {
+          ok: false as const,
+          error: `AI valuation failed (${res.status})`,
+          valuation: null,
+        };
+      }
+
+      const json = (await res.json()) as {
+        choices?: Array<{
+          message?: { tool_calls?: Array<{ function?: { arguments?: string } }> };
+        }>;
+      };
+      const argsStr = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      if (!argsStr) {
+        return { ok: false as const, error: "AI returned no estimate", valuation: null };
+      }
+      const parsed = JSON.parse(argsStr) as PropertyValuation;
+      return { ok: true as const, error: null, valuation: parsed };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI valuation failed";
+      console.error("estimatePropertyValue error:", msg);
+      return { ok: false as const, error: msg, valuation: null };
+    }
+  });
+
+// =================================================================
 // Insurance Policies
 // =================================================================
 
