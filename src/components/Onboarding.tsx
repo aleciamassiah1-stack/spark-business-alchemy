@@ -90,6 +90,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
         </div>
 
         <AnimatePresence mode="wait">
+          {step === "verify" && <ScreenVerify key="verify" onNext={goNext} />}
           {step === "biometric" && <ScreenBiometric key="bio" onNext={goNext} />}
           {step === "personalize" && <ScreenPersonalize key="pers" onNext={goNext} />}
           {step === "connect" && <ScreenConnect key="conn" onNext={goNext} />}
