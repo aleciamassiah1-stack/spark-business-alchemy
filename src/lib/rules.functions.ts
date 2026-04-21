@@ -115,7 +115,7 @@ export const upsertRule = createServerFn({ method: "POST" })
     // Always re-apply ALL rules so priority/conflict resolution is correct
     const { data: appliedCount, error: rpcErr } = await supabaseAdmin.rpc(
       "apply_transaction_rules",
-      { target_rule_id: null },
+      {},
     );
     if (rpcErr) {
       return {
@@ -150,15 +150,13 @@ export const deleteRule = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) return { ok: false as const, error: error.message };
     // Re-apply remaining rules in case other rules now match these transactions
-    await supabaseAdmin.rpc("apply_transaction_rules", { target_rule_id: null });
+    await supabaseAdmin.rpc("apply_transaction_rules", {});
     return { ok: true as const, error: null as string | null };
   });
 
 // ---------- REAPPLY (manual) ----------
 export const reapplyAllRules = createServerFn({ method: "POST" }).handler(async () => {
-  const { data, error } = await supabaseAdmin.rpc("apply_transaction_rules", {
-    target_rule_id: null,
-  });
+  const { data, error } = await supabaseAdmin.rpc("apply_transaction_rules", {});
   if (error) return { ok: false as const, error: error.message, updated: 0 };
   return { ok: true as const, error: null as string | null, updated: (data as number) ?? 0 };
 });
@@ -190,9 +188,7 @@ export const quickCreateRule = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) return { ok: false as const, error: error.message, updated: 0 };
-    const { data: count } = await supabaseAdmin.rpc("apply_transaction_rules", {
-      target_rule_id: null,
-    });
+    const { data: count } = await supabaseAdmin.rpc("apply_transaction_rules", {});
     return {
       ok: true as const,
       error: null as string | null,
