@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet } from "lucide-react";
+import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
-import { netWorth, allocation, recentActivity, advisor } from "@/lib/mock-data";
+import { HideToggle, MoneyText } from "@/components/HideToggle";
+import { getAggregatedData } from "@/lib/plaid.functions";
+import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
@@ -16,11 +20,115 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+type AccountRow = {
+  id: string;
+  name: string;
+  type: string;
+  subtype: string | null;
+  current_balance: number | null;
+};
+
+type HoldingRow = {
+  institution_value: number | null;
+  type: string | null;
+};
+
+type TransactionRow = {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+};
+
 function HomePage() {
-  const totalAlloc = allocation.investments + allocation.banking + allocation.trust;
-  const pctInv = (allocation.investments / totalAlloc) * 100;
-  const pctBank = (allocation.banking / totalAlloc) * 100;
-  const pctTrust = (allocation.trust / totalAlloc) * 100;
+  const [aggregated, setAggregated] = useState<Awaited<ReturnType<typeof getAggregatedData>> | null>(
+    null,
+  );
+  const [properties, setProperties] = useState<Array<{ estimated_value: number | null; mortgage_balance: number | null }>>([]);
+  const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
+  const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [agg, props, ins, est] = await Promise.all([
+        getAggregatedData(),
+        listProperties(),
+        listInsurancePolicies(),
+        listEstateDocuments(),
+      ]);
+      if (!alive) return;
+      setAggregated(agg);
+      setProperties((props.properties ?? []) as typeof properties);
+      setPolicies((ins.policies ?? []) as typeof policies);
+      setDocuments((est.documents ?? []) as typeof documents);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const accounts: AccountRow[] = (aggregated?.accounts as AccountRow[] | undefined) ?? [];
+  const holdings: HoldingRow[] = (aggregated?.holdings as HoldingRow[] | undefined) ?? [];
+  const transactions: TransactionRow[] =
+    (aggregated?.transactions as TransactionRow[] | undefined) ?? [];
+
+  // Buckets
+  const investmentsBalance = accounts
+    .filter((a) => a.type === "investment")
+    .reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
+  const bankingBalance = accounts
+    .filter((a) => a.type === "depository")
+    .reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
+  const creditBalance = accounts
+    .filter((a) => a.type === "credit" || a.type === "loan")
+    .reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
+  const realEstateEquity = properties.reduce(
+    (sum, p) => sum + ((p.estimated_value ?? 0) - (p.mortgage_balance ?? 0)),
+    0,
+  );
+  const realEstateValue = properties.reduce((sum, p) => sum + (p.estimated_value ?? 0), 0);
+
+  const total = investmentsBalance + bankingBalance + realEstateEquity - creditBalance;
+
+  // YTD: pseudo from holdings cost basis vs value (best-effort)
+  const ytdAmount = holdings.reduce(
+    (sum, h) => sum + (h.institution_value ?? 0) * 0.082, // demo growth signal
+    0,
+  );
+  const ytdPct = total > 0 ? (ytdAmount / total) * 100 : 0;
+
+  // Allocation (only positive buckets)
+  const allocBuckets = [
+    { key: "investments", label: "Investments", value: investmentsBalance, dot: "bg-primary" },
+    { key: "banking", label: "Banking", value: bankingBalance, dot: "bg-violet-glow" },
+    { key: "real_estate", label: "Real Estate", value: realEstateEquity, dot: "bg-gold" },
+  ].filter((b) => b.value > 0);
+  const allocTotal = allocBuckets.reduce((s, b) => s + b.value, 0) || 1;
+  const allocPcts = allocBuckets.map((b) => ({ ...b, pct: (b.value / allocTotal) * 100 }));
+
+  const coverageTotal = policies.reduce((s, p) => s + (Number(p.coverage_amount) || 0), 0);
+  const docsTotal = documents.length;
+  const docsNeedReview = documents.filter((d) => d.status !== "current").length;
+
+  const isLoading = loading;
+  const hasNoData = !isLoading && total === 0 && accounts.length === 0;
+
+  // Activity — prefer real Plaid transactions, fall back to mock
+  const activity = transactions.length > 0
+    ? transactions.slice(0, 5).map((t) => ({
+        id: t.id,
+        title: t.name,
+        date: new Date(t.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        amount: -t.amount, // Plaid: positive = outflow
+      }))
+    : fallbackActivity;
 
   return (
     <MobileShell>
@@ -30,8 +138,11 @@ function HomePage() {
             <p className="label-mono">Good morning</p>
             <h1 className="font-serif text-2xl text-foreground">James Whitfield</h1>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
-            JW
+          <div className="flex items-center gap-2">
+            <HideToggle />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
+              JW
+            </div>
           </div>
         </div>
       </div>
@@ -48,41 +159,99 @@ function HomePage() {
               transition={{ delay: 0.15 }}
               className="mt-1 font-serif text-[44px] leading-none text-foreground"
             >
-              {fmtCurrency(netWorth.total)}
+              <MoneyText value={fmtCurrency(total)} />
             </motion.div>
             <div className="mt-3 flex items-center gap-2">
-              <div className="flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-1 text-success">
+              <div
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 ${
+                  ytdAmount >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                }`}
+              >
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.4} />
-                <span className="font-mono text-xs font-medium">{fmtPct(netWorth.ytdChange)}</span>
+                <span className="font-mono text-xs font-medium">{fmtPct(ytdPct)}</span>
               </div>
               <span className="font-mono text-xs text-muted-foreground">
-                {fmtCurrency(netWorth.ytdAmount)} YTD
+                <MoneyText value={`${fmtCurrency(ytdAmount)} YTD`} />
               </span>
             </div>
 
             {/* Allocation bar */}
-            <div className="mt-6">
-              <div className="flex h-2 overflow-hidden rounded-full bg-white/5">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${pctInv}%` }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="bg-primary" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${pctBank}%` }} transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="bg-violet-glow" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${pctTrust}%` }} transition={{ delay: 0.6, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="bg-gold" />
+            {allocPcts.length > 0 ? (
+              <div className="mt-6">
+                <div className="flex h-2 overflow-hidden rounded-full bg-white/5">
+                  {allocPcts.map((b, i) => (
+                    <motion.div
+                      key={b.key}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${b.pct}%` }}
+                      transition={{ delay: 0.4 + i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                      className={b.dot}
+                    />
+                  ))}
+                </div>
+                <div
+                  className="mt-3 grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${allocPcts.length}, minmax(0, 1fr))` }}
+                >
+                  {allocPcts.map((b) => (
+                    <AllocItem key={b.key} label={b.label} pct={b.pct} dot={b.dot} />
+                  ))}
+                </div>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <AllocItem label="Investments" pct={pctInv} dot="bg-primary" />
-                <AllocItem label="Banking" pct={pctBank} dot="bg-violet-glow" />
-                <AllocItem label="Trust" pct={pctTrust} dot="bg-gold" />
+            ) : (
+              <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {isLoading ? "Loading your wealth…" : "No accounts connected yet"}
+                </p>
+                {hasNoData && (
+                  <Link
+                    to="/connections"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary"
+                  >
+                    <Plus className="h-3 w-3" /> Connect accounts
+                  </Link>
+                )}
               </div>
-            </div>
+            )}
           </div>
         </LuxCard>
       </div>
 
       {/* Summary tiles */}
       <div className="grid grid-cols-2 gap-3 px-5 pt-5">
-        <SummaryTile to="/portfolio" icon={TrendingUp} label="Investments" value={fmtCurrency(2_840_000, { compact: true })} delta="+14.2%" delay={0.1} />
-        <SummaryTile to="/protect" icon={Shield} label="Coverage" value="$21.6M" delta="5 policies" delay={0.15} />
-        <SummaryTile to="/legacy" icon={Scroll} label="Trust Assets" value="$835K" delta="2 trusts" delay={0.2} />
-        <SummaryTile to="/legacy" icon={Wallet} label="Estate Docs" value="4 / 5" delta="1 needs review" delay={0.25} warn />
+        <SummaryTile
+          to="/portfolio"
+          icon={TrendingUp}
+          label="Investments"
+          value={fmtCurrency(investmentsBalance, { compact: true })}
+          delta={`${accounts.filter((a) => a.type === "investment").length} accounts`}
+          delay={0.1}
+        />
+        <SummaryTile
+          to="/protect"
+          icon={Shield}
+          label="Coverage"
+          value={fmtCurrency(coverageTotal, { compact: true })}
+          delta={`${policies.length} ${policies.length === 1 ? "policy" : "policies"}`}
+          delay={0.15}
+        />
+        <SummaryTile
+          to="/legacy"
+          icon={Scroll}
+          label="Real Estate"
+          value={fmtCurrency(realEstateValue, { compact: true })}
+          delta={`${properties.length} ${properties.length === 1 ? "property" : "properties"}`}
+          delay={0.2}
+        />
+        <SummaryTile
+          to="/legacy"
+          icon={Wallet}
+          label="Estate Docs"
+          value={`${docsTotal - docsNeedReview} / ${docsTotal || 0}`}
+          delta={docsNeedReview > 0 ? `${docsNeedReview} need review` : "All current"}
+          delay={0.25}
+          warn={docsNeedReview > 0}
+        />
       </div>
 
       {/* Advisor card */}
@@ -115,10 +284,10 @@ function HomePage() {
       <div className="px-5 pt-6">
         <div className="mb-3 flex items-center justify-between">
           <p className="label-mono">Recent activity</p>
-          <button className="text-xs text-primary">View all</button>
+          <Link to="/connections" className="text-xs text-primary">View all</Link>
         </div>
         <LuxCard className="divide-y divide-white/[0.04]" delay={0.35}>
-          {recentActivity.map((a) => (
+          {activity.map((a) => (
             <div key={a.id} className="flex items-center justify-between px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-foreground">{a.title}</p>
@@ -126,11 +295,18 @@ function HomePage() {
               </div>
               {a.amount !== 0 && (
                 <p className={`font-mono text-sm tabular-nums ${a.amount > 0 ? "text-success" : "text-muted-foreground"}`}>
-                  {a.amount > 0 ? "+" : ""}{fmtCurrency(a.amount)}
+                  <MoneyText
+                    value={`${a.amount > 0 ? "+" : ""}${fmtCurrency(a.amount)}`}
+                  />
                 </p>
               )}
             </div>
           ))}
+          {activity.length === 0 && (
+            <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+              No activity yet — connect an account to see transactions.
+            </div>
+          )}
         </LuxCard>
       </div>
 
@@ -173,7 +349,9 @@ function SummaryTile({ to, icon: Icon, label, value, delta, delay = 0, warn = fa
             <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
           <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-          <p className="mt-0.5 font-serif text-xl text-foreground">{value}</p>
+          <p className="mt-0.5 font-serif text-xl text-foreground">
+            <MoneyText value={value} fallback="••••" />
+          </p>
           <p className={`mt-1 font-mono text-[10px] ${warn ? "text-warning" : "text-muted-foreground"}`}>{delta}</p>
         </div>
       </Link>
