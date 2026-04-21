@@ -960,7 +960,15 @@ function statusStyle(status: string) {
 }
 
 // =================== Activity Tab ===================
-function ActivityTab({ transactions }: { transactions: Tx[] }) {
+function ActivityTab({
+  transactions,
+  rules,
+  onQuickRule,
+}: {
+  transactions: Tx[];
+  rules: TransactionRule[];
+  onQuickRule: (t: Tx) => void;
+}) {
   if (transactions.length === 0) {
     return (
       <LuxCard className="p-6 text-center">
@@ -972,12 +980,13 @@ function ActivityTab({ transactions }: { transactions: Tx[] }) {
       </LuxCard>
     );
   }
-  // cash flow this month
+  // cash flow this month — using effective category (custom overrides original)
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthly = transactions.filter((t) => new Date(t.date) >= monthStart);
   const income = monthly.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
   const spending = monthly.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const customizedCount = transactions.filter((t) => t.custom_category).length;
 
   return (
     <div>
@@ -988,26 +997,54 @@ function ActivityTab({ transactions }: { transactions: Tx[] }) {
           <Mini label="Spending" value={fmtCurrency(spending, { compact: true })} />
           <Mini label="Net" value={fmtCurrency(income - spending, { compact: true })} positive={income - spending >= 0} />
         </div>
+        {rules.length > 0 && (
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            {rules.length} rule{rules.length === 1 ? "" : "s"} · {customizedCount} txns recategorized
+          </p>
+        )}
       </LuxCard>
 
       <p className="label-mono mt-5 mb-2">Recent activity</p>
       <LuxCard className="divide-y divide-white/[0.04]">
-        {transactions.slice(0, 30).map((t) => (
-          <div key={t.id} className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[10px] font-mono text-primary">
-              {(t.merchant_name ?? t.name).slice(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-foreground">{t.merchant_name ?? t.name}</p>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                {t.category?.replace(/_/g, " ") ?? "—"} · {new Date(t.date).toLocaleDateString()}
+        {transactions.slice(0, 30).map((t) => {
+          const effectiveCategory = t.custom_category ?? t.category;
+          const isCustom = !!t.custom_category;
+          return (
+            <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[10px] font-mono text-primary">
+                {(t.merchant_name ?? t.name).slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-foreground">{t.merchant_name ?? t.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p
+                    className={`truncate font-mono text-[10px] uppercase tracking-wider ${
+                      isCustom ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {isCustom && <Tag className="mr-1 inline h-2.5 w-2.5" />}
+                    {effectiveCategory?.replace(/_/g, " ") ?? "—"}
+                  </p>
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    · {new Date(t.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <p
+                className={`font-mono text-sm tabular-nums ${t.amount < 0 ? "text-success" : "text-foreground"}`}
+              >
+                <MoneyText value={`${t.amount < 0 ? "+" : "-"}${fmtCurrency(Math.abs(t.amount))}`} />
               </p>
+              <button
+                onClick={() => onQuickRule(t)}
+                aria-label="Create rule from this transaction"
+                className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.03] text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary"
+              >
+                <Tag className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <p className={`font-mono text-sm tabular-nums ${t.amount < 0 ? "text-success" : "text-foreground"}`}>
-              <MoneyText value={`${t.amount < 0 ? "+" : "-"}${fmtCurrency(Math.abs(t.amount))}`} />
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </LuxCard>
     </div>
   );
