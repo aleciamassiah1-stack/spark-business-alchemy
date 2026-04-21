@@ -678,10 +678,12 @@ function PropertiesTab({
   properties,
   onAdd,
   onDelete,
+  onShowHistory,
 }: {
   properties: Property[];
   onAdd: () => void;
   onDelete: (id: string) => void;
+  onShowHistory: (p: Property) => void;
 }) {
   return (
     <div>
@@ -715,6 +717,12 @@ function PropertiesTab({
                       <Mini label="Mortgage" value={fmtCurrency(p.mortgage_balance, { compact: true })} />
                       <Mini label="Equity" value={fmtCurrency(equity, { compact: true })} positive />
                     </div>
+                    <button
+                      onClick={() => onShowHistory(p)}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-medium text-primary"
+                    >
+                      <History className="h-3 w-3" /> Valuation history
+                    </button>
                   </div>
                   <button
                     onClick={() => onDelete(p.id)}
