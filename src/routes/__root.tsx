@@ -1,4 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { WealthProvider } from "@/lib/wealth-context";
+import { SyncStatusBar } from "@/components/SyncStatusBar";
 
 import appCss from "../styles.css?url";
 
@@ -68,5 +70,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <WealthProvider>
+      <SyncStatusBar />
+      <Outlet />
+    </WealthProvider>
+  );
 }

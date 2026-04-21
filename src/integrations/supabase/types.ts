@@ -126,6 +126,162 @@ export type Database = {
           },
         ]
       }
+      aggregated_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string | null
+          category_detailed: string | null
+          created_at: string
+          date: string
+          id: string
+          iso_currency_code: string | null
+          last_synced_at: string
+          logo_url: string | null
+          merchant_name: string | null
+          name: string
+          payment_channel: string | null
+          pending: boolean | null
+          plaid_transaction_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category?: string | null
+          category_detailed?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          iso_currency_code?: string | null
+          last_synced_at?: string
+          logo_url?: string | null
+          merchant_name?: string | null
+          name: string
+          payment_channel?: string | null
+          pending?: boolean | null
+          plaid_transaction_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string | null
+          category_detailed?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          iso_currency_code?: string | null
+          last_synced_at?: string
+          logo_url?: string | null
+          merchant_name?: string | null
+          name?: string
+          payment_channel?: string | null
+          pending?: boolean | null
+          plaid_transaction_id?: string
+        }
+        Relationships: []
+      }
+      estate_documents: {
+        Row: {
+          created_at: string
+          document_path: string | null
+          document_type: string
+          document_url: string | null
+          expiration_date: string | null
+          id: string
+          notes: string | null
+          signed_date: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_path?: string | null
+          document_type: string
+          document_url?: string | null
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          signed_date?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_path?: string | null
+          document_type?: string
+          document_url?: string | null
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          signed_date?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      insurance_policies: {
+        Row: {
+          beneficiaries: Json | null
+          coverage_amount: number | null
+          created_at: string
+          document_path: string | null
+          document_url: string | null
+          id: string
+          insurer_name: string
+          iso_currency_code: string | null
+          parsed_by_ai: boolean | null
+          policy_number: string | null
+          policy_type: string
+          premium_amount: number | null
+          premium_frequency: string | null
+          raw_extraction: Json | null
+          renewal_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          beneficiaries?: Json | null
+          coverage_amount?: number | null
+          created_at?: string
+          document_path?: string | null
+          document_url?: string | null
+          id?: string
+          insurer_name: string
+          iso_currency_code?: string | null
+          parsed_by_ai?: boolean | null
+          policy_number?: string | null
+          policy_type: string
+          premium_amount?: number | null
+          premium_frequency?: string | null
+          raw_extraction?: Json | null
+          renewal_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          beneficiaries?: Json | null
+          coverage_amount?: number | null
+          created_at?: string
+          document_path?: string | null
+          document_url?: string | null
+          id?: string
+          insurer_name?: string
+          iso_currency_code?: string | null
+          parsed_by_ai?: boolean | null
+          policy_number?: string | null
+          policy_type?: string
+          premium_amount?: number | null
+          premium_frequency?: string | null
+          raw_extraction?: Json | null
+          renewal_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plaid_items: {
         Row: {
           access_token: string
@@ -158,6 +314,51 @@ export type Database = {
           item_id?: string
           last_synced_at?: string | null
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          created_at: string
+          estimated_value: number
+          id: string
+          iso_currency_code: string | null
+          last_valued_at: string | null
+          mortgage_balance: number | null
+          name: string
+          property_type: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          iso_currency_code?: string | null
+          last_valued_at?: string | null
+          mortgage_balance?: number | null
+          name: string
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          iso_currency_code?: string | null
+          last_valued_at?: string | null
+          mortgage_balance?: number | null
+          name?: string
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
           updated_at?: string
         }
         Relationships: []

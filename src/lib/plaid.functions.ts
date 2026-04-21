@@ -7,6 +7,7 @@ import {
   getAccounts,
   getHoldings,
   getInstitution,
+  syncTransactions,
 } from "./plaid.server";
 
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
@@ -68,6 +69,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
         itemId: null,
         accountsUpdated: 0,
         holdingsUpdated: 0,
+        transactionsUpdated: 0,
         error: message,
       };
     }
@@ -115,7 +117,7 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
 // 5. Read aggregated data for the UI
 export const getAggregatedData = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const [itemsRes, accountsRes, holdingsRes, syncRes] = await Promise.all([
+    const [itemsRes, accountsRes, holdingsRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at")
@@ -133,6 +135,11 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         .select("*")
         .order("created_at", { ascending: false })
         .limit(10),
+      supabaseAdmin
+        .from("aggregated_transactions")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(50),
     ]);
 
     return {
@@ -140,11 +147,19 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       accounts: accountsRes.data ?? [],
       holdings: holdingsRes.data ?? [],
       syncLog: syncRes.data ?? [],
+      transactions: txRes.data ?? [],
       error: itemsRes.error?.message ?? accountsRes.error?.message ?? null,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load data";
-    return { items: [], accounts: [], holdings: [], syncLog: [], error: message };
+    return {
+      items: [],
+      accounts: [],
+      holdings: [],
+      syncLog: [],
+      transactions: [],
+      error: message,
+    };
   }
 });
 
@@ -245,6 +260,62 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       console.warn("holdings skipped:", holdErr instanceof Error ? holdErr.message : holdErr);
     }
 
+    // Pull transactions (best-effort)
+    let transactionsCount = 0;
+    try {
+      // Sandbox sometimes needs a moment before transactions are ready
+      let cursor: string | undefined = undefined;
+      let hasMore = true;
+      const allAdded: Array<{
+        plaid_transaction_id: string;
+        account_id: string;
+        amount: number;
+        iso_currency_code: string;
+        date: string;
+        name: string;
+        merchant_name: string | null;
+        category: string | null;
+        category_detailed: string | null;
+        payment_channel: string | null;
+        pending: boolean;
+        logo_url: string | null;
+      }> = [];
+      let pages = 0;
+      while (hasMore && pages < 5) {
+        const txRes = await syncTransactions(access_token, cursor);
+        for (const t of txRes.added) {
+          const ourAcctId = acctIdMap.get(t.account_id);
+          if (!ourAcctId) continue;
+          allAdded.push({
+            plaid_transaction_id: t.transaction_id,
+            account_id: ourAcctId,
+            amount: t.amount,
+            iso_currency_code: t.iso_currency_code ?? "USD",
+            date: t.date,
+            name: t.name,
+            merchant_name: t.merchant_name,
+            category: t.personal_finance_category?.primary ?? null,
+            category_detailed: t.personal_finance_category?.detailed ?? null,
+            payment_channel: t.payment_channel,
+            pending: t.pending,
+            logo_url: t.logo_url,
+          });
+        }
+        cursor = txRes.next_cursor;
+        hasMore = txRes.has_more;
+        pages += 1;
+      }
+      if (allAdded.length > 0) {
+        const { error } = await supabaseAdmin
+          .from("aggregated_transactions")
+          .upsert(allAdded, { onConflict: "plaid_transaction_id" });
+        if (error) throw new Error(`transactions upsert: ${error.message}`);
+      }
+      transactionsCount = allAdded.length;
+    } catch (txErr) {
+      console.warn("transactions skipped:", txErr instanceof Error ? txErr.message : txErr);
+    }
+
     await supabaseAdmin
       .from("plaid_items")
       .update({ last_synced_at: new Date().toISOString(), status: "active" })
@@ -258,7 +329,11 @@ async function syncItemInternal(itemRowId: string, access_token: string) {
       duration_ms: Date.now() - startedAt,
     });
 
-    return { accountsUpdated: accountRows.length, holdingsUpdated: holdingsCount };
+    return {
+      accountsUpdated: accountRows.length,
+      holdingsUpdated: holdingsCount,
+      transactionsUpdated: transactionsCount,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync error";
     await supabaseAdmin.from("sync_log").insert({

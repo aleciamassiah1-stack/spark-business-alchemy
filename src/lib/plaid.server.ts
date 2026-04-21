@@ -36,7 +36,7 @@ export async function createLinkToken(): Promise<PlaidLinkTokenResp> {
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: "aether-demo-user" },
     client_name: "Æther Wealth",
-    products: ["auth", "investments"],
+    products: ["auth", "transactions", "investments"],
     country_codes: ["US"],
     language: "en",
   });
@@ -102,5 +102,36 @@ export async function getInstitution(institution_id: string): Promise<{
   return plaidPost("/institutions/get_by_id", {
     institution_id,
     country_codes: ["US"],
+  });
+}
+
+export type PlaidTransaction = {
+  transaction_id: string;
+  account_id: string;
+  amount: number;
+  iso_currency_code: string | null;
+  date: string;
+  name: string;
+  merchant_name: string | null;
+  payment_channel: string | null;
+  pending: boolean;
+  logo_url: string | null;
+  personal_finance_category: { primary: string; detailed: string } | null;
+};
+
+export async function syncTransactions(
+  access_token: string,
+  cursor?: string,
+): Promise<{
+  added: PlaidTransaction[];
+  modified: PlaidTransaction[];
+  removed: { transaction_id: string }[];
+  next_cursor: string;
+  has_more: boolean;
+}> {
+  return plaidPost("/transactions/sync", {
+    access_token,
+    cursor: cursor ?? "",
+    count: 250,
   });
 }
