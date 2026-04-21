@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { WealthProvider } from "@/lib/wealth-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
+import { Onboarding } from "@/components/Onboarding";
 
 import appCss from "../styles.css?url";
 
@@ -74,6 +75,7 @@ function RootComponent() {
     <WealthProvider>
       <SyncStatusBar />
       <Outlet />
+      <Onboarding />
     </WealthProvider>
   );
 }
