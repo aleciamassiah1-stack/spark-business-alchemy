@@ -1068,9 +1068,43 @@ function PropertyFormModal({
 }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [beds, setBeds] = useState("");
+  const [baths, setBaths] = useState("");
+  const [sqft, setSqft] = useState("");
   const [value, setValue] = useState("");
   const [mortgage, setMortgage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [estimating, setEstimating] = useState(false);
+  const [valuation, setValuation] = useState<PropertyValuation | null>(null);
+
+  const estimate = async () => {
+    if (!address.trim() || address.trim().length < 5) {
+      onError("Enter an address first");
+      return;
+    }
+    setEstimating(true);
+    setValuation(null);
+    try {
+      const res = await estimatePropertyValue({
+        data: {
+          address: address.trim(),
+          beds: beds ? Number(beds) : null,
+          baths: baths ? Number(baths) : null,
+          sqft: sqft ? Number(sqft) : null,
+        },
+      });
+      if (!res.ok || !res.valuation) {
+        onError(res.error ?? "Could not estimate value");
+      } else {
+        setValuation(res.valuation);
+        setValue(String(Math.round(res.valuation.estimated_value)));
+      }
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Estimation failed");
+    } finally {
+      setEstimating(false);
+    }
+  };
 
   const submit = async () => {
     if (!name.trim() || !address.trim() || !value) {
@@ -1090,15 +1124,114 @@ function PropertyFormModal({
     res.ok ? onSaved() : onError(res.error ?? "Failed");
   };
 
+  const confidenceColor =
+    valuation?.confidence === "high"
+      ? "text-success bg-success/15"
+      : valuation?.confidence === "medium"
+        ? "text-gold bg-gold/15"
+        : "text-muted-foreground bg-white/[0.06]";
+
   return (
     <Modal title="Add property" onClose={onClose}>
       <Field label="Name" placeholder="Primary residence" value={name} onChange={setName} />
       <Field label="Address" placeholder="123 Main St, City, ST" value={address} onChange={setAddress} />
-      <Field label="Estimated value (USD)" placeholder="850000" value={value} onChange={setValue} type="number" />
-      <Field label="Mortgage balance (USD)" placeholder="320000" value={mortgage} onChange={setMortgage} type="number" />
-      <p className="mt-1 text-center font-mono text-[10px] text-muted-foreground">
-        Zillow auto-valuation coming soon
-      </p>
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        <Field label="Beds" placeholder="3" value={beds} onChange={setBeds} type="number" />
+        <Field label="Baths" placeholder="2" value={baths} onChange={setBaths} type="number" />
+        <Field label="Sqft" placeholder="1800" value={sqft} onChange={setSqft} type="number" />
+      </div>
+      <button
+        onClick={estimate}
+        disabled={estimating || !address.trim()}
+        className="mb-3 flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
+      >
+        {estimating ? (
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="h-3.5 w-3.5" />
+        )}
+        {estimating ? "Estimating with AI…" : "Estimate value with AI"}
+      </button>
+
+      {valuation && (
+        <div className="mb-3 rounded-xl border border-primary/20 bg-primary/[0.04] p-3">
+          <div className="flex items-baseline justify-between">
+            <p className="font-serif text-2xl text-foreground">
+              {fmtCurrency(valuation.estimated_value, { compact: true })}
+            </p>
+            <span
+              className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${confidenceColor}`}
+            >
+              {valuation.confidence} confidence
+            </span>
+          </div>
+          <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+            Range: {fmtCurrency(valuation.value_low, { compact: true })} –{" "}
+            {fmtCurrency(valuation.value_high, { compact: true })}
+            {valuation.price_per_sqft
+              ? ` · $${Math.round(valuation.price_per_sqft)}/sqft`
+              : ""}
+          </p>
+          {valuation.market_summary && (
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+              {valuation.market_summary}
+            </p>
+          )}
+          {valuation.comps.length > 0 && (
+            <div className="mt-3">
+              <p className="label-mono mb-1.5">Comparable sales</p>
+              <div className="flex flex-col gap-1.5">
+                {valuation.comps.slice(0, 4).map((c, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between rounded-lg bg-white/[0.03] px-2 py-1.5 text-[11px]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-foreground">{c.address}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        {[
+                          c.beds ? `${c.beds}bd` : null,
+                          c.baths ? `${c.baths}ba` : null,
+                          c.sqft ? `${c.sqft.toLocaleString()}sf` : null,
+                          c.distance_mi ? `${c.distance_mi.toFixed(1)}mi` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </p>
+                    </div>
+                    <p className="font-mono tabular-nums text-foreground">
+                      {fmtCurrency(c.sold_price, { compact: true })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {valuation.assumptions && (
+            <p className="mt-2 font-mono text-[10px] italic text-muted-foreground">
+              Assumptions: {valuation.assumptions}
+            </p>
+          )}
+          <p className="mt-2 text-center font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            AI estimate · not an appraisal
+          </p>
+        </div>
+      )}
+
+      <Field
+        label="Estimated value (USD)"
+        placeholder="850000"
+        value={value}
+        onChange={setValue}
+        type="number"
+      />
+      <Field
+        label="Mortgage balance (USD)"
+        placeholder="320000"
+        value={mortgage}
+        onChange={setMortgage}
+        type="number"
+      />
       <button
         onClick={submit}
         disabled={saving}
