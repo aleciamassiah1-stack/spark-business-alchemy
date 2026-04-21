@@ -899,6 +899,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </p>
       )}
 
+      {mode === "signup" && !valid && (fullName || email || password || phone) && (
+        <ul className="space-y-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-muted-foreground">
+          {!nameValid && <li>• Enter your full name (2+ characters)</li>}
+          {!emailValid && <li>• Enter a valid email address</li>}
+          {!pwLen && <li>• Password must be at least 12 characters</li>}
+          {!pwNum && <li>• Password must include a number</li>}
+          {!pwSym && <li>• Password must include a symbol (!@#$…)</li>}
+          {!phoneValid && <li>• Enter a valid phone number (7+ digits)</li>}
+        </ul>
+      )}
+
       <PrimaryCta type="submit" disabled={!valid || busy || isLocked}>
         {busy ? (
           <span className="inline-flex items-center gap-2">
