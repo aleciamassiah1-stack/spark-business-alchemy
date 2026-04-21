@@ -138,6 +138,10 @@ function ConnectionsPage() {
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
   const [showPropForm, setShowPropForm] = useState(false);
   const [showEstateForm, setShowEstateForm] = useState(false);
+  const [rules, setRules] = useState<TransactionRule[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
+  const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
+  const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
@@ -145,11 +149,13 @@ function ConnectionsPage() {
   };
 
   const loadAll = async () => {
-    const [agg, props, ins, est] = await Promise.all([
+    const [agg, props, ins, est, rls, cats] = await Promise.all([
       getAggregatedData(),
       listProperties(),
       listInsurancePolicies(),
       listEstateDocuments(),
+      listRules(),
+      listCategorySuggestions(),
     ]);
     setItems(agg.items as Item[]);
     setAccounts(agg.accounts as Account[]);
@@ -158,6 +164,8 @@ function ConnectionsPage() {
     setProperties(props.properties as Property[]);
     setPolicies(ins.policies as Policy[]);
     setEstateDocs(est.documents as EstateDoc[]);
+    setRules(rls.rules);
+    setCategorySuggestions(cats.categories);
   };
 
   useEffect(() => {
