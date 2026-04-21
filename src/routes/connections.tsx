@@ -366,8 +366,66 @@ function ConnectionsPage() {
             }}
           />
         )}
-        {tab === "activity" && <ActivityTab transactions={transactions} />}
+        {tab === "activity" && (
+          <ActivityTab
+            transactions={transactions}
+            rules={rules}
+            onQuickRule={(t) => setQuickRuleTx(t)}
+          />
+        )}
+        {tab === "rules" && (
+          <RulesTab
+            rules={rules}
+            onCreate={() => setShowRuleForm("new")}
+            onEdit={(r) => setShowRuleForm(r)}
+            onDelete={async (id) => {
+              if (!confirm("Delete this rule? Matching transactions will revert to their original category.")) return;
+              const res = await deleteRule({ data: { id } });
+              if (res.ok) {
+                showToast("ok", "Rule deleted");
+                await loadAll();
+              } else showToast("err", res.error ?? "Failed");
+            }}
+            onReapply={async () => {
+              setSyncing(true, "Re-applying rules…");
+              const res = await reapplyAllRules();
+              setSyncing(false);
+              if (res.ok) {
+                showToast("ok", `Recategorized ${res.updated} transaction${res.updated === 1 ? "" : "s"}`);
+                await loadAll();
+              } else showToast("err", res.error ?? "Failed");
+            }}
+          />
+        )}
       </div>
+
+      {showRuleForm && (
+        <RuleFormModal
+          rule={showRuleForm === "new" ? null : showRuleForm}
+          categorySuggestions={categorySuggestions}
+          onClose={() => setShowRuleForm(null)}
+          onSaved={async (updated) => {
+            setShowRuleForm(null);
+            await loadAll();
+            showToast("ok", updated > 0 ? `Saved · ${updated} transactions recategorized` : "Rule saved");
+          }}
+          onError={(m) => showToast("err", m)}
+        />
+      )}
+
+      {quickRuleTx && (
+        <QuickRuleModal
+          tx={quickRuleTx}
+          categorySuggestions={categorySuggestions}
+          onClose={() => setQuickRuleTx(null)}
+          onSaved={async (updated) => {
+            setQuickRuleTx(null);
+            await loadAll();
+            showToast("ok", `Rule created · ${updated} transactions recategorized`);
+          }}
+          onError={(m) => showToast("err", m)}
+        />
+      )}
 
       {showPropForm && (
         <PropertyFormModal
