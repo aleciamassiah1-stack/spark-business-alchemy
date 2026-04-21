@@ -829,7 +829,7 @@ export function Welcome({
   onSignIn?: () => void;
 } = {}) {
   const navigate = useNavigate();
-  const handleCreate = onCreate ?? (() => navigate({ to: "/signup", search: { view: "form" } as never }));
+  const handleCreate = onCreate ?? (() => navigate({ to: "/signup" }));
   const handleSignIn = onSignIn ?? (() => navigate({ to: "/signin" }));
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-6 py-10">
