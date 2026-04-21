@@ -302,8 +302,7 @@ function ScreenBiometric({ onNext }: { onNext: () => void }) {
   const tryBiometric = async () => {
     // Best-effort WebAuthn probe; gracefully no-op if unavailable.
     try {
-      // @ts-expect-error - optional API
-      if (typeof window !== "undefined" && window.PublicKeyCredential) {
+      if (typeof window !== "undefined" && "PublicKeyCredential" in window) {
         // We only flip the state — full WebAuthn enrollment is out of scope here.
         setEnabled(true);
         return;
