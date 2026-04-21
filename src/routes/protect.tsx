@@ -15,8 +15,16 @@ export const Route = createFileRoute("/protect")({
       { name: "description", content: "All your coverage in one private vault." },
     ],
   }),
-  component: ProtectPage,
+  component: ProtectRoute,
 });
+
+function ProtectRoute() {
+  return (
+    <RequireOnboarding>
+      <ProtectPage />
+    </RequireOnboarding>
+  );
+}
 
 function ProtectPage() {
   const [open, setOpen] = useState<string | null>(null);
