@@ -1930,3 +1930,211 @@ function RuleField({
     </label>
   );
 }
+
+// =================== Valuation History Modal ===================
+type ValuationRecord = {
+  id: string;
+  estimated_value: number;
+  value_low: number;
+  value_high: number;
+  confidence: string;
+  price_per_sqft: number | null;
+  comps: PropertyValuation["comps"];
+  market_summary: string | null;
+  assumptions: string | null;
+  input_address: string | null;
+  input_beds: number | null;
+  input_baths: number | null;
+  input_sqft: number | null;
+  source: string;
+  created_at: string;
+};
+
+function ValuationHistoryModal({
+  property,
+  onClose,
+  onSaved,
+  onError,
+}: {
+  property: Property;
+  onClose: () => void;
+  onSaved: () => void;
+  onError: (m: string) => void;
+}) {
+  const [valuations, setValuations] = useState<ValuationRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [estimating, setEstimating] = useState(false);
+  const [beds, setBeds] = useState("");
+  const [baths, setBaths] = useState("");
+  const [sqft, setSqft] = useState("");
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const res = await listPropertyValuations({ data: { property_id: property.id } });
+      setValuations((res.valuations as unknown as ValuationRecord[]) ?? []);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to load history");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property.id]);
+
+  const runEstimate = async () => {
+    setEstimating(true);
+    try {
+      const est = await estimatePropertyValue({
+        data: {
+          address: property.address,
+          beds: beds ? Number(beds) : null,
+          baths: baths ? Number(baths) : null,
+          sqft: sqft ? Number(sqft) : null,
+        },
+      });
+      if (!est.ok || !est.valuation) {
+        onError(est.error ?? "Could not estimate value");
+        return;
+      }
+      const saveRes = await savePropertyValuation({
+        data: {
+          property_id: property.id,
+          valuation: est.valuation,
+          input_address: property.address,
+          input_beds: beds ? Number(beds) : null,
+          input_baths: baths ? Number(baths) : null,
+          input_sqft: sqft ? Number(sqft) : null,
+          source: "ai",
+        },
+      });
+      if (!saveRes.ok) {
+        onError(saveRes.error ?? "Failed to save valuation");
+        return;
+      }
+      await refresh();
+      onSaved();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Estimation failed");
+    } finally {
+      setEstimating(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Remove this valuation from history?")) return;
+    const res = await deletePropertyValuation({ data: { id } });
+    if (!res.ok) {
+      onError(res.error ?? "Delete failed");
+      return;
+    }
+    await refresh();
+  };
+
+  const confidenceClass = (c: string) =>
+    c === "high"
+      ? "text-success bg-success/15"
+      : c === "medium"
+        ? "text-gold bg-gold/15"
+        : "text-muted-foreground bg-white/[0.06]";
+
+  return (
+    <Modal title={`Valuation history · ${property.name}`} onClose={onClose}>
+      <p className="mb-3 text-[11px] text-muted-foreground">{property.address}</p>
+
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        <Field label="Beds" placeholder="3" value={beds} onChange={setBeds} type="number" />
+        <Field label="Baths" placeholder="2" value={baths} onChange={setBaths} type="number" />
+        <Field label="Sqft" placeholder="1800" value={sqft} onChange={setSqft} type="number" />
+      </div>
+      <button
+        onClick={runEstimate}
+        disabled={estimating}
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-xs font-medium text-primary-foreground glow-violet disabled:opacity-50"
+      >
+        {estimating ? (
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="h-3.5 w-3.5" />
+        )}
+        {estimating ? "Estimating with AI…" : "Run new AI estimate & save"}
+      </button>
+
+      <p className="label-mono mb-2">History</p>
+      {loading ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>
+      ) : valuations.length === 0 ? (
+        <LuxCard className="p-5 text-center">
+          <History className="mx-auto h-5 w-5 text-primary" />
+          <p className="mt-2 text-xs text-muted-foreground">
+            No saved valuations yet. Run a new AI estimate above.
+          </p>
+        </LuxCard>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {valuations.map((v) => (
+            <LuxCard key={v.id} className="p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-serif text-lg text-foreground">
+                      {fmtCurrency(v.estimated_value, { compact: true })}
+                    </p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${confidenceClass(v.confidence)}`}
+                    >
+                      {v.confidence}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                    {fmtCurrency(v.value_low, { compact: true })} –{" "}
+                    {fmtCurrency(v.value_high, { compact: true })}
+                    {v.price_per_sqft ? ` · $${Math.round(v.price_per_sqft)}/sqft` : ""}
+                  </p>
+                  <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                    {new Date(v.created_at).toLocaleString()} · {v.source}
+                  </p>
+                  {v.market_summary && (
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                      {v.market_summary}
+                    </p>
+                  )}
+                  {v.comps && v.comps.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-primary">
+                        {v.comps.length} comp{v.comps.length === 1 ? "" : "s"}
+                      </summary>
+                      <div className="mt-1.5 flex flex-col gap-1">
+                        {v.comps.slice(0, 5).map((c, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between rounded-lg bg-white/[0.03] px-2 py-1 text-[10px]"
+                          >
+                            <p className="min-w-0 flex-1 truncate text-foreground">{c.address}</p>
+                            <p className="font-mono tabular-nums text-foreground">
+                              {fmtCurrency(c.sold_price, { compact: true })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDelete(v.id)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                  aria-label="Delete valuation"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            </LuxCard>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
