@@ -7,6 +7,7 @@ import {
   getAccounts,
   getHoldings,
   getInstitution,
+  syncTransactions,
 } from "./plaid.server";
 
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
