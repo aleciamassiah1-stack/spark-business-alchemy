@@ -20,6 +20,9 @@ import {
   Sparkles,
   Loader2,
   MessageSquare,
+  PiggyBank,
+  Bitcoin,
+  CreditCard,
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
@@ -497,8 +500,12 @@ const TRACK_ITEMS = [
   { key: "investments", label: "Investments", icon: TrendingUp },
   { key: "banking", label: "Banking", icon: Wallet },
   { key: "insurance", label: "Insurance", icon: Shield },
-  { key: "estate", label: "Trust & Estate", icon: ScrollText },
   { key: "real_estate", label: "Real Estate", icon: Home },
+  { key: "retirement", label: "Retirement", icon: PiggyBank },
+  { key: "estate", label: "Trust & Estate", icon: ScrollText },
+  { key: "business", label: "Business Assets", icon: Briefcase },
+  { key: "crypto", label: "Crypto", icon: Bitcoin },
+  { key: "debt", label: "Debt & Liabilities", icon: CreditCard },
 ] as const;
 
 function ScreenPersonalize({ onNext }: { onNext: () => void }) {
