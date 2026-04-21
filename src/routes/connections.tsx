@@ -38,6 +38,8 @@ import {
   listProperties,
   upsertProperty,
   deleteProperty,
+  estimatePropertyValue,
+  type PropertyValuation,
   listInsurancePolicies,
   upsertInsurancePolicy,
   deleteInsurancePolicy,
