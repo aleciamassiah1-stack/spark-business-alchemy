@@ -36,7 +36,7 @@ export async function createLinkToken(): Promise<PlaidLinkTokenResp> {
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: "aether-demo-user" },
     client_name: "Æther Wealth",
-    products: ["auth", "investments"],
+    products: ["auth", "transactions", "investments"],
     country_codes: ["US"],
     language: "en",
   });
