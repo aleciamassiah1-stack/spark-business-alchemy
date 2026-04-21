@@ -821,8 +821,16 @@ function Req({ ok, label }: { ok: boolean; label: string }) {
 }
 
 /* Welcome screen with trust badges — used by /signup landing */
-export function Welcome() {
+export function Welcome({
+  onCreate,
+  onSignIn,
+}: {
+  onCreate?: () => void;
+  onSignIn?: () => void;
+} = {}) {
   const navigate = useNavigate();
+  const handleCreate = onCreate ?? (() => navigate({ to: "/signup", search: { view: "form" } as never }));
+  const handleSignIn = onSignIn ?? (() => navigate({ to: "/signin" }));
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-6 py-10">
       <div
@@ -853,10 +861,10 @@ export function Welcome() {
       </div>
 
       <div className="relative w-full max-w-[400px] space-y-3">
-        <PrimaryCta onClick={() => navigate({ to: "/signup" })}>Create Account</PrimaryCta>
+        <PrimaryCta onClick={handleCreate}>Create Account</PrimaryCta>
         <button
           type="button"
-          onClick={() => navigate({ to: "/signin" })}
+          onClick={handleSignIn}
           className="w-full rounded-full border border-white/[0.08] bg-white/[0.02] px-6 py-4 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06]"
         >
           Sign In

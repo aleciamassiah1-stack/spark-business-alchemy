@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProtectRouteImport } from './routes/protect'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as MoreRouteImport } from './routes/more'
@@ -22,6 +24,16 @@ import { Route as IndexRouteImport } from './routes/index'
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectRoute = ProtectRouteImport.update({
@@ -74,6 +86,8 @@ export interface FileRoutesByFullPath {
   '/more': typeof MoreRoute
   '/portfolio': typeof PortfolioRoute
   '/protect': typeof ProtectRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +99,8 @@ export interface FileRoutesByTo {
   '/more': typeof MoreRoute
   '/portfolio': typeof PortfolioRoute
   '/protect': typeof ProtectRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesById {
@@ -97,6 +113,8 @@ export interface FileRoutesById {
   '/more': typeof MoreRoute
   '/portfolio': typeof PortfolioRoute
   '/protect': typeof ProtectRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +128,8 @@ export interface FileRouteTypes {
     | '/more'
     | '/portfolio'
     | '/protect'
+    | '/signin'
+    | '/signup'
     | '/timeline'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +141,8 @@ export interface FileRouteTypes {
     | '/more'
     | '/portfolio'
     | '/protect'
+    | '/signin'
+    | '/signup'
     | '/timeline'
   id:
     | '__root__'
@@ -132,6 +154,8 @@ export interface FileRouteTypes {
     | '/more'
     | '/portfolio'
     | '/protect'
+    | '/signin'
+    | '/signup'
     | '/timeline'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +168,8 @@ export interface RootRouteChildren {
   MoreRoute: typeof MoreRoute
   PortfolioRoute: typeof PortfolioRoute
   ProtectRoute: typeof ProtectRoute
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
   TimelineRoute: typeof TimelineRoute
 }
 
@@ -154,6 +180,20 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/protect': {
@@ -224,6 +264,8 @@ const rootRouteChildren: RootRouteChildren = {
   MoreRoute: MoreRoute,
   PortfolioRoute: PortfolioRoute,
   ProtectRoute: ProtectRoute,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
   TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport
