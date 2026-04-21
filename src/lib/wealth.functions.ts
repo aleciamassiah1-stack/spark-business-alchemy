@@ -269,6 +269,107 @@ export const estimatePropertyValue = createServerFn({ method: "POST" })
     }
   });
 
+// Save a valuation snapshot to a property's history
+export const savePropertyValuation = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      property_id: string;
+      valuation: PropertyValuation;
+      input_address?: string | null;
+      input_beds?: number | null;
+      input_baths?: number | null;
+      input_sqft?: number | null;
+      source?: string;
+    }) =>
+      z
+        .object({
+          property_id: z.string().uuid(),
+          valuation: z.object({
+            estimated_value: z.number(),
+            value_low: z.number(),
+            value_high: z.number(),
+            confidence: z.enum(["low", "medium", "high"]),
+            price_per_sqft: z.number().nullable(),
+            comps: z.array(z.any()),
+            market_summary: z.string(),
+            assumptions: z.string(),
+          }),
+          input_address: z.string().max(300).optional().nullable(),
+          input_beds: z.number().optional().nullable(),
+          input_baths: z.number().optional().nullable(),
+          input_sqft: z.number().optional().nullable(),
+          source: z.string().max(20).optional(),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const userId = await requireUserId();
+    // verify property ownership
+    const { data: prop, error: propErr } = await supabaseAdmin
+      .from("properties")
+      .select("id")
+      .eq("id", data.property_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (propErr || !prop) {
+      return { ok: false as const, error: "Property not found", id: null as string | null };
+    }
+    const v = data.valuation;
+    const { data: inserted, error } = await supabaseAdmin
+      .from("property_valuations")
+      .insert({
+        user_id: userId,
+        property_id: data.property_id,
+        estimated_value: v.estimated_value,
+        value_low: v.value_low,
+        value_high: v.value_high,
+        confidence: v.confidence,
+        price_per_sqft: v.price_per_sqft,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        comps: (v.comps ?? []) as any,
+        market_summary: v.market_summary,
+        assumptions: v.assumptions,
+        input_address: data.input_address ?? null,
+        input_beds: data.input_beds ?? null,
+        input_baths: data.input_baths ?? null,
+        input_sqft: data.input_sqft ?? null,
+        source: data.source ?? "ai",
+      })
+      .select("id")
+      .single();
+    return { ok: !error, error: error?.message ?? null, id: inserted?.id ?? null };
+  });
+
+// List valuation history for a property (most recent first)
+export const listPropertyValuations = createServerFn({ method: "POST" })
+  .inputValidator((input: { property_id: string }) =>
+    z.object({ property_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const userId = await getCurrentUserId();
+    if (!userId) return { valuations: [], error: null as string | null };
+    const { data: rows, error } = await supabaseAdmin
+      .from("property_valuations")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("property_id", data.property_id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { valuations: rows ?? [], error: error?.message ?? null };
+  });
+
+export const deletePropertyValuation = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const userId = await requireUserId();
+    const { error } = await supabaseAdmin
+      .from("property_valuations")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    return { ok: !error, error: error?.message ?? null };
+  });
+
 // =================================================================
 // Insurance Policies
 // =================================================================
