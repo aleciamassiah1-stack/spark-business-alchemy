@@ -5,7 +5,12 @@ import { AuthForm, Welcome } from "@/components/Onboarding";
 import { useAuth } from "@/lib/auth-context";
 import { useOnboarding } from "@/lib/onboarding-context";
 
+type SignupSearch = { view?: "form" };
+
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search): SignupSearch => ({
+    view: search.view === "form" ? "form" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Create Account — Æther Wealth" },
@@ -19,8 +24,8 @@ function SignupRoute() {
   const auth = useAuth();
   const { markStep } = useOnboarding();
   const navigate = useNavigate();
+  const search = Route.useSearch();
 
-  // Once a session exists, mark account step done and proceed.
   useEffect(() => {
     if (auth.user) {
       markStep("account");
@@ -28,13 +33,13 @@ function SignupRoute() {
     }
   }, [auth.user, markStep, navigate]);
 
-  // Determine view: ?view=form to skip welcome screen.
-  const params =
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const showForm = params?.get("view") === "form";
-
-  if (!showForm) {
-    return <WelcomeWithFormLink />;
+  if (search.view !== "form") {
+    return (
+      <Welcome
+        onCreate={() => navigate({ to: "/signup", search: { view: "form" } })}
+        onSignIn={() => navigate({ to: "/signin" })}
+      />
+    );
   }
 
   return (
@@ -50,6 +55,7 @@ function SignupRoute() {
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/signup"
+            search={{ view: undefined }}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-3.5 w-3.5" /> Back
@@ -71,13 +77,4 @@ function SignupRoute() {
       </div>
     </div>
   );
-}
-
-function WelcomeWithFormLink() {
-  const navigate = useNavigate();
-  // Override default Welcome buttons by intercepting clicks via custom variant.
-  // Simplest: render Welcome and let its CTAs navigate to /signup?view=form via override below.
-  // We re-implement here for explicit control.
-  void navigate;
-  return <Welcome />;
 }
