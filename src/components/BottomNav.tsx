@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 
 const items = [
   { to: "/", label: "Home", icon: Home, exact: true },
-  { to: "/portfolio", label: "Portfolio", icon: TrendingUp },
-  { to: "/protect", label: "Protect", icon: Shield },
-  { to: "/legacy", label: "Legacy", icon: Scroll },
-  { to: "/more", label: "More", icon: MoreHorizontal },
+  { to: "/portfolio", label: "Portfolio", icon: TrendingUp, exact: false },
+  { to: "/protect", label: "Protect", icon: Shield, exact: false },
+  { to: "/legacy", label: "Legacy", icon: Scroll, exact: false },
+  { to: "/more", label: "More", icon: MoreHorizontal, exact: false },
 ] as const;
 
 export function BottomNav() {
