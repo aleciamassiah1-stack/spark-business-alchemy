@@ -48,30 +48,36 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setReady(true);
   }, []);
 
-  const persist = useCallback((next: OnboardingProfile) => {
-    setProfile(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    }
+  const persist = useCallback((updater: (prev: OnboardingProfile) => OnboardingProfile) => {
+    setProfile((prev) => {
+      const next = updater(prev);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      }
+      return next;
+    });
   }, []);
 
   const update = useCallback(
     (patch: Partial<OnboardingProfile>) => {
-      persist({ ...profile, ...patch });
+      persist((prev) => ({ ...prev, ...patch }));
     },
-    [profile, persist],
+    [persist],
   );
 
   const markStep = useCallback(
     (step: string) => {
-      if (profile.completedSteps.includes(step)) return;
-      persist({ ...profile, completedSteps: [...profile.completedSteps, step] });
+      persist((prev) =>
+        prev.completedSteps.includes(step)
+          ? prev
+          : { ...prev, completedSteps: [...prev.completedSteps, step] },
+      );
     },
-    [profile, persist],
+    [persist],
   );
 
   const reset = useCallback(() => {
-    persist(EMPTY);
+    persist(() => EMPTY);
   }, [persist]);
 
   const onboarded = REQUIRED_FOR_GATE.every((s) => profile.completedSteps.includes(s));
