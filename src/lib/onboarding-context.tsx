@@ -9,8 +9,9 @@ export type OnboardingProfile = {
   personas?: string[];
   trackingPrefs?: string[];
   firstAccountConnected?: boolean;
+  phoneVerified?: boolean;
   bannerDismissed?: string; // ISO date of last dismissal session
-  completedSteps: string[]; // step keys: "account" | "biometric" | "personalize" | "connect"
+  completedSteps: string[]; // step keys: "account" | "verify" | "biometric" | "personalize" | "connect"
 };
 
 const EMPTY: OnboardingProfile = { completedSteps: [] };
