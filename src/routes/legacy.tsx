@@ -194,18 +194,29 @@ function LegacyPage() {
 }
 
 function DocIcon({ status }: { status: string }) {
-  if (status === "Current") return <CheckCircle2 className="h-5 w-5 text-success" strokeWidth={1.8} />;
-  if (status === "Needs Review") return <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.8} />;
+  const s = status.toLowerCase();
+  if (s === "current") return <CheckCircle2 className="h-5 w-5 text-success" strokeWidth={1.8} />;
+  if (s === "needs_review" || s === "needs review")
+    return <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.8} />;
   return <Circle className="h-5 w-5 text-muted-foreground" strokeWidth={1.8} />;
 }
 
 function DocStatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase();
+  const label = s === "needs_review" ? "Needs Review" : s.charAt(0).toUpperCase() + s.slice(1);
   const styles: Record<string, string> = {
-    Current: "bg-success/15 text-success",
-    "Needs Review": "bg-warning/15 text-warning",
-    Missing: "bg-destructive/15 text-destructive",
+    current: "bg-success/15 text-success",
+    needs_review: "bg-warning/15 text-warning",
+    "needs review": "bg-warning/15 text-warning",
+    expired: "bg-destructive/15 text-destructive",
+    missing: "bg-destructive/15 text-destructive",
   };
-  return <span className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${styles[status]}`}>{status}</span>;
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${styles[s] ?? "bg-muted/40 text-muted-foreground"}`}
+    >
+      {label}
+    </span>
+  );
 }
 
-const _ = FileText;
