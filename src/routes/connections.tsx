@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { useWealth } from "@/lib/wealth-context";
@@ -65,7 +66,11 @@ export const Route = createFileRoute("/connections")({
       { name: "description", content: "Manage every account, property, policy, and document." },
     ],
   }),
-  component: ConnectionsPage,
+  component: () => (
+    <RequireOnboarding>
+      <ConnectionsPage />
+    </RequireOnboarding>
+  ),
 });
 
 declare global {
