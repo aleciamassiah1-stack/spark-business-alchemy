@@ -18,6 +18,8 @@ import {
   Upload,
   X,
   Wand2,
+  Tag,
+  Pencil,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -46,6 +48,15 @@ import {
   seedDemoData,
   clearDemoData,
 } from "@/lib/wealth.functions";
+import {
+  listRules,
+  upsertRule,
+  deleteRule,
+  reapplyAllRules,
+  quickCreateRule,
+  listCategorySuggestions,
+  type TransactionRule,
+} from "@/lib/rules.functions";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
@@ -93,7 +104,7 @@ function loadPlaidScript(): Promise<void> {
   });
 }
 
-type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity";
+type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity" | "rules";
 
 const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "accounts", label: "Accounts", icon: Building2 },
@@ -101,12 +112,13 @@ const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "insurance", label: "Insurance", icon: Shield },
   { key: "estate", label: "Estate", icon: Scroll },
   { key: "activity", label: "Activity", icon: Receipt },
+  { key: "rules", label: "Rules", icon: Tag },
 ];
 
 type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string };
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
-type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; logo_url: string | null };
+type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
 type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number };
 type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
 type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; signed_date: string | null };
@@ -125,6 +137,10 @@ function ConnectionsPage() {
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
   const [showPropForm, setShowPropForm] = useState(false);
   const [showEstateForm, setShowEstateForm] = useState(false);
+  const [rules, setRules] = useState<TransactionRule[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
+  const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
+  const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
@@ -132,11 +148,13 @@ function ConnectionsPage() {
   };
 
   const loadAll = async () => {
-    const [agg, props, ins, est] = await Promise.all([
+    const [agg, props, ins, est, rls, cats] = await Promise.all([
       getAggregatedData(),
       listProperties(),
       listInsurancePolicies(),
       listEstateDocuments(),
+      listRules(),
+      listCategorySuggestions(),
     ]);
     setItems(agg.items as Item[]);
     setAccounts(agg.accounts as Account[]);
@@ -145,6 +163,8 @@ function ConnectionsPage() {
     setProperties(props.properties as Property[]);
     setPolicies(ins.policies as Policy[]);
     setEstateDocs(est.documents as EstateDoc[]);
+    setRules(rls.rules);
+    setCategorySuggestions(cats.categories);
   };
 
   useEffect(() => {
@@ -345,8 +365,66 @@ function ConnectionsPage() {
             }}
           />
         )}
-        {tab === "activity" && <ActivityTab transactions={transactions} />}
+        {tab === "activity" && (
+          <ActivityTab
+            transactions={transactions}
+            rules={rules}
+            onQuickRule={(t) => setQuickRuleTx(t)}
+          />
+        )}
+        {tab === "rules" && (
+          <RulesTab
+            rules={rules}
+            onCreate={() => setShowRuleForm("new")}
+            onEdit={(r) => setShowRuleForm(r)}
+            onDelete={async (id) => {
+              if (!confirm("Delete this rule? Matching transactions will revert to their original category.")) return;
+              const res = await deleteRule({ data: { id } });
+              if (res.ok) {
+                showToast("ok", "Rule deleted");
+                await loadAll();
+              } else showToast("err", res.error ?? "Failed");
+            }}
+            onReapply={async () => {
+              setSyncing(true, "Re-applying rules…");
+              const res = await reapplyAllRules();
+              setSyncing(false);
+              if (res.ok) {
+                showToast("ok", `Recategorized ${res.updated} transaction${res.updated === 1 ? "" : "s"}`);
+                await loadAll();
+              } else showToast("err", res.error ?? "Failed");
+            }}
+          />
+        )}
       </div>
+
+      {showRuleForm && (
+        <RuleFormModal
+          rule={showRuleForm === "new" ? null : showRuleForm}
+          categorySuggestions={categorySuggestions}
+          onClose={() => setShowRuleForm(null)}
+          onSaved={async (updated) => {
+            setShowRuleForm(null);
+            await loadAll();
+            showToast("ok", updated > 0 ? `Saved · ${updated} transactions recategorized` : "Rule saved");
+          }}
+          onError={(m) => showToast("err", m)}
+        />
+      )}
+
+      {quickRuleTx && (
+        <QuickRuleModal
+          tx={quickRuleTx}
+          categorySuggestions={categorySuggestions}
+          onClose={() => setQuickRuleTx(null)}
+          onSaved={async (updated) => {
+            setQuickRuleTx(null);
+            await loadAll();
+            showToast("ok", `Rule created · ${updated} transactions recategorized`);
+          }}
+          onError={(m) => showToast("err", m)}
+        />
+      )}
 
       {showPropForm && (
         <PropertyFormModal
@@ -881,7 +959,15 @@ function statusStyle(status: string) {
 }
 
 // =================== Activity Tab ===================
-function ActivityTab({ transactions }: { transactions: Tx[] }) {
+function ActivityTab({
+  transactions,
+  rules,
+  onQuickRule,
+}: {
+  transactions: Tx[];
+  rules: TransactionRule[];
+  onQuickRule: (t: Tx) => void;
+}) {
   if (transactions.length === 0) {
     return (
       <LuxCard className="p-6 text-center">
@@ -893,12 +979,13 @@ function ActivityTab({ transactions }: { transactions: Tx[] }) {
       </LuxCard>
     );
   }
-  // cash flow this month
+  // cash flow this month — using effective category (custom overrides original)
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthly = transactions.filter((t) => new Date(t.date) >= monthStart);
   const income = monthly.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
   const spending = monthly.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const customizedCount = transactions.filter((t) => t.custom_category).length;
 
   return (
     <div>
@@ -909,26 +996,54 @@ function ActivityTab({ transactions }: { transactions: Tx[] }) {
           <Mini label="Spending" value={fmtCurrency(spending, { compact: true })} />
           <Mini label="Net" value={fmtCurrency(income - spending, { compact: true })} positive={income - spending >= 0} />
         </div>
+        {rules.length > 0 && (
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            {rules.length} rule{rules.length === 1 ? "" : "s"} · {customizedCount} txns recategorized
+          </p>
+        )}
       </LuxCard>
 
       <p className="label-mono mt-5 mb-2">Recent activity</p>
       <LuxCard className="divide-y divide-white/[0.04]">
-        {transactions.slice(0, 30).map((t) => (
-          <div key={t.id} className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[10px] font-mono text-primary">
-              {(t.merchant_name ?? t.name).slice(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-foreground">{t.merchant_name ?? t.name}</p>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                {t.category?.replace(/_/g, " ") ?? "—"} · {new Date(t.date).toLocaleDateString()}
+        {transactions.slice(0, 30).map((t) => {
+          const effectiveCategory = t.custom_category ?? t.category;
+          const isCustom = !!t.custom_category;
+          return (
+            <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[10px] font-mono text-primary">
+                {(t.merchant_name ?? t.name).slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-foreground">{t.merchant_name ?? t.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p
+                    className={`truncate font-mono text-[10px] uppercase tracking-wider ${
+                      isCustom ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {isCustom && <Tag className="mr-1 inline h-2.5 w-2.5" />}
+                    {effectiveCategory?.replace(/_/g, " ") ?? "—"}
+                  </p>
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    · {new Date(t.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <p
+                className={`font-mono text-sm tabular-nums ${t.amount < 0 ? "text-success" : "text-foreground"}`}
+              >
+                <MoneyText value={`${t.amount < 0 ? "+" : "-"}${fmtCurrency(Math.abs(t.amount))}`} />
               </p>
+              <button
+                onClick={() => onQuickRule(t)}
+                aria-label="Create rule from this transaction"
+                className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.03] text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary"
+              >
+                <Tag className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <p className={`font-mono text-sm tabular-nums ${t.amount < 0 ? "text-success" : "text-foreground"}`}>
-              <MoneyText value={`${t.amount < 0 ? "+" : "-"}${fmtCurrency(Math.abs(t.amount))}`} />
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </LuxCard>
     </div>
   );
@@ -1146,4 +1261,487 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
+}
+
+// =================== Rules Tab ===================
+function RulesTab({
+  rules,
+  onCreate,
+  onEdit,
+  onDelete,
+  onReapply,
+}: {
+  rules: TransactionRule[];
+  onCreate: () => void;
+  onEdit: (r: TransactionRule) => void;
+  onDelete: (id: string) => void;
+  onReapply: () => void;
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="label-mono">Categorization rules</p>
+        <div className="flex gap-2">
+          {rules.length > 0 && (
+            <button
+              onClick={onReapply}
+              className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Re-apply
+            </button>
+          )}
+          <button
+            onClick={onCreate}
+            className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[11px] text-primary transition-colors hover:bg-primary/25"
+          >
+            <Plus className="h-3 w-3" />
+            New rule
+          </button>
+        </div>
+      </div>
+
+      {rules.length === 0 ? (
+        <LuxCard className="p-6 text-center">
+          <Tag className="mx-auto h-6 w-6 text-primary" />
+          <p className="mt-3 font-serif text-lg text-foreground">No rules yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Create rules to map merchants to categories. Lower priority numbers run first.
+          </p>
+          <button
+            onClick={onCreate}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-4 py-2 text-xs text-primary transition-colors hover:bg-primary/25"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create first rule
+          </button>
+        </LuxCard>
+      ) : (
+        <div className="space-y-2">
+          {rules.map((r) => (
+            <LuxCard key={r.id} className={`p-4 ${r.enabled ? "" : "opacity-50"}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                      #{r.priority}
+                    </span>
+                    <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                    {!r.enabled && (
+                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                        Off
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-xs text-primary">
+                    <Tag className="mr-1 inline h-2.5 w-2.5" />
+                    {r.category}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {r.merchant_pattern && (
+                      <RulePill label={`merchant ${r.match_type} "${r.merchant_pattern}"`} />
+                    )}
+                    {r.description_keyword && <RulePill label={`desc has "${r.description_keyword}"`} />}
+                    {(r.amount_min != null || r.amount_max != null) && (
+                      <RulePill label={`amount ${r.amount_min ?? "0"}–${r.amount_max ?? "∞"}`} />
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    onClick={() => onEdit(r)}
+                    aria-label="Edit rule"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(r.id)}
+                    aria-label="Delete rule"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </LuxCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RulePill({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+      {label}
+    </span>
+  );
+}
+
+// =================== Rule Form Modal ===================
+function RuleFormModal({
+  rule,
+  categorySuggestions,
+  onClose,
+  onSaved,
+  onError,
+}: {
+  rule: TransactionRule | null;
+  categorySuggestions: string[];
+  onClose: () => void;
+  onSaved: (updated: number) => void;
+  onError: (m: string) => void;
+}) {
+  const [name, setName] = useState(rule?.name ?? "");
+  const [category, setCategory] = useState(rule?.category ?? "");
+  const [priority, setPriority] = useState(rule?.priority ?? 100);
+  const [merchantPattern, setMerchantPattern] = useState(rule?.merchant_pattern ?? "");
+  const [matchType, setMatchType] = useState<"exact" | "contains" | "starts_with">(
+    rule?.match_type ?? "contains",
+  );
+  const [descriptionKeyword, setDescriptionKeyword] = useState(rule?.description_keyword ?? "");
+  const [amountMin, setAmountMin] = useState(rule?.amount_min?.toString() ?? "");
+  const [amountMax, setAmountMax] = useState(rule?.amount_max?.toString() ?? "");
+  const [enabled, setEnabled] = useState(rule?.enabled ?? true);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !category.trim()) {
+      onError("Name and category are required");
+      return;
+    }
+    setSaving(true);
+    const res = await upsertRule({
+      data: {
+        id: rule?.id,
+        name: name.trim(),
+        category: category.trim(),
+        priority,
+        merchant_pattern: merchantPattern.trim() || null,
+        match_type: matchType,
+        description_keyword: descriptionKeyword.trim() || null,
+        amount_min: amountMin ? Number(amountMin) : null,
+        amount_max: amountMax ? Number(amountMax) : null,
+        enabled,
+      },
+    });
+    setSaving(false);
+    if (res.ok) onSaved(res.updated);
+    else onError(res.error ?? "Failed to save rule");
+  };
+
+  return (
+    <RuleModalShell onClose={onClose} title={rule ? "Edit rule" : "New rule"}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <RuleField label="Name">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Coffee shops → Food"
+            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+            autoFocus
+          />
+        </RuleField>
+
+        <RuleField label="Category" hint="What to label matching transactions">
+          <input
+            type="text"
+            list="rule-cat-suggestions"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g. Food & Dining"
+            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+          />
+          <datalist id="rule-cat-suggestions">
+            {categorySuggestions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </RuleField>
+
+        <div>
+          <p className="label-mono mb-2">Match conditions (AND)</p>
+          <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <RuleField label="Merchant pattern" hint="Match against merchant or transaction name">
+              <div className="flex gap-2">
+                <select
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value as typeof matchType)}
+                  className="w-32 shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.03] px-2 py-2 text-xs text-foreground outline-none focus:border-primary/40"
+                >
+                  <option value="contains">contains</option>
+                  <option value="exact">exact</option>
+                  <option value="starts_with">starts with</option>
+                </select>
+                <input
+                  type="text"
+                  value={merchantPattern}
+                  onChange={(e) => setMerchantPattern(e.target.value)}
+                  placeholder="e.g. Starbucks"
+                  className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+                />
+              </div>
+            </RuleField>
+
+            <RuleField label="Description keyword" hint="Optional — substring of transaction name">
+              <input
+                type="text"
+                value={descriptionKeyword}
+                onChange={(e) => setDescriptionKeyword(e.target.value)}
+                placeholder="e.g. autopay"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+              />
+            </RuleField>
+
+            <div className="grid grid-cols-2 gap-2">
+              <RuleField label="Amount min">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={amountMin}
+                  onChange={(e) => setAmountMin(e.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+                />
+              </RuleField>
+              <RuleField label="Amount max">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={amountMax}
+                  onChange={(e) => setAmountMax(e.target.value)}
+                  placeholder="∞"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+                />
+              </RuleField>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <RuleField label="Priority" hint="Lower = runs first">
+            <input
+              type="number"
+              min={1}
+              max={9999}
+              value={priority}
+              onChange={(e) => setPriority(Number(e.target.value) || 100)}
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+            />
+          </RuleField>
+          <RuleField label="Status">
+            <button
+              type="button"
+              onClick={() => setEnabled((v) => !v)}
+              className={`flex w-full items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm transition-colors ${
+                enabled ? "text-success" : "text-muted-foreground"
+              }`}
+            >
+              {enabled ? "Enabled" : "Disabled"}
+              <span
+                className={`h-5 w-9 rounded-full p-0.5 transition-colors ${
+                  enabled ? "bg-success/30" : "bg-white/[0.08]"
+                }`}
+              >
+                <span
+                  className={`block h-4 w-4 rounded-full bg-foreground transition-transform ${
+                    enabled ? "translate-x-4" : ""
+                  }`}
+                />
+              </span>
+            </button>
+          </RuleField>
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-full border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.05]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 rounded-full bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Save & apply"}
+          </button>
+        </div>
+      </form>
+    </RuleModalShell>
+  );
+}
+
+// =================== Quick Rule Modal (inline) ===================
+function QuickRuleModal({
+  tx,
+  categorySuggestions,
+  onClose,
+  onSaved,
+  onError,
+}: {
+  tx: Tx;
+  categorySuggestions: string[];
+  onClose: () => void;
+  onSaved: (updated: number) => void;
+  onError: (m: string) => void;
+}) {
+  const merchant = tx.merchant_name ?? tx.name;
+  const [category, setCategory] = useState(tx.custom_category ?? tx.category ?? "");
+  const [matchType, setMatchType] = useState<"exact" | "contains">("contains");
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!category.trim()) {
+      onError("Pick a category");
+      return;
+    }
+    setSaving(true);
+    const res = await quickCreateRule({
+      data: { merchant, category: category.trim(), matchType },
+    });
+    setSaving(false);
+    if (res.ok) onSaved(res.updated);
+    else onError(res.error ?? "Failed to create rule");
+  };
+
+  return (
+    <RuleModalShell onClose={onClose} title="Always categorize as…">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+          <p className="label-mono">Merchant</p>
+          <p className="mt-1 truncate text-sm text-foreground">{merchant}</p>
+        </div>
+
+        <RuleField label="Category">
+          <input
+            type="text"
+            list="quick-cat-suggestions"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g. Food & Dining"
+            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none focus:border-primary/40"
+            autoFocus
+          />
+          <datalist id="quick-cat-suggestions">
+            {categorySuggestions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </RuleField>
+
+        <RuleField label="Match" hint="How should we match this merchant in future transactions?">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMatchType("contains")}
+              className={`flex-1 rounded-full py-2 text-xs transition-colors ${
+                matchType === "contains"
+                  ? "bg-primary/20 text-primary"
+                  : "bg-white/[0.03] text-muted-foreground"
+              }`}
+            >
+              Contains
+            </button>
+            <button
+              type="button"
+              onClick={() => setMatchType("exact")}
+              className={`flex-1 rounded-full py-2 text-xs transition-colors ${
+                matchType === "exact"
+                  ? "bg-primary/20 text-primary"
+                  : "bg-white/[0.03] text-muted-foreground"
+              }`}
+            >
+              Exact match
+            </button>
+          </div>
+        </RuleField>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-full border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.05]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 rounded-full bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Create rule"}
+          </button>
+        </div>
+      </form>
+    </RuleModalShell>
+  );
+}
+
+// =================== Shared rule modal helpers ===================
+function RuleModalShell({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 40, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-white/[0.08] bg-card p-5 shadow-2xl sm:rounded-3xl"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-serif text-xl text-foreground">{title}</h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {children}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function RuleField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <p className="label-mono mb-1.5">{label}</p>
+      {children}
+      {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
+    </label>
+  );
 }
