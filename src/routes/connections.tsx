@@ -1146,8 +1146,27 @@ function PropertyFormModal({
         mortgage_balance: Number(mortgage) || 0,
       },
     });
+    // If we have an AI valuation and the property was created, persist the snapshot
+    if (res.ok && res.id && valuation) {
+      try {
+        await savePropertyValuation({
+          data: {
+            property_id: res.id,
+            valuation,
+            input_address: address.trim(),
+            input_beds: beds ? Number(beds) : null,
+            input_baths: baths ? Number(baths) : null,
+            input_sqft: sqft ? Number(sqft) : null,
+            source: "ai",
+          },
+        });
+      } catch (err) {
+        console.warn("Failed to save valuation snapshot:", err);
+      }
+    }
     setSaving(false);
-    res.ok ? onSaved() : onError(res.error ?? "Failed");
+    if (res.ok) onSaved();
+    else onError(res.error ?? "Failed");
   };
 
   const confidenceColor =
