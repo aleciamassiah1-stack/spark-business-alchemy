@@ -207,6 +207,11 @@ function HomePage() {
                 <MoneyText value={`${fmtCurrency(ytdAmount)} YTD`} />
               </span>
             </div>
+            {lastRefreshed && (
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                Updated {lastRefreshed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              </p>
+            )}
 
             {/* Allocation bar */}
             {allocPcts.length > 0 ? (
