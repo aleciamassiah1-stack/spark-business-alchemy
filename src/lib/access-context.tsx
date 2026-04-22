@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { checkAccess } from "@/lib/access.functions";
 import { useAuth } from "@/lib/auth-context";
 
@@ -17,7 +17,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   const [hasAccess, setHasAccess] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!auth.user) {
       setHasAccess(false);
       setIsAdmin(false);
@@ -34,13 +34,28 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     } finally {
       setReady(true);
     }
-  };
+  }, [auth.user]);
 
   useEffect(() => {
     setReady(false);
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.ready, auth.user?.id]);
+    void load();
+  }, [auth.ready, auth.user?.id, load]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleFocus = () => {
+      void load();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [load]);
 
   return (
     <AccessContext.Provider value={{ ready, hasAccess, isAdmin, refresh: load }}>
