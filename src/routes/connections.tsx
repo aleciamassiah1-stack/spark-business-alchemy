@@ -1247,6 +1247,33 @@ function PropertyFormModal({
     }
   };
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImage = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      onError("Please choose an image file");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      onError("Image too large (max 6 MB)");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const up = await uploadPropertyImage({
+        data: { fileName: file.name, base64, mimeType: file.type },
+      });
+      if (!up.ok || !up.url) throw new Error(up.error ?? "Upload failed");
+      setImageUrl(up.url);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Image upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const submit = async () => {
     if (!name.trim() || !address.trim() || !value) {
       onError("Name, address, and value are required");
@@ -1259,6 +1286,10 @@ function PropertyFormModal({
         address: address.trim(),
         estimated_value: Number(value),
         mortgage_balance: Number(mortgage) || 0,
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
+        image_url: imageUrl,
       },
     });
     // If we have an AI valuation and the property was created, persist the snapshot
@@ -1293,6 +1324,38 @@ function PropertyFormModal({
 
   return (
     <Modal title="Add property" onClose={onClose}>
+      <div className="mb-3">
+        <p className="label-mono mb-1.5">Photo (optional)</p>
+        {imageUrl ? (
+          <div className="relative overflow-hidden rounded-xl">
+            <img src={imageUrl} alt="Property" className="aspect-[16/10] w-full object-cover" />
+            <button
+              onClick={() => setImageUrl(null)}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] px-4 py-6 text-xs text-muted-foreground hover:bg-white/[0.04]">
+            {uploadingImage ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            {uploadingImage ? "Uploading…" : "Upload photo of the home"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImage(f);
+              }}
+            />
+          </label>
+        )}
+      </div>
       <Field label="Name" placeholder="Primary residence" value={name} onChange={setName} />
       <Field label="Address" placeholder="123 Main St, City, ST" value={address} onChange={setAddress} />
       <div className="mb-3 grid grid-cols-3 gap-2">
