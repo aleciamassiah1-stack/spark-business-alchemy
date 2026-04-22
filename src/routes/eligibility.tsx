@@ -762,11 +762,15 @@ function RequestAccessDialog({
   open,
   onOpenChange,
   country,
+  accounts,
+  useCases,
   gatedItems,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   country: string;
+  accounts: AccountType[];
+  useCases: UseCase[];
   gatedItems: ChecklistItem[];
 }) {
   const [form, setForm] = useState<CompanyForm>(() => {
@@ -783,6 +787,31 @@ function RequestAccessDialog({
   const [copied, setCopied] = useState(false);
 
   const canSubmit = form.companyName.trim() && form.contactName.trim() && /\S+@\S+\.\S+/.test(form.email);
+
+  // Auto-derived context from eligibility answers
+  const accountLabels = useMemo(
+    () => accounts.map((a) => ACCOUNT_TYPES.find((t) => t.key === a)?.label ?? a).join(", "),
+    [accounts],
+  );
+  const useCaseLabels = useMemo(
+    () => useCases.map((u) => USE_CASES.find((t) => t.key === u)?.label ?? u).join(", "),
+    [useCases],
+  );
+  const inferredVolume = useMemo(() => {
+    // Heuristic: family / advisor / multiple account types → larger volume
+    const breadth = accounts.length + (useCases.includes("family") ? 2 : 0) + (useCases.includes("advisor") ? 2 : 0);
+    if (breadth >= 7) return "10,000–50,000";
+    if (breadth >= 5) return "1,000–10,000";
+    return "<1,000";
+  }, [accounts, useCases]);
+  const inferredNotes = useMemo(() => {
+    const bits: string[] = [];
+    if (useCases.includes("family")) bits.push("multi-member household with shared visibility");
+    if (useCases.includes("advisor")) bits.push("read-only sharing with an RIA / CPA");
+    if (useCases.includes("estate")) bits.push("legacy & estate planning workflows");
+    if (useCases.includes("personal")) bits.push("personal net worth tracking");
+    return bits.length ? `Primary workflows: ${bits.join("; ")}.` : "";
+  }, [useCases]);
 
   const emailTemplates = useMemo(() => {
     return gatedItems.map((item) => {
@@ -801,13 +830,15 @@ Company snapshot
 • Company: ${form.companyName || "[Company]"}
 • Region: ${country}
 • Primary contact: ${form.contactName || "[Name]"} <${form.email || "[email]"}>
-• Estimated monthly volume: ${form.monthlyVolume} connected items
-• Use case: ${item.category} — ${item.whatYouGet}
+• Tracking: ${accountLabels || "—"}
+• Use cases: ${useCaseLabels || "—"}
+• Estimated monthly volume: ${inferredVolume} connected items
+• Use case for ${meta.name}: ${item.category} — ${item.whatYouGet}
 
 What we need
 ${meta.access}
 
-${form.notes ? `Additional context\n${form.notes}\n\n` : ""}Please let us know next steps, pricing, and any compliance docs you need from us.
+${inferredNotes ? `Additional context\n${inferredNotes}\n\n` : ""}Please let us know next steps, pricing, and any compliance docs you need from us.
 
 Thanks,
 ${form.contactName || "[Your Name]"}
@@ -815,7 +846,7 @@ ${form.companyName || "[Company]"}
 ${form.email || "[email]"}`;
       return { id: item.id, providerName: meta.name, contact: meta.contact, sla: meta.sla, subject, body };
     });
-  }, [gatedItems, form, country]);
+  }, [gatedItems, form, country, accountLabels, useCaseLabels, inferredVolume, inferredNotes]);
 
   const handleSubmit = () => {
     try {
@@ -852,12 +883,31 @@ ${form.email || "[email]"}`;
           <DialogDescription className="text-xs">
             {submitted
               ? "We pre-filled emails for each gated provider. Copy, paste, and send."
-              : "We'll generate ready-to-send emails for the providers that need sales keys."}
+              : "We've pre-filled the context from your answers. Just add your company details."}
           </DialogDescription>
         </DialogHeader>
 
         {!submitted ? (
           <div className="mt-2 space-y-3">
+            {/* Auto-filled summary from eligibility wizard */}
+            <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                  From your answers
+                </p>
+                <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[9px] font-medium text-success">
+                  <Check className="h-2.5 w-2.5" />
+                  Auto-filled
+                </span>
+              </div>
+              <dl className="mt-2 space-y-1.5 text-[11px]">
+                <SummaryRow label="Region" value={country} />
+                <SummaryRow label="Tracking" value={accountLabels || "—"} />
+                <SummaryRow label="Use cases" value={useCaseLabels || "—"} />
+                <SummaryRow label="Est. volume" value={`${inferredVolume} items / mo`} />
+              </dl>
+            </div>
+
             <FormRow label="Company name">
               <input
                 value={form.companyName}
@@ -896,27 +946,6 @@ ${form.email || "[email]"}`;
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="jane@aether.com"
                 className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
-              />
-            </FormRow>
-            <FormRow label="Estimated monthly connected items">
-              <select
-                value={form.monthlyVolume}
-                onChange={(e) => setForm({ ...form, monthlyVolume: e.target.value })}
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground focus:border-primary/40 focus:outline-none"
-              >
-                <option>&lt;1,000</option>
-                <option>1,000–10,000</option>
-                <option>10,000–50,000</option>
-                <option>50,000+</option>
-              </select>
-            </FormRow>
-            <FormRow label="Anything else? (optional)">
-              <textarea
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                rows={3}
-                placeholder="Compliance posture, target launch date, regional needs…"
-                className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
               />
             </FormRow>
 
