@@ -24,6 +24,11 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Send,
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
+  FileEdit,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -611,6 +616,8 @@ function ResultsCard({
         </LuxCard>
       )}
 
+      {enterpriseGated.length > 0 && <RequestStatusTracker gatedItems={enterpriseGated} />}
+
       {checklist.map((item) => (
         <ChecklistRow key={item.id} item={item} />
       ))}
@@ -812,6 +819,242 @@ function saveProfilesState(state: ProfilesState) {
   try {
     window.localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(state));
   } catch { /* ignore */ }
+}
+
+// ── Request status tracking ────────────────────────────────────────
+
+type RequestStatus = "draft" | "sent" | "approved" | "rejected";
+
+type RequestRecord = {
+  status: RequestStatus;
+  note: string;
+  updatedAt: string;
+};
+
+const REQUEST_STATUS_KEY = "aether.requestAccess.status.v1";
+
+type RequestStatusMap = Record<string, Record<string, RequestRecord>>;
+
+function loadRequestStatus(): RequestStatusMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(REQUEST_STATUS_KEY);
+    if (raw) return JSON.parse(raw) as RequestStatusMap;
+  } catch { /* ignore */ }
+  return {};
+}
+
+function saveRequestStatus(map: RequestStatusMap) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(REQUEST_STATUS_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+}
+
+const STATUS_META: Record<RequestStatus, { label: string; icon: typeof Clock; cls: string }> = {
+  draft: { label: "Draft", icon: FileEdit, cls: "bg-muted/30 text-muted-foreground border-white/[0.1]" },
+  sent: { label: "Sent", icon: Send, cls: "bg-primary/15 text-primary border-primary/30" },
+  approved: { label: "Approved", icon: ThumbsUp, cls: "bg-success/15 text-success border-success/30" },
+  rejected: { label: "Rejected", icon: ThumbsDown, cls: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
+function RequestStatusTracker({ gatedItems }: { gatedItems: ChecklistItem[] }) {
+  const [profilesState, setProfilesState] = useState<ProfilesState>(() => loadProfilesState());
+  const [statusMap, setStatusMap] = useState<RequestStatusMap>(() => loadRequestStatus());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+
+  // Re-read whenever the window regains focus (e.g. after editing in the dialog)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const refresh = () => {
+      setProfilesState(loadProfilesState());
+      setStatusMap(loadRequestStatus());
+    };
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, []);
+
+  const activeProfile = profilesState.profiles.find((p) => p.id === profilesState.activeId) ?? null;
+  const profileId = activeProfile?.id ?? "__no_profile__";
+  const records = statusMap[profileId] ?? {};
+
+  const switchProfile = (id: string) => {
+    const next = { ...profilesState, activeId: id };
+    setProfilesState(next);
+    saveProfilesState(next);
+  };
+
+  const updateRecord = (providerId: string, patch: Partial<RequestRecord>) => {
+    setStatusMap((prev) => {
+      const bucket = { ...(prev[profileId] ?? {}) };
+      const current: RequestRecord = bucket[providerId] ?? {
+        status: "draft",
+        note: "",
+        updatedAt: new Date().toISOString(),
+      };
+      bucket[providerId] = { ...current, ...patch, updatedAt: new Date().toISOString() };
+      const next = { ...prev, [profileId]: bucket };
+      saveRequestStatus(next);
+      return next;
+    });
+  };
+
+  const setStatus = (providerId: string, status: RequestStatus) => {
+    updateRecord(providerId, { status });
+    toast.success(`Marked ${STATUS_META[status].label.toLowerCase()}`);
+  };
+
+  const startEditNote = (providerId: string) => {
+    setEditingId(providerId);
+    setNoteDraft(records[providerId]?.note ?? "");
+  };
+
+  const saveNote = (providerId: string) => {
+    updateRecord(providerId, { note: noteDraft.trim() });
+    setEditingId(null);
+    setNoteDraft("");
+  };
+
+  if (gatedItems.length === 0) return null;
+
+  const counts = gatedItems.reduce(
+    (acc, item) => {
+      const s = records[item.id]?.status ?? "draft";
+      acc[s] = (acc[s] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<RequestStatus, number>,
+  );
+
+  return (
+    <LuxCard className="p-4">
+      <div className="min-w-0">
+        <p className="label-mono">Request status</p>
+        <h3 className="mt-0.5 font-serif text-[18px] leading-tight text-foreground">
+          Outreach tracker
+        </h3>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {activeProfile ? `For ${activeProfile.label}` : "Tracking unsaved drafts"} ·{" "}
+          {counts.approved ?? 0} approved · {counts.sent ?? 0} sent · {counts.draft ?? 0} draft
+          {counts.rejected ? ` · ${counts.rejected} rejected` : ""}
+        </p>
+      </div>
+
+      {profilesState.profiles.length > 1 && (
+        <div className="mt-3">
+          <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+            Tracking for profile
+          </label>
+          <select
+            value={profilesState.activeId ?? ""}
+            onChange={(e) => switchProfile(e.target.value)}
+            className="w-full rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-1.5 text-xs text-foreground focus:border-primary/40 focus:outline-none"
+          >
+            {profilesState.profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {gatedItems.map((item) => {
+          const record = records[item.id];
+          const status = record?.status ?? "draft";
+          const meta = STATUS_META[status];
+          const Icon = meta.icon;
+          const providerName = PROVIDER_KEY_MAP[item.id]?.name ?? item.provider;
+          const isEditing = editingId === item.id;
+
+          return (
+            <div key={item.id} className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground">{providerName}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.category}</p>
+                </div>
+                <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${meta.cls}`}>
+                  <Icon className="h-2.5 w-2.5" />
+                  {meta.label}
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-1">
+                {(["draft", "sent", "approved", "rejected"] as RequestStatus[]).map((s) => {
+                  const active = status === s;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setStatus(item.id, s)}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors ${
+                        active
+                          ? STATUS_META[s].cls
+                          : "border-white/[0.08] bg-white/[0.02] text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {STATUS_META[s].label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {isEditing ? (
+                <div className="mt-2 space-y-1.5">
+                  <textarea
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    placeholder="e.g. Sent via sales@plaid.com Apr 22, awaiting MSA"
+                    rows={2}
+                    className="w-full resize-none rounded-md border border-primary/40 bg-white/[0.04] px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => saveNote(item.id)}
+                      className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-medium text-primary"
+                    >
+                      Save note
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 flex items-start justify-between gap-2">
+                  <p className="min-w-0 flex-1 text-[11px] text-muted-foreground">
+                    {record?.note ? (
+                      record.note
+                    ) : (
+                      <span className="italic text-muted-foreground/60">No notes yet</span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() => startEditNote(item.id)}
+                    className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-2.5 w-2.5" />
+                    {record?.note ? "Edit" : "Add note"}
+                  </button>
+                </div>
+              )}
+
+              {record?.updatedAt && (
+                <p className="mt-1.5 text-[9px] text-muted-foreground/60">
+                  Updated {new Date(record.updatedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </LuxCard>
+  );
 }
 
 function RequestAccessDialog({
