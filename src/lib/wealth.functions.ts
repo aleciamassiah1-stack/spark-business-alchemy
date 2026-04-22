@@ -1003,7 +1003,7 @@ export const parseTaxReturnDocuments = createServerFn({ method: "POST" })
     ] as const) {
       const { val, src } = pickFirst(f);
       if (val != null && src) {
-        (agg as Record<string, number | null | string>)[f] = val as number;
+        (agg as unknown as Record<string, number | null | string>)[f] = val as number;
         credit(src, f);
       }
     }
