@@ -18,30 +18,51 @@ function getVerifier() {
   return _verifier;
 }
 
-/**
- * Resolves the authenticated user id from the inbound request.
- * Returns null if there is no valid bearer token.
- */
-export async function getCurrentUserId(): Promise<string | null> {
+type ResolvedUser = {
+  userId: string;
+  emailConfirmed: boolean;
+};
+
+async function resolveUser(): Promise<ResolvedUser | null> {
   const req = getRequest();
   const auth = req?.headers?.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7).trim();
   if (!token) return null;
   try {
-    const { data, error } = await getVerifier().auth.getClaims(token);
-    if (error || !data?.claims?.sub) return null;
-    return data.claims.sub as string;
+    const client = getVerifier();
+    // Use getUser so we can read email_confirmed_at — getClaims doesn't include it.
+    const { data, error } = await client.auth.getUser(token);
+    if (error || !data?.user?.id) return null;
+    return {
+      userId: data.user.id,
+      emailConfirmed: !!data.user.email_confirmed_at,
+    };
   } catch {
     return null;
   }
 }
 
-/** Like getCurrentUserId but throws 401 when unauthenticated. */
+/**
+ * Resolves the authenticated user id from the inbound request.
+ * Returns null if there is no valid bearer token OR the user's email
+ * is not confirmed — unconfirmed users are treated as unauthenticated
+ * for all data access.
+ */
+export async function getCurrentUserId(): Promise<string | null> {
+  const u = await resolveUser();
+  if (!u || !u.emailConfirmed) return null;
+  return u.userId;
+}
+
+/** Like getCurrentUserId but throws 401 when unauthenticated, and 403 when email is unconfirmed. */
 export async function requireUserId(): Promise<string> {
-  const id = await getCurrentUserId();
-  if (!id) {
+  const u = await resolveUser();
+  if (!u) {
     throw new Response("Unauthorized", { status: 401 });
   }
-  return id;
+  if (!u.emailConfirmed) {
+    throw new Response("Email not confirmed", { status: 403 });
+  }
+  return u.userId;
 }
