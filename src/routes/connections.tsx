@@ -779,6 +779,16 @@ function InsuranceTab({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewDraft, setReviewDraft] = useState<InsuranceReviewDraft | null>(null);
+  const [reviewFileName, setReviewFileName] = useState<string | undefined>();
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [pendingDoc, setPendingDoc] = useState<{
+    path: string | null;
+    url: string | null;
+    raw: unknown;
+  } | null>(null);
   const { setSyncing } = useWealth();
 
   const handleFile = async (file: File) => {
@@ -799,38 +809,46 @@ function InsuranceTab({
         data: { fileName: file.name, base64, mimeType: file.type },
       });
 
+      const fallbackName = file.name.replace(/\.[^.]+$/, "");
+      let draft: InsuranceReviewDraft;
+      let raw: unknown = null;
+
       if (!parsed.ok || !parsed.extracted) {
-        // still save the document with manual placeholder
-        await upsertInsurancePolicy({
-          data: {
-            policy_type: "other",
-            insurer_name: file.name.replace(/\.[^.]+$/, ""),
-            document_path: upload.path,
-            document_url: upload.url,
-            parsed_by_ai: false,
-          },
-        });
-        showToast("err", parsed.error ?? "AI parse failed — saved as draft");
+        draft = {
+          policy_type: "other",
+          insurer_name: fallbackName,
+          policy_number: null,
+          coverage_amount: null,
+          premium_amount: null,
+          premium_frequency: "monthly",
+          renewal_date: null,
+          status: "active",
+          beneficiaries: [],
+          parsed_by_ai: false,
+        };
+        showToast("err", parsed.error ?? "AI parse failed — review manually");
       } else {
         const e = parsed.extracted;
-        await upsertInsurancePolicy({
-          data: {
-            policy_type: e.policy_type,
-            insurer_name: e.insurer_name,
-            policy_number: e.policy_number ?? null,
-            coverage_amount: e.coverage_amount ?? null,
-            premium_amount: e.premium_amount ?? null,
-            premium_frequency: e.premium_frequency ?? "monthly",
-            renewal_date: e.renewal_date ?? null,
-            beneficiaries: e.beneficiaries ?? [],
-            document_path: upload.path,
-            document_url: upload.url,
-            parsed_by_ai: true,
-            raw_extraction: e,
-          },
-        });
+        raw = e;
+        draft = {
+          policy_type: e.policy_type ?? "other",
+          insurer_name: e.insurer_name ?? fallbackName,
+          policy_number: e.policy_number ?? null,
+          coverage_amount: e.coverage_amount ?? null,
+          premium_amount: e.premium_amount ?? null,
+          premium_frequency: e.premium_frequency ?? "monthly",
+          renewal_date: e.renewal_date ?? null,
+          status: "active",
+          beneficiaries: e.beneficiaries ?? [],
+          parsed_by_ai: true,
+        };
       }
-      onParsed();
+
+      setPendingDoc({ path: upload.path, url: upload.url, raw });
+      setReviewDraft(draft);
+      setReviewFileName(file.name);
+      setReviewError(null);
+      setReviewOpen(true);
     } catch (err) {
       showToast("err", err instanceof Error ? err.message : "Failed");
     } finally {
@@ -839,8 +857,59 @@ function InsuranceTab({
     }
   };
 
+  const handleConfirmSave = async (draft: InsuranceReviewDraft) => {
+    setReviewSaving(true);
+    setReviewError(null);
+    try {
+      const res = await upsertInsurancePolicy({
+        data: {
+          policy_type: draft.policy_type,
+          insurer_name: draft.insurer_name,
+          policy_number: draft.policy_number,
+          coverage_amount: draft.coverage_amount,
+          premium_amount: draft.premium_amount,
+          premium_frequency: draft.premium_frequency,
+          renewal_date: draft.renewal_date,
+          status: draft.status,
+          beneficiaries: draft.beneficiaries,
+          document_path: pendingDoc?.path ?? null,
+          document_url: pendingDoc?.url ?? null,
+          parsed_by_ai: draft.parsed_by_ai,
+          raw_extraction: pendingDoc?.raw ?? null,
+        },
+      });
+      if (!res.ok) throw new Error(res.error ?? "Save failed");
+      setReviewOpen(false);
+      setReviewDraft(null);
+      setPendingDoc(null);
+      showToast("ok", "Policy saved");
+      onParsed();
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  const handleCloseReview = () => {
+    if (reviewSaving) return;
+    setReviewOpen(false);
+    setReviewDraft(null);
+    setPendingDoc(null);
+    setReviewError(null);
+  };
+
   return (
     <div>
+      <InsuranceReviewModal
+        open={reviewOpen}
+        initial={reviewDraft}
+        fileName={reviewFileName}
+        onClose={handleCloseReview}
+        onSave={handleConfirmSave}
+        saving={reviewSaving}
+        error={reviewError}
+      />
       <input
         ref={fileRef}
         type="file"
@@ -865,7 +934,7 @@ function InsuranceTab({
         {parsing ? "Parsing with AI…" : "Upload policy (AI parses)"}
       </button>
       <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-        PDF or photo · Lovable AI extracts fields automatically
+        PDF or photo · review extracted fields before saving
       </p>
 
       {policies.length === 0 ? (
