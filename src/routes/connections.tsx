@@ -23,6 +23,7 @@ import {
   History,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { InsuranceReviewModal, type InsuranceReviewDraft } from "@/components/InsuranceReviewModal";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
