@@ -869,11 +869,12 @@ function OwnershipBlock({
   const partnersTotal = state.ownership.partners.reduce((s, p) => s + (p.pct || 0), 0);
   const yourPct = Math.max(0, 100 - partnersTotal);
 
+  const storedYourPct = state.ownership.yourPct;
   useEffect(() => {
-    if (state.ownership.yourPct !== yourPct) {
+    if (storedYourPct !== yourPct) {
       update((s) => ({ ...s, ownership: { ...s.ownership, yourPct } }));
     }
-  }, [partnersTotal]);
+  }, [partnersTotal, storedYourPct, yourPct, update]);
 
   const addPartner = () => {
     const p = makePartner({ name: "New partner", pct: 0 });
@@ -1749,5 +1750,3 @@ function initials(s: string) {
     .join("")
     .toUpperCase();
 }
-
-export type _Refs = EntityType | typeof Button;
