@@ -25,17 +25,18 @@ function SignupRoute() {
   const auth = useAuth();
   const { markStep } = useOnboarding();
   const navigate = useNavigate();
+  const guardedNavigate = useGuardedNavigate();
   const search = Route.useSearch();
 
   useEffect(() => {
     if (!auth.user) return;
     if (!auth.emailConfirmed) {
-      navigate({ to: "/verify-email" });
+      guardedNavigate({ to: "/verify-email" });
       return;
     }
     markStep("account");
-    navigate({ to: "/" });
-  }, [auth.user, auth.emailConfirmed, markStep, navigate]);
+    guardedNavigate({ to: "/" });
+  }, [auth.user, auth.emailConfirmed, markStep, guardedNavigate]);
 
   if (search.view !== "form") {
     return (
