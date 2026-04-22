@@ -15,6 +15,10 @@ const propertyInputSchema = z.object({
   mortgage_balance: z.number().min(0).max(1_000_000_000).default(0),
   purchase_price: z.number().min(0).max(1_000_000_000).optional().nullable(),
   purchase_date: z.string().optional().nullable(),
+  beds: z.number().min(0).max(50).optional().nullable(),
+  baths: z.number().min(0).max(50).optional().nullable(),
+  sqft: z.number().min(0).max(1_000_000).optional().nullable(),
+  image_url: z.string().trim().max(2048).url().optional().nullable(),
 });
 
 export const listProperties = createServerFn({ method: "GET" }).handler(async () => {
@@ -39,6 +43,10 @@ export const upsertProperty = createServerFn({ method: "POST" })
       mortgage_balance?: number;
       purchase_price?: number | null;
       purchase_date?: string | null;
+      beds?: number | null;
+      baths?: number | null;
+      sqft?: number | null;
+      image_url?: string | null;
     }) => {
       const { id, ...rest } = input;
       const parsed = propertyInputSchema.parse({
@@ -60,6 +68,10 @@ export const upsertProperty = createServerFn({ method: "POST" })
       mortgage_balance: data.mortgage_balance,
       purchase_price: data.purchase_price ?? null,
       purchase_date: data.purchase_date ?? null,
+      beds: data.beds ?? null,
+      baths: data.baths ?? null,
+      sqft: data.sqft ?? null,
+      image_url: data.image_url ?? null,
       last_valued_at: new Date().toISOString(),
     };
     if (data.id) {
