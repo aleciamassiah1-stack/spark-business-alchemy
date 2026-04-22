@@ -4,6 +4,7 @@ import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { Toaster } from "@/components/ui/sonner";
 import { installAuthFetch } from "@/lib/auth-fetch";
 
@@ -82,6 +83,7 @@ function RootComponent() {
     <AuthProvider>
       <OnboardingProvider>
         <WealthProvider>
+          <PaymentTestModeBanner />
           <SyncStatusBar />
           <Outlet />
           <Toaster theme="dark" position="top-center" />
