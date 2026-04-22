@@ -215,17 +215,24 @@ const FAQS = [
 function PricingPage() {
   const [billing, setBilling] = useState<Billing>("annual");
   const [demoOpen, setDemoOpen] = useState(false);
+  const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const handleCta = (tier: Tier) => {
     if (tier.ctaAction === "demo") {
       setDemoOpen(true);
       return;
     }
-    // Checkout placeholder — Stripe will be wired up later.
-    const price = billing === "annual" ? tier.annual : tier.monthly;
-    toast(`${tier.name} — Checkout coming soon`, {
-      description: `$${price.toLocaleString()} / ${billing === "annual" ? "year" : "month"}. Payments will be enabled shortly.`,
-    });
+    if (!isStripeConfigured()) {
+      toast.error("Payments are not configured yet");
+      return;
+    }
+    if (!tier.priceIds) {
+      toast.error("This plan is not available for self-checkout");
+      return;
+    }
+    const priceId = billing === "annual" ? tier.priceIds.annual : tier.priceIds.monthly;
+    setCheckoutPriceId(priceId);
   };
 
   return (
