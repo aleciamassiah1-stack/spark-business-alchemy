@@ -15,6 +15,9 @@ import {
   ExternalLink,
   X,
   Trash2,
+  Home,
+  Sparkles,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
@@ -24,10 +27,36 @@ import { trustAccounts as demoTrustAccounts, attorney as demoAttorney } from "@/
 import { useIsTestAccount } from "@/lib/test-account";
 import {
   listEstateDocuments,
+  listProperties,
+  listPropertyValuations,
   upsertEstateDocument,
   deleteEstateDocument,
 } from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
+
+type Property = {
+  id: string;
+  name: string;
+  address: string;
+  estimated_value: number | null;
+  mortgage_balance: number | null;
+  image_url: string | null;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+};
+
+type Valuation = {
+  id: string;
+  property_id: string;
+  estimated_value: number;
+  value_low: number;
+  value_high: number;
+  confidence: string;
+  price_per_sqft: number | null;
+  market_summary: string | null;
+  created_at: string;
+};
 
 type EstateDoc = {
   id: string;
@@ -92,6 +121,9 @@ function LegacyPage() {
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EstateDoc | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [valuationsByProperty, setValuationsByProperty] = useState<Record<string, Valuation[]>>({});
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
 
   async function reload() {
     const res = await listEstateDocuments();
@@ -111,11 +143,109 @@ function LegacyPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await listProperties();
+        if (!mounted) return;
+        const props = (res.properties ?? []) as Property[];
+        setProperties(props);
+        // Fetch latest valuations in parallel for each property
+        const valuationLists = await Promise.all(
+          props.map((p) => listPropertyValuations({ data: { property_id: p.id } })),
+        );
+        if (!mounted) return;
+        const map: Record<string, Valuation[]> = {};
+        props.forEach((p, i) => {
+          map[p.id] = (valuationLists[i].valuations ?? []) as Valuation[];
+        });
+        setValuationsByProperty(map);
+      } finally {
+        if (mounted) setPropertiesLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const totalRealEstateValue = properties.reduce((s, p) => s + (Number(p.estimated_value) || 0), 0);
+  const totalRealEstateEquity = properties.reduce(
+    (s, p) => s + Math.max(0, (Number(p.estimated_value) || 0) - (Number(p.mortgage_balance) || 0)),
+    0,
+  );
+
   return (
     <MobileShell title="Legacy" subtitle="Trust & Estate">
+      {/* Real estate — properties with photos and AI valuations */}
+      <div className="px-5">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="label-mono">
+            Real estate {properties.length > 0 ? `· ${fmtCurrency(totalRealEstateValue, { compact: true })}` : ""}
+          </p>
+          <Link
+            to="/connections"
+            className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-foreground"
+          >
+            <Plus className="h-3 w-3" /> Add property
+          </Link>
+        </div>
+
+        {propertiesLoading ? (
+          <LuxCard className="flex items-center justify-center p-6">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </LuxCard>
+        ) : properties.length === 0 ? (
+          <LuxCard className="p-6 text-center">
+            <Home className="mx-auto h-6 w-6 text-muted-foreground" />
+            <p className="mt-2 font-serif text-base text-foreground">No properties yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add a home to track its value, equity, and AI-estimated worth over time.
+            </p>
+            <Link
+              to="/connections"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full gradient-violet px-4 py-2 text-xs font-medium text-foreground glow-violet"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add your first property
+            </Link>
+          </LuxCard>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* Equity summary banner */}
+            <LuxCard className="gradient-hero p-4">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/30 blur-3xl" />
+              <div className="relative grid grid-cols-2 gap-3">
+                <div>
+                  <p className="label-mono">Total value</p>
+                  <p className="mt-1 font-serif text-2xl text-foreground">
+                    {fmtCurrency(totalRealEstateValue, { compact: true })}
+                  </p>
+                </div>
+                <div>
+                  <p className="label-mono">Equity</p>
+                  <p className="mt-1 font-serif text-2xl text-foreground">
+                    {fmtCurrency(totalRealEstateEquity, { compact: true })}
+                  </p>
+                </div>
+              </div>
+            </LuxCard>
+
+            {properties.map((p, i) => (
+              <PropertyCard
+                key={p.id}
+                property={p}
+                valuation={valuationsByProperty[p.id]?.[0] ?? null}
+                delay={i * 0.05}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Trust accounts — demo data only for the test account */}
       {trustAccounts.length > 0 ? (
-        <div className="px-5">
+        <div className="mt-6 px-5">
           <p className="label-mono mb-2">Trust accounts · {fmtCurrency(trustTotal, { compact: true })}</p>
           <div className="flex flex-col gap-2">
             {trustAccounts.map((t, i) => (
@@ -537,5 +667,153 @@ function DocStatusBadge({ status }: { status: string }) {
     >
       {label}
     </span>
+  );
+}
+
+function PropertyCard({
+  property,
+  valuation,
+  delay = 0,
+}: {
+  property: Property;
+  valuation: Valuation | null;
+  delay?: number;
+}) {
+  const value = Number(property.estimated_value) || 0;
+  const mortgage = Number(property.mortgage_balance) || 0;
+  const equity = Math.max(0, value - mortgage);
+  const ltv = value > 0 ? Math.min(100, Math.round((mortgage / value) * 100)) : 0;
+  const aiDelta = valuation ? valuation.estimated_value - value : 0;
+  const aiDeltaPct = value > 0 && valuation ? (aiDelta / value) * 100 : 0;
+  const confidence = (valuation?.confidence ?? "").toLowerCase();
+  const confidenceStyle: Record<string, string> = {
+    high: "bg-success/15 text-success",
+    medium: "bg-primary/15 text-primary",
+    low: "bg-warning/15 text-warning",
+  };
+
+  return (
+    <LuxCard delay={delay} className="overflow-hidden">
+      {/* Photo */}
+      <div className="relative h-40 w-full overflow-hidden bg-white/[0.03]">
+        {property.image_url ? (
+          <img
+            src={property.image_url}
+            alt={property.name}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Home className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+        <div className="absolute bottom-3 left-4 right-4">
+          <p className="font-serif text-lg leading-tight text-foreground drop-shadow">
+            {property.name}
+          </p>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{property.address}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 divide-x divide-white/[0.04] border-t border-white/[0.04]">
+        <div className="px-3 py-3">
+          <p className="label-mono">Value</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">
+            {fmtCurrency(value, { compact: true })}
+          </p>
+        </div>
+        <div className="px-3 py-3">
+          <p className="label-mono">Equity</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">
+            {fmtCurrency(equity, { compact: true })}
+          </p>
+        </div>
+        <div className="px-3 py-3">
+          <p className="label-mono">LTV</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">{ltv}%</p>
+        </div>
+      </div>
+
+      {/* Beds / baths / sqft chip row */}
+      {(property.beds || property.baths || property.sqft) && (
+        <div className="flex flex-wrap gap-2 border-t border-white/[0.04] px-4 py-2.5">
+          {property.beds ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {property.beds} bed
+            </span>
+          ) : null}
+          {property.baths ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {property.baths} bath
+            </span>
+          ) : null}
+          {property.sqft ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {Number(property.sqft).toLocaleString()} sqft
+            </span>
+          ) : null}
+        </div>
+      )}
+
+      {/* AI valuation block */}
+      {valuation ? (
+        <div className="border-t border-white/[0.04] bg-primary/[0.04] px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <p className="label-mono">AI valuation</p>
+            </div>
+            {confidence ? (
+              <span
+                className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                  confidenceStyle[confidence] ?? "bg-muted/40 text-muted-foreground"
+                }`}
+              >
+                {confidence} confidence
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <p className="font-serif text-xl text-foreground">
+              {fmtCurrency(valuation.estimated_value, { compact: true })}
+            </p>
+            <p
+              className={`font-mono text-[11px] ${
+                aiDelta >= 0 ? "text-success" : "text-destructive"
+              }`}
+            >
+              {aiDelta >= 0 ? "+" : ""}
+              {fmtCurrency(aiDelta, { compact: true })} ({aiDeltaPct >= 0 ? "+" : ""}
+              {aiDeltaPct.toFixed(1)}%) vs entered
+            </p>
+          </div>
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+            Range {fmtCurrency(valuation.value_low, { compact: true })}–
+            {fmtCurrency(valuation.value_high, { compact: true })}
+            {valuation.price_per_sqft ? ` · $${Math.round(valuation.price_per_sqft)}/sqft` : ""}
+          </p>
+          {valuation.market_summary ? (
+            <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-muted-foreground">
+              {valuation.market_summary}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="border-t border-white/[0.04] px-4 py-3">
+          <Link
+            to="/connections"
+            className="flex items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-medium text-primary"
+          >
+            <Sparkles className="h-3 w-3" /> Get AI valuation
+          </Link>
+        </div>
+      )}
+    </LuxCard>
   );
 }
