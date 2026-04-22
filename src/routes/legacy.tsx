@@ -15,6 +15,10 @@ import {
   ExternalLink,
   X,
   Trash2,
+  Home,
+  Sparkles,
+  TrendingUp,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
@@ -24,10 +28,36 @@ import { trustAccounts as demoTrustAccounts, attorney as demoAttorney } from "@/
 import { useIsTestAccount } from "@/lib/test-account";
 import {
   listEstateDocuments,
+  listProperties,
+  listPropertyValuations,
   upsertEstateDocument,
   deleteEstateDocument,
 } from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
+
+type Property = {
+  id: string;
+  name: string;
+  address: string;
+  estimated_value: number | null;
+  mortgage_balance: number | null;
+  image_url: string | null;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+};
+
+type Valuation = {
+  id: string;
+  property_id: string;
+  estimated_value: number;
+  value_low: number;
+  value_high: number;
+  confidence: string;
+  price_per_sqft: number | null;
+  market_summary: string | null;
+  created_at: string;
+};
 
 type EstateDoc = {
   id: string;
