@@ -4,7 +4,8 @@ import { AlertTriangle, Plus, Pencil } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
-import { beneficiaries, conflicts } from "@/lib/mock-data";
+import { beneficiaries as demoBeneficiaries, conflicts as demoConflicts } from "@/lib/mock-data";
+import { useIsTestAccount } from "@/lib/test-account";
 
 export const Route = createFileRoute("/beneficiaries")({
   head: () => ({
@@ -21,6 +22,9 @@ export const Route = createFileRoute("/beneficiaries")({
 });
 
 function BeneficiariesPage() {
+  const isTestAccount = useIsTestAccount();
+  const beneficiaries = isTestAccount ? demoBeneficiaries : [];
+  const conflicts = isTestAccount ? demoConflicts : [];
   return (
     <MobileShell title="Beneficiaries" subtitle="Who inherits what">
       {/* Conflicts */}
