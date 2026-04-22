@@ -17,9 +17,21 @@ import {
   ScrollText,
   RotateCcw,
   ExternalLink,
+  KeyRound,
+  Copy,
+  Check,
+  Mail,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/eligibility")({
   head: () => ({
