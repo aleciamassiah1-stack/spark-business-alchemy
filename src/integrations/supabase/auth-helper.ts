@@ -70,7 +70,7 @@ export async function getCurrentUserId(): Promise<string | null> {
   return u.userId;
 }
 
-/** Like getCurrentUserId but throws 401 when unauthenticated, and 403 when email is unconfirmed. */
+/** Like getCurrentUserId but throws 401 when unauthenticated, 403 when email is unconfirmed, and 410 when scheduled for deletion. */
 export async function requireUserId(): Promise<string> {
   const u = await resolveUser();
   if (!u) {
@@ -78,6 +78,9 @@ export async function requireUserId(): Promise<string> {
   }
   if (!u.emailConfirmed) {
     throw new Response("Email not confirmed", { status: 403 });
+  }
+  if (await isPendingDeletion(u.userId)) {
+    throw new Response("Account scheduled for deletion", { status: 410 });
   }
   return u.userId;
 }
