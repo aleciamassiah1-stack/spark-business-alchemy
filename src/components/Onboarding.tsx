@@ -23,6 +23,7 @@ import {
   PiggyBank,
   Bitcoin,
   CreditCard,
+  Star,
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
