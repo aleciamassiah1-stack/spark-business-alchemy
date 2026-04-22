@@ -245,6 +245,11 @@ function HomePage() {
                       animate={{ width: `${b.pct}%` }}
                       transition={{ delay: 0.4 + i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                       className={b.dot}
+                      title={
+                        b.key === "business"
+                          ? "Includes estimated business valuation."
+                          : `${b.label} · ${b.pct.toFixed(1)}%`
+                      }
                     />
                   ))}
                 </div>
