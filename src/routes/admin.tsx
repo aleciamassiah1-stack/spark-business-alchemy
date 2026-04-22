@@ -338,11 +338,56 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
     }
   };
 
+  const scheduleDelete = async () => {
+    const ok = window.confirm(
+      `Delete ${m.email ?? "this account"}?\n\nThe account will be retained for 30 days and then permanently purged. You can cancel within that window.`,
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await adminScheduleAccountDeletion({ data: { userId: m.user_id } });
+      const purgeDate = new Date(res.purgeAfter).toLocaleDateString();
+      toast.success(`Deletion scheduled — purges ${purgeDate}`);
+      onChanged();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelDelete = async () => {
+    setBusy(true);
+    try {
+      await adminCancelAccountDeletion({ data: { userId: m.user_id } });
+      toast.success("Deletion cancelled");
+      onChanged();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const isPendingDeletion = !!m.pending_deletion_at;
+  const daysRemaining = m.pending_purge_after
+    ? Math.max(
+        0,
+        Math.ceil((new Date(m.pending_purge_after).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      )
+    : 0;
+
   return (
-    <tr className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02]">
+    <tr
+      className={`border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] ${
+        isPendingDeletion ? "bg-destructive/[0.04]" : ""
+      }`}
+    >
       <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-foreground">{m.email ?? "—"}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`${isPendingDeletion ? "text-muted-foreground line-through" : "text-foreground"}`}>
+            {m.email ?? "—"}
+          </span>
           {m.is_admin && (
             <span className="rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-primary">
               Admin
@@ -351,6 +396,11 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
           {m.has_manual_access && (
             <span className="rounded-full bg-gold/15 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-gold">
               Comp
+            </span>
+          )}
+          {isPendingDeletion && (
+            <span className="rounded-full bg-destructive/15 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-destructive">
+              Deleting · {daysRemaining}d
             </span>
           )}
         </div>
@@ -376,7 +426,7 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
         {m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString() : "—"}
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="inline-flex items-center gap-1.5">
+        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
           {m.has_manual_access ? (
             <button
               onClick={revoke}
@@ -405,6 +455,24 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
           >
             <ShieldCheck className="h-3 w-3" /> {m.is_admin ? "Demote" : "Make admin"}
           </button>
+          {isPendingDeletion ? (
+            <button
+              onClick={cancelDelete}
+              disabled={busy}
+              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] text-success hover:bg-success/20 disabled:opacity-50"
+            >
+              <Undo2 className="h-3 w-3" /> Restore
+            </button>
+          ) : (
+            <button
+              onClick={scheduleDelete}
+              disabled={busy || m.is_admin}
+              title={m.is_admin ? "Demote admin before deleting" : "Soft-delete (30-day grace)"}
+              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] text-destructive hover:bg-destructive/20 disabled:opacity-30"
+            >
+              <Trash2 className="h-3 w-3" /> Delete
+            </button>
+          )}
         </div>
       </td>
     </tr>
