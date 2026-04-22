@@ -472,20 +472,36 @@ function MemberRow({
           {isPendingDeletion ? (
             <button
               onClick={cancelDelete}
-              disabled={busy}
-              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] text-success hover:bg-success/20 disabled:opacity-50"
+              disabled={busy || isSelf}
+              title={
+                isSelf
+                  ? "You cannot restore your own admin account"
+                  : "Cancel scheduled deletion"
+              }
+              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] text-success hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Undo2 className="h-3 w-3" /> Restore
             </button>
           ) : (
             <button
               onClick={scheduleDelete}
-              disabled={busy || m.is_admin}
-              title={m.is_admin ? "Demote admin before deleting" : "Soft-delete (30-day grace)"}
-              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] text-destructive hover:bg-destructive/20 disabled:opacity-30"
+              disabled={busy || m.is_admin || isSelf}
+              title={
+                isSelf
+                  ? "You cannot delete your own admin account"
+                  : m.is_admin
+                    ? "Demote admin before deleting"
+                    : "Soft-delete (30-day grace)"
+              }
+              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] text-destructive hover:bg-destructive/20 disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Trash2 className="h-3 w-3" /> Delete
             </button>
+          )}
+          {isSelf && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-white/[0.04] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+              You
+            </span>
           )}
         </div>
       </td>
