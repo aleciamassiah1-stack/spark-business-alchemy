@@ -397,6 +397,7 @@ const insuranceInputSchema = z.object({
   premium_amount: z.number().min(0).max(10_000_000).optional().nullable(),
   premium_frequency: z.string().trim().max(30).default("monthly"),
   renewal_date: z.string().optional().nullable(),
+  status: z.string().trim().max(30).default("active"),
   beneficiaries: z.array(z.string().trim().max(120)).max(20).default([]),
 });
 
