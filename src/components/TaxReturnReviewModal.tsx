@@ -134,7 +134,7 @@ export function TaxReturnReviewModal({
                   <select
                     value={draft.form_type}
                     onChange={(e) => set("form_type", e.target.value)}
-                    className="luxe-modal-select"
+                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground focus:border-primary/50 focus:outline-none"
                   >
                     {FORM_TYPES.map((t) => (
                       <option key={t} value={t} className="bg-background">
