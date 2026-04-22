@@ -1,8 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Users, BarChart3, Settings, HelpCircle, Bell, LogOut, ChevronRight, Building2, Link as LinkIcon } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/more")({
   head: () => ({
@@ -19,6 +21,19 @@ export const Route = createFileRoute("/more")({
 });
 
 function MorePage() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      toast.success("Signed out");
+      navigate({ to: "/signin" });
+    } catch {
+      toast.error("Could not sign out");
+    }
+  }
+
   return (
     <MobileShell title="More" subtitle="Tools & settings">
       <div className="flex flex-col gap-3 px-5">
@@ -34,10 +49,22 @@ function MorePage() {
         </NavGroup>
 
         <NavGroup title="Account">
-          <NavRow to="/more" icon={Bell} label="Notifications" />
-          <NavRow to="/more" icon={Settings} label="Preferences" />
-          <NavRow to="/more" icon={HelpCircle} label="Concierge support" />
-          <NavRow to="/more" icon={LogOut} label="Sign out" danger />
+          <NavRow to="/notifications" icon={Bell} label="Notifications" desc="Push or encrypted email" />
+          <NavRow to="/preferences" icon={Settings} label="Preferences" desc="Currency, region, privacy" />
+          <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+              <LogOut className="h-4 w-4 text-destructive" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-destructive">Sign out</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
         </NavGroup>
 
         <p className="mt-2 text-center font-serif text-xs italic text-muted-foreground">
@@ -57,14 +84,14 @@ function NavGroup({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
-function NavRow({ to, icon: Icon, label, desc, danger = false }: { to: string; icon: typeof Users; label: string; desc?: string; danger?: boolean }) {
+function NavRow({ to, icon: Icon, label, desc }: { to: string; icon: typeof Users; label: string; desc?: string }) {
   return (
     <Link to={to} className="flex items-center gap-3 px-4 py-3.5">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${danger ? "bg-destructive/15" : "bg-white/[0.04]"}`}>
-        <Icon className={`h-4 w-4 ${danger ? "text-destructive" : "text-primary"}`} />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04]">
+        <Icon className="h-4 w-4 text-primary" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`text-sm ${danger ? "text-destructive" : "text-foreground"}`}>{label}</p>
+        <p className="text-sm text-foreground">{label}</p>
         {desc && <p className="text-[11px] text-muted-foreground">{desc}</p>}
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground" />
