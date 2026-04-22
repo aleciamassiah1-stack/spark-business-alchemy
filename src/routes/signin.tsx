@@ -1,9 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { AuthForm } from "@/components/Onboarding";
 import { useAuth } from "@/lib/auth-context";
 import { useOnboarding } from "@/lib/onboarding-context";
+import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 
 export const Route = createFileRoute("/signin")({
   head: () => ({
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/signin")({
 function SigninRoute() {
   const auth = useAuth();
   const { markStep } = useOnboarding();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
 
   useEffect(() => {
     if (!auth.user) return;

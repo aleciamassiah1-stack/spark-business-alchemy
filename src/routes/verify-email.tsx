@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MailCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 
 export const Route = createFileRoute("/verify-email")({
   head: () => ({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/verify-email")({
 
 function VerifyEmailRoute() {
   const auth = useAuth();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const [resending, setResending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 

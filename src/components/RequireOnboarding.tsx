@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import { Onboarding } from "@/components/Onboarding";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
+import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
@@ -28,7 +29,7 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const onb = useOnboarding();
   const access = useAccess();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -38,10 +39,10 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   }, [auth.ready, auth.user, navigate]);
 
   useEffect(() => {
-    if (auth.ready && auth.user && !auth.emailConfirmed && location.pathname !== "/verify-email") {
+    if (auth.ready && auth.user && !auth.emailConfirmed) {
       navigate({ to: "/verify-email" });
     }
-  }, [auth.ready, auth.user, auth.emailConfirmed, location.pathname, navigate]);
+  }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
   useEffect(() => {
     if (
