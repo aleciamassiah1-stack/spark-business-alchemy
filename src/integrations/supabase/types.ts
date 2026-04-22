@@ -688,6 +688,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_intake: {
+        Row: {
+          advisor_email: string | null
+          advisor_firm: string | null
+          advisor_name: string | null
+          billing_interval: string
+          completed_at: string | null
+          created_at: string
+          full_name: string | null
+          has_advisor: boolean | null
+          id: string
+          net_worth_band: string | null
+          plan: string
+          primary_goal: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          advisor_email?: string | null
+          advisor_firm?: string | null
+          advisor_name?: string | null
+          billing_interval?: string
+          completed_at?: string | null
+          created_at?: string
+          full_name?: string | null
+          has_advisor?: boolean | null
+          id?: string
+          net_worth_band?: string | null
+          plan: string
+          primary_goal?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          advisor_email?: string | null
+          advisor_firm?: string | null
+          advisor_name?: string | null
+          billing_interval?: string
+          completed_at?: string | null
+          created_at?: string
+          full_name?: string | null
+          has_advisor?: boolean | null
+          id?: string
+          net_worth_band?: string | null
+          plan?: string
+          primary_goal?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
