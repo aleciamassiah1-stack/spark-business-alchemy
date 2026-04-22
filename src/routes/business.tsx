@@ -48,9 +48,10 @@ import { Button } from "@/components/ui/button";
 import {
   TaxReturnReviewModal,
   type TaxReturnReviewDraft,
+  type TaxReturnReviewSource,
 } from "@/components/TaxReturnReviewModal";
 import { fmtCurrency, fmtPct } from "@/lib/format";
-import { parseTaxReturnPdf } from "@/lib/wealth.functions";
+import { parseTaxReturnDocuments } from "@/lib/wealth.functions";
 import {
   type BusinessState,
   type BusinessAsset,
