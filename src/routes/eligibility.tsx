@@ -949,6 +949,21 @@ ${form.email || "[email]"}`;
               </dl>
             </div>
 
+            {hasSavedProfile && (
+              <div className="flex items-center justify-between rounded-lg border border-success/20 bg-success/[0.06] px-3 py-2">
+                <div className="flex items-center gap-2 text-[11px] text-foreground/80">
+                  <Check className="h-3 w-3 text-success" />
+                  <span>Loaded from your saved profile</span>
+                </div>
+                <button
+                  onClick={clearSavedProfile}
+                  className="text-[10px] text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             <FormRow label="Company name">
               <input
                 value={form.companyName}
