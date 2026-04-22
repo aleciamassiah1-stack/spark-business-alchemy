@@ -1714,20 +1714,24 @@ function DocumentsBlock({
         next = { ...next, liabilities: [...stripped, line] };
       }
 
-      // Always file the document itself in the documents list
-      const doc = makeDocument({
-        name: pendingFile?.name ?? "Tax Return.pdf",
-        category: "Tax Return",
-        status: "current",
-      });
-      next = { ...next, documents: [...next.documents, doc] };
+      // File every uploaded source document in the documents list. Schedules go
+      // in as "Tax Return" too — they're part of the return package.
+      const docsToAdd = pendingFiles.map((f) =>
+        makeDocument({
+          name: f.name || "Tax Return.pdf",
+          category: "Tax Return",
+          status: "current",
+        }),
+      );
+      next = { ...next, documents: [...next.documents, ...docsToAdd] };
 
       return next;
     });
 
     setReviewOpen(false);
     setReviewDraft(null);
-    setPendingFile(null);
+    setReviewSources(undefined);
+    setPendingFiles([]);
     setParseStatus("Applied to your business");
     window.setTimeout(() => setParseStatus(null), 2500);
   };
@@ -1735,7 +1739,8 @@ function DocumentsBlock({
   const handleCloseReview = () => {
     setReviewOpen(false);
     setReviewDraft(null);
-    setPendingFile(null);
+    setReviewSources(undefined);
+    setPendingFiles([]);
     setReviewError(null);
   };
 
