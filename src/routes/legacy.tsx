@@ -240,6 +240,13 @@ function LegacyPage() {
                 property={p}
                 valuation={valuationsByProperty[p.id]?.[0] ?? null}
                 delay={i * 0.05}
+                onValuationSaved={async () => {
+                  const res = await listPropertyValuations({ data: { property_id: p.id } });
+                  setValuationsByProperty((prev) => ({
+                    ...prev,
+                    [p.id]: (res.valuations ?? []) as Valuation[],
+                  }));
+                }}
               />
             ))}
           </div>
