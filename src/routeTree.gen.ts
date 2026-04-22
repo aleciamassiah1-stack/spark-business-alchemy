@@ -13,7 +13,9 @@ import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProtectRouteImport } from './routes/protect'
+import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as FamilyRouteImport } from './routes/family'
@@ -41,9 +43,19 @@ const ProtectRoute = ProtectRouteImport.update({
   path: '/protect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreferencesRoute = PreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MoreRoute = MoreRouteImport.update({
@@ -84,7 +96,9 @@ export interface FileRoutesByFullPath {
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
+  '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
+  '/preferences': typeof PreferencesRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -97,7 +111,9 @@ export interface FileRoutesByTo {
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
+  '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
+  '/preferences': typeof PreferencesRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -111,7 +127,9 @@ export interface FileRoutesById {
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
+  '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
+  '/preferences': typeof PreferencesRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -126,7 +144,9 @@ export interface FileRouteTypes {
     | '/family'
     | '/legacy'
     | '/more'
+    | '/notifications'
     | '/portfolio'
+    | '/preferences'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -139,7 +159,9 @@ export interface FileRouteTypes {
     | '/family'
     | '/legacy'
     | '/more'
+    | '/notifications'
     | '/portfolio'
+    | '/preferences'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -152,7 +174,9 @@ export interface FileRouteTypes {
     | '/family'
     | '/legacy'
     | '/more'
+    | '/notifications'
     | '/portfolio'
+    | '/preferences'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -166,7 +190,9 @@ export interface RootRouteChildren {
   FamilyRoute: typeof FamilyRoute
   LegacyRoute: typeof LegacyRoute
   MoreRoute: typeof MoreRoute
+  NotificationsRoute: typeof NotificationsRoute
   PortfolioRoute: typeof PortfolioRoute
+  PreferencesRoute: typeof PreferencesRoute
   ProtectRoute: typeof ProtectRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
@@ -203,11 +229,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preferences': {
+      id: '/preferences'
+      path: '/preferences'
+      fullPath: '/preferences'
+      preLoaderRoute: typeof PreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portfolio': {
       id: '/portfolio'
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/more': {
@@ -262,7 +302,9 @@ const rootRouteChildren: RootRouteChildren = {
   FamilyRoute: FamilyRoute,
   LegacyRoute: LegacyRoute,
   MoreRoute: MoreRoute,
+  NotificationsRoute: NotificationsRoute,
   PortfolioRoute: PortfolioRoute,
+  PreferencesRoute: PreferencesRoute,
   ProtectRoute: ProtectRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
@@ -271,3 +313,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
