@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
@@ -30,6 +31,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRoutesByTo {
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRoutesById {
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRouteTypes {
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/timeline'
+    | '/verify-email'
     | '/checkout/return'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/timeline'
+    | '/verify-email'
     | '/checkout/return'
   id:
     | '__root__'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/timeline'
+    | '/verify-email'
     | '/checkout/return'
   fileRoutesById: FileRoutesById
 }
@@ -287,11 +299,19 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
   TimelineRoute: typeof TimelineRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/timeline': {
       id: '/timeline'
       path: '/timeline'
@@ -455,6 +475,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
   TimelineRoute: TimelineRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
 }
 export const routeTree = rootRouteImport
