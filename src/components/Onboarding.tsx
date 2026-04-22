@@ -1159,7 +1159,7 @@ function WelcomeTier({
   return (
     <Link
       to="/pricing"
-      className={`relative block overflow-hidden rounded-2xl border ${styles.border} ${styles.bg} ${styles.glow} px-4 py-4 text-left transition-all hover:scale-[1.01]`}
+      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border ${styles.border} ${styles.bg} ${styles.glow} px-4 py-4 text-left transition-all hover:scale-[1.01]`}
     >
       {badge && (
         <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-gold">
@@ -1177,8 +1177,8 @@ function WelcomeTier({
       <p className="mt-1 text-[11px] text-muted-foreground">{description}</p>
       <ul className="mt-3 space-y-1.5">
         {highlights.map((h) => (
-          <li key={h} className="flex items-center gap-2">
-            <Check className={`h-3 w-3 shrink-0 ${styles.check}`} strokeWidth={2.4} />
+          <li key={h} className="flex items-start gap-2">
+            <Check className={`mt-0.5 h-3 w-3 shrink-0 ${styles.check}`} strokeWidth={2.4} />
             <span className="text-[12px] text-foreground/85">{h}</span>
           </li>
         ))}
