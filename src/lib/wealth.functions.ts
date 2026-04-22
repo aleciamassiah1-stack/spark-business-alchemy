@@ -1210,6 +1210,40 @@ export const uploadWealthDocument = createServerFn({ method: "POST" })
     }
   });
 
+// Upload a property hero image to the public property-images bucket and return its public URL
+export const uploadPropertyImage = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { fileName: string; base64: string; mimeType: string }) =>
+      z
+        .object({
+          fileName: z.string().trim().min(1).max(255),
+          base64: z.string().min(10),
+          mimeType: z
+            .string()
+            .trim()
+            .max(80)
+            .regex(/^image\/(jpeg|jpg|png|webp|heic|heif)$/i, "Image only"),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await requireUserId();
+      const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${userId}/${Date.now()}_${safeName}`;
+      const buf = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
+      const { error } = await supabaseAdmin.storage
+        .from("property-images")
+        .upload(path, buf, { contentType: data.mimeType, upsert: false });
+      if (error) return { ok: false as const, url: null, error: error.message };
+      const { data: pub } = supabaseAdmin.storage.from("property-images").getPublicUrl(path);
+      return { ok: true as const, url: pub.publicUrl, error: null as string | null };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      return { ok: false as const, url: null, error: msg };
+    }
+  });
+
 // =================================================================
 // Demo mode — seed mock institutions / clear demo (per user)
 // =================================================================
