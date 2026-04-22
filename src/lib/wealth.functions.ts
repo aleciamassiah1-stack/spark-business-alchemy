@@ -412,6 +412,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       premium_amount?: number | null;
       premium_frequency?: string;
       renewal_date?: string | null;
+      status?: string;
       beneficiaries?: string[];
       document_path?: string | null;
       document_url?: string | null;
@@ -422,6 +423,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       const parsed = insuranceInputSchema.parse({
         ...rest,
         premium_frequency: rest.premium_frequency ?? "monthly",
+        status: rest.status ?? "active",
         beneficiaries: rest.beneficiaries ?? [],
       });
       return {
@@ -445,6 +447,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       premium_amount: data.premium_amount ?? null,
       premium_frequency: data.premium_frequency,
       renewal_date: data.renewal_date ?? null,
+      status: data.status,
       beneficiaries: data.beneficiaries,
       document_path: data.document_path,
       document_url: data.document_url,
