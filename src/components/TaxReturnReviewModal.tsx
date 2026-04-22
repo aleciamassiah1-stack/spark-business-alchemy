@@ -35,11 +35,21 @@ type CurrentValues = {
   totalLiabilities: number;
 };
 
+export type TaxReturnReviewSource = {
+  fileName: string;
+  form_type: string;
+  is_schedule: boolean;
+  tax_year: number | null;
+  used_fields: string[];
+  error: string | null;
+};
+
 export function TaxReturnReviewModal({
   open,
   initial,
   fileName,
   current,
+  sources,
   onClose,
   onSave,
   saving = false,
@@ -49,6 +59,7 @@ export function TaxReturnReviewModal({
   initial: TaxReturnReviewDraft | null;
   fileName?: string;
   current: CurrentValues;
+  sources?: TaxReturnReviewSource[];
   onClose: () => void;
   onSave: (draft: TaxReturnReviewDraft) => void | Promise<void>;
   saving?: boolean;
