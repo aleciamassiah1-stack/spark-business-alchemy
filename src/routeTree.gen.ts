@@ -31,6 +31,7 @@ import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -142,10 +143,15 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPropertyImageTestRoute = AdminPropertyImageTestRouteImport.update({
+  id: '/property-image-test',
+  path: '/property-image-test',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -165,11 +171,12 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -189,12 +196,13 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/timeline'
     | '/verify-email'
+    | '/admin/property-image-test'
     | '/checkout/return'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/timeline'
     | '/verify-email'
+    | '/admin/property-image-test'
     | '/checkout/return'
   id:
     | '__root__'
@@ -288,12 +299,13 @@ export interface FileRouteTypes {
     | '/support'
     | '/timeline'
     | '/verify-email'
+    | '/admin/property-image-test'
     | '/checkout/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BeneficiariesRoute: typeof BeneficiariesRoute
   BusinessRoute: typeof BusinessRoute
   ConnectionsRoute: typeof ConnectionsRoute
@@ -472,12 +484,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/property-image-test': {
+      id: '/admin/property-image-test'
+      path: '/property-image-test'
+      fullPath: '/admin/property-image-test'
+      preLoaderRoute: typeof AdminPropertyImageTestRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   BeneficiariesRoute: BeneficiariesRoute,
   BusinessRoute: BusinessRoute,
   ConnectionsRoute: ConnectionsRoute,
