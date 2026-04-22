@@ -299,8 +299,17 @@ function KPI({
   );
 }
 
-function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void }) {
+function MemberRow({
+  m,
+  currentUserId,
+  onChanged,
+}: {
+  m: Members[number];
+  currentUserId: string | null;
+  onChanged: () => void;
+}) {
   const [busy, setBusy] = useState(false);
+  const isSelf = currentUserId === m.user_id;
 
   const grant = async () => {
     setBusy(true);
