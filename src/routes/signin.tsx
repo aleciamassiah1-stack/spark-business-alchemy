@@ -19,7 +19,7 @@ export const Route = createFileRoute("/signin")({
 function SigninRoute() {
   const auth = useAuth();
   const { markStep } = useOnboarding();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
 
   useEffect(() => {
     if (!auth.user) return;
