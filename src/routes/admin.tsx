@@ -210,7 +210,12 @@ function AdminPage() {
                   )}
                   {!loading &&
                     filtered.map((m) => (
-                      <MemberRow key={m.user_id} m={m} onChanged={load} />
+                      <MemberRow
+                        key={m.user_id}
+                        m={m}
+                        currentUserId={auth.user?.id ?? null}
+                        onChanged={load}
+                      />
                     ))}
                 </tbody>
               </table>
@@ -294,8 +299,17 @@ function KPI({
   );
 }
 
-function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void }) {
+function MemberRow({
+  m,
+  currentUserId,
+  onChanged,
+}: {
+  m: Members[number];
+  currentUserId: string | null;
+  onChanged: () => void;
+}) {
   const [busy, setBusy] = useState(false);
+  const isSelf = currentUserId === m.user_id;
 
   const grant = async () => {
     setBusy(true);
@@ -339,6 +353,10 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
   };
 
   const scheduleDelete = async () => {
+    if (isSelf) {
+      toast.error("You cannot schedule deletion of your own admin account");
+      return;
+    }
     const ok = window.confirm(
       `Delete ${m.email ?? "this account"}?\n\nThe account will be retained for 30 days and then permanently purged. You can cancel within that window.`,
     );
@@ -357,6 +375,10 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
   };
 
   const cancelDelete = async () => {
+    if (isSelf) {
+      toast.error("You cannot cancel deletion of your own admin account");
+      return;
+    }
     setBusy(true);
     try {
       await adminCancelAccountDeletion({ data: { userId: m.user_id } });
@@ -458,20 +480,36 @@ function MemberRow({ m, onChanged }: { m: Members[number]; onChanged: () => void
           {isPendingDeletion ? (
             <button
               onClick={cancelDelete}
-              disabled={busy}
-              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] text-success hover:bg-success/20 disabled:opacity-50"
+              disabled={busy || isSelf}
+              title={
+                isSelf
+                  ? "You cannot restore your own admin account"
+                  : "Cancel scheduled deletion"
+              }
+              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] text-success hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Undo2 className="h-3 w-3" /> Restore
             </button>
           ) : (
             <button
               onClick={scheduleDelete}
-              disabled={busy || m.is_admin}
-              title={m.is_admin ? "Demote admin before deleting" : "Soft-delete (30-day grace)"}
-              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] text-destructive hover:bg-destructive/20 disabled:opacity-30"
+              disabled={busy || m.is_admin || isSelf}
+              title={
+                isSelf
+                  ? "You cannot delete your own admin account"
+                  : m.is_admin
+                    ? "Demote admin before deleting"
+                    : "Soft-delete (30-day grace)"
+              }
+              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] text-destructive hover:bg-destructive/20 disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Trash2 className="h-3 w-3" /> Delete
             </button>
+          )}
+          {isSelf && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-white/[0.04] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+              You
+            </span>
           )}
         </div>
       </td>

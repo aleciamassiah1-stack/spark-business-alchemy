@@ -320,7 +320,10 @@ export const adminScheduleAccountDeletion = createServerFn({ method: "POST" })
 export const adminCancelAccountDeletion = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const adminId = await requireAdmin();
+    if (data.userId === adminId) {
+      throw new Error("You cannot cancel deletion of your own admin account");
+    }
     const { error } = await supabaseAdmin
       .from("pending_account_deletions")
       .delete()
