@@ -12,6 +12,7 @@ import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/li
 import { useWealth } from "@/lib/wealth-context";
 import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { loadBusiness, subscribeBusiness, netBusinessEquity } from "@/lib/business-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,7 +62,10 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [business, setBusiness] = useState(() => loadBusiness());
   const { setSyncing } = useWealth();
+
+  useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
   const loadAll = useCallback(async () => {
     const [agg, props, ins, est] = await Promise.all([
@@ -125,8 +129,13 @@ function HomePage() {
     0,
   );
   const realEstateValue = properties.reduce((sum, p) => sum + (p.estimated_value ?? 0), 0);
+  const businessEquity = business.setupComplete
+    ? business.valuation > 0
+      ? business.valuation
+      : netBusinessEquity(business)
+    : 0;
 
-  const total = investmentsBalance + bankingBalance + realEstateEquity - creditBalance;
+  const total = investmentsBalance + bankingBalance + realEstateEquity - creditBalance + businessEquity;
 
   // YTD: pseudo from holdings cost basis vs value (best-effort)
   const ytdAmount = holdings.reduce(
@@ -140,6 +149,7 @@ function HomePage() {
     { key: "investments", label: "Investments", value: investmentsBalance, dot: "bg-primary" },
     { key: "banking", label: "Banking", value: bankingBalance, dot: "bg-violet-glow" },
     { key: "real_estate", label: "Real Estate", value: realEstateEquity, dot: "bg-gold" },
+    { key: "business", label: "Business", value: businessEquity, dot: "bg-warning" },
   ].filter((b) => b.value > 0);
   const allocTotal = allocBuckets.reduce((s, b) => s + b.value, 0) || 1;
   const allocPcts = allocBuckets.map((b) => ({ ...b, pct: (b.value / allocTotal) * 100 }));
@@ -235,6 +245,11 @@ function HomePage() {
                       animate={{ width: `${b.pct}%` }}
                       transition={{ delay: 0.4 + i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                       className={b.dot}
+                      title={
+                        b.key === "business"
+                          ? "Includes estimated business valuation."
+                          : `${b.label} · ${b.pct.toFixed(1)}%`
+                      }
                     />
                   ))}
                 </div>
