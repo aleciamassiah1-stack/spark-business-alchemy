@@ -8,6 +8,9 @@ import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { timelines } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { useIsTestAccount } from "@/lib/test-account";
+import { Link } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({
@@ -28,6 +31,30 @@ type Range = (typeof RANGES)[number];
 
 function TimelinePage() {
   const [range, setRange] = useState<Range>("1Y");
+  const isTestAccount = useIsTestAccount();
+
+  if (!isTestAccount) {
+    return (
+      <MobileShell title="Net Worth" subtitle="Timeline">
+        <div className="px-5 pt-2">
+          <LuxCard className="p-8 text-center">
+            <p className="font-serif text-lg text-foreground">No history yet</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              We'll start tracking your net worth as soon as you connect accounts.
+              Check back after a few weeks for your timeline.
+            </p>
+            <Link
+              to="/connections"
+              className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-4 py-2 text-xs font-medium text-primary"
+            >
+              <Plus className="h-3 w-3" /> Connect accounts
+            </Link>
+          </LuxCard>
+        </div>
+      </MobileShell>
+    );
+  }
+
   const data = timelines[range];
   const start = data[0].value;
   const end = data[data.length - 1].value;
