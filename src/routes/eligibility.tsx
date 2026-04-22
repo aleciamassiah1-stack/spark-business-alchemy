@@ -616,6 +616,8 @@ function ResultsCard({
         </LuxCard>
       )}
 
+      {enterpriseGated.length > 0 && <RequestStatusTracker gatedItems={enterpriseGated} />}
+
       {checklist.map((item) => (
         <ChecklistRow key={item.id} item={item} />
       ))}
