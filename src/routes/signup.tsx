@@ -74,6 +74,18 @@ function SignupRoute() {
             Sign in
           </Link>
         </p>
+        <Link
+          to="/pricing"
+          className="mt-4 flex items-center justify-between rounded-2xl border border-primary/25 gradient-hero px-4 py-3.5 transition-all hover:border-primary/50 hover:glow-violet"
+        >
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">
+              Membership
+            </p>
+            <p className="mt-0.5 text-sm text-foreground">Compare tiers and pricing</p>
+          </div>
+          <ChevronLeft className="h-4 w-4 rotate-180 text-primary" />
+        </Link>
       </div>
     </div>
   );
