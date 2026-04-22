@@ -72,6 +72,7 @@ const TIERS: Tier[] = [
     cta: "Get Started",
     ctaAction: "checkout",
     variant: "private",
+    priceIds: { monthly: "private_monthly", annual: "private_annual" },
     features: [
       "Everything in Essential, plus",
       "Unlimited connected accounts",
