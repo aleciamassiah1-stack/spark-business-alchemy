@@ -1055,10 +1055,7 @@ export function Welcome({
 
       {/* Tier preview — front and center */}
       <div className="relative mt-10 w-full max-w-[1100px]">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Choose your tier
-          </p>
+        <div className="mb-3 flex items-center justify-end">
           <Link
             to="/pricing"
             className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
