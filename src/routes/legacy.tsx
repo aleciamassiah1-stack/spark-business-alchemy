@@ -17,7 +17,6 @@ import {
   Trash2,
   Home,
   Sparkles,
-  TrendingUp,
   MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -668,5 +667,153 @@ function DocStatusBadge({ status }: { status: string }) {
     >
       {label}
     </span>
+  );
+}
+
+function PropertyCard({
+  property,
+  valuation,
+  delay = 0,
+}: {
+  property: Property;
+  valuation: Valuation | null;
+  delay?: number;
+}) {
+  const value = Number(property.estimated_value) || 0;
+  const mortgage = Number(property.mortgage_balance) || 0;
+  const equity = Math.max(0, value - mortgage);
+  const ltv = value > 0 ? Math.min(100, Math.round((mortgage / value) * 100)) : 0;
+  const aiDelta = valuation ? valuation.estimated_value - value : 0;
+  const aiDeltaPct = value > 0 && valuation ? (aiDelta / value) * 100 : 0;
+  const confidence = (valuation?.confidence ?? "").toLowerCase();
+  const confidenceStyle: Record<string, string> = {
+    high: "bg-success/15 text-success",
+    medium: "bg-primary/15 text-primary",
+    low: "bg-warning/15 text-warning",
+  };
+
+  return (
+    <LuxCard delay={delay} className="overflow-hidden">
+      {/* Photo */}
+      <div className="relative h-40 w-full overflow-hidden bg-white/[0.03]">
+        {property.image_url ? (
+          <img
+            src={property.image_url}
+            alt={property.name}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Home className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+        <div className="absolute bottom-3 left-4 right-4">
+          <p className="font-serif text-lg leading-tight text-foreground drop-shadow">
+            {property.name}
+          </p>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{property.address}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 divide-x divide-white/[0.04] border-t border-white/[0.04]">
+        <div className="px-3 py-3">
+          <p className="label-mono">Value</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">
+            {fmtCurrency(value, { compact: true })}
+          </p>
+        </div>
+        <div className="px-3 py-3">
+          <p className="label-mono">Equity</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">
+            {fmtCurrency(equity, { compact: true })}
+          </p>
+        </div>
+        <div className="px-3 py-3">
+          <p className="label-mono">LTV</p>
+          <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground">{ltv}%</p>
+        </div>
+      </div>
+
+      {/* Beds / baths / sqft chip row */}
+      {(property.beds || property.baths || property.sqft) && (
+        <div className="flex flex-wrap gap-2 border-t border-white/[0.04] px-4 py-2.5">
+          {property.beds ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {property.beds} bed
+            </span>
+          ) : null}
+          {property.baths ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {property.baths} bath
+            </span>
+          ) : null}
+          {property.sqft ? (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {Number(property.sqft).toLocaleString()} sqft
+            </span>
+          ) : null}
+        </div>
+      )}
+
+      {/* AI valuation block */}
+      {valuation ? (
+        <div className="border-t border-white/[0.04] bg-primary/[0.04] px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <p className="label-mono">AI valuation</p>
+            </div>
+            {confidence ? (
+              <span
+                className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                  confidenceStyle[confidence] ?? "bg-muted/40 text-muted-foreground"
+                }`}
+              >
+                {confidence} confidence
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <p className="font-serif text-xl text-foreground">
+              {fmtCurrency(valuation.estimated_value, { compact: true })}
+            </p>
+            <p
+              className={`font-mono text-[11px] ${
+                aiDelta >= 0 ? "text-success" : "text-destructive"
+              }`}
+            >
+              {aiDelta >= 0 ? "+" : ""}
+              {fmtCurrency(aiDelta, { compact: true })} ({aiDeltaPct >= 0 ? "+" : ""}
+              {aiDeltaPct.toFixed(1)}%) vs entered
+            </p>
+          </div>
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+            Range {fmtCurrency(valuation.value_low, { compact: true })}–
+            {fmtCurrency(valuation.value_high, { compact: true })}
+            {valuation.price_per_sqft ? ` · $${Math.round(valuation.price_per_sqft)}/sqft` : ""}
+          </p>
+          {valuation.market_summary ? (
+            <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-muted-foreground">
+              {valuation.market_summary}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="border-t border-white/[0.04] px-4 py-3">
+          <Link
+            to="/connections"
+            className="flex items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-medium text-primary"
+          >
+            <Sparkles className="h-3 w-3" /> Get AI valuation
+          </Link>
+        </div>
+      )}
+    </LuxCard>
   );
 }
