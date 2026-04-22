@@ -210,7 +210,12 @@ function AdminPage() {
                   )}
                   {!loading &&
                     filtered.map((m) => (
-                      <MemberRow key={m.user_id} m={m} onChanged={load} />
+                      <MemberRow
+                        key={m.user_id}
+                        m={m}
+                        currentUserId={auth.user?.id ?? null}
+                        onChanged={load}
+                      />
                     ))}
                 </tbody>
               </table>
