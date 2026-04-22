@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Minus, ChevronDown, X, Lock, Star } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { isStripeConfigured } from "@/lib/stripe";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -31,6 +34,7 @@ type Tier = {
   ctaAction: "checkout" | "demo";
   features: string[];
   variant: "essential" | "private" | "family";
+  priceIds?: { monthly: string; annual: string };
 };
 
 const TIERS: Tier[] = [
@@ -45,6 +49,7 @@ const TIERS: Tier[] = [
     cta: "Get Started",
     ctaAction: "checkout",
     variant: "essential",
+    priceIds: { monthly: "essential_monthly", annual: "essential_annual" },
     features: [
       "Up to 3 connected accounts",
       "Investments, banking and insurance tracking",
@@ -67,6 +72,7 @@ const TIERS: Tier[] = [
     cta: "Get Started",
     ctaAction: "checkout",
     variant: "private",
+    priceIds: { monthly: "private_monthly", annual: "private_annual" },
     features: [
       "Everything in Essential, plus",
       "Unlimited connected accounts",
@@ -209,17 +215,24 @@ const FAQS = [
 function PricingPage() {
   const [billing, setBilling] = useState<Billing>("annual");
   const [demoOpen, setDemoOpen] = useState(false);
+  const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const handleCta = (tier: Tier) => {
     if (tier.ctaAction === "demo") {
       setDemoOpen(true);
       return;
     }
-    // Checkout placeholder — Stripe will be wired up later.
-    const price = billing === "annual" ? tier.annual : tier.monthly;
-    toast(`${tier.name} — Checkout coming soon`, {
-      description: `$${price.toLocaleString()} / ${billing === "annual" ? "year" : "month"}. Payments will be enabled shortly.`,
-    });
+    if (!isStripeConfigured()) {
+      toast.error("Payments are not configured yet");
+      return;
+    }
+    if (!tier.priceIds) {
+      toast.error("This plan is not available for self-checkout");
+      return;
+    }
+    const priceId = billing === "annual" ? tier.priceIds.annual : tier.priceIds.monthly;
+    setCheckoutPriceId(priceId);
   };
 
   return (
@@ -306,8 +319,63 @@ function PricingPage() {
 
       <AnimatePresence>
         {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} />}
+        {checkoutPriceId && (
+          <CheckoutModal
+            priceId={checkoutPriceId}
+            customerEmail={user?.email}
+            userId={user?.id}
+            onClose={() => setCheckoutPriceId(null)}
+          />
+        )}
       </AnimatePresence>
     </MobileShell>
+  );
+}
+
+function CheckoutModal({
+  priceId,
+  customerEmail,
+  userId,
+  onClose,
+}: {
+  priceId: string;
+  customerEmail?: string;
+  userId?: string;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/[0.08] bg-background p-4 shadow-elevated"
+      >
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground hover:text-foreground"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="max-h-[80vh] overflow-y-auto pt-2">
+          <StripeEmbeddedCheckout
+            priceId={priceId}
+            customerEmail={customerEmail}
+            userId={userId}
+            returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
+          />
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
