@@ -14,6 +14,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProtectRouteImport } from './routes/protect'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -47,6 +48,11 @@ const SigninRoute = SigninRouteImport.update({
 const ProtectRoute = ProtectRouteImport.update({
   id: '/protect',
   path: '/protect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PreferencesRoute = PreferencesRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
+  '/pricing': typeof PricingRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
+  '/pricing': typeof PricingRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
+  '/pricing': typeof PricingRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/portfolio'
     | '/preferences'
+    | '/pricing'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/portfolio'
     | '/preferences'
+    | '/pricing'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/portfolio'
     | '/preferences'
+    | '/pricing'
     | '/protect'
     | '/signin'
     | '/signup'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   PortfolioRoute: typeof PortfolioRoute
   PreferencesRoute: typeof PreferencesRoute
+  PricingRoute: typeof PricingRoute
   ProtectRoute: typeof ProtectRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/protect'
       fullPath: '/protect'
       preLoaderRoute: typeof ProtectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/preferences': {
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   PortfolioRoute: PortfolioRoute,
   PreferencesRoute: PreferencesRoute,
+  PricingRoute: PricingRoute,
   ProtectRoute: ProtectRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
