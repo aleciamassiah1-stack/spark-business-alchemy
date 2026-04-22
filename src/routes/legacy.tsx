@@ -122,6 +122,9 @@ function LegacyPage() {
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EstateDoc | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [valuationsByProperty, setValuationsByProperty] = useState<Record<string, Valuation[]>>({});
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
 
   async function reload() {
     const res = await listEstateDocuments();
@@ -141,11 +144,109 @@ function LegacyPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await listProperties();
+        if (!mounted) return;
+        const props = (res.properties ?? []) as Property[];
+        setProperties(props);
+        // Fetch latest valuations in parallel for each property
+        const valuationLists = await Promise.all(
+          props.map((p) => listPropertyValuations({ data: { property_id: p.id } })),
+        );
+        if (!mounted) return;
+        const map: Record<string, Valuation[]> = {};
+        props.forEach((p, i) => {
+          map[p.id] = (valuationLists[i].valuations ?? []) as Valuation[];
+        });
+        setValuationsByProperty(map);
+      } finally {
+        if (mounted) setPropertiesLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const totalRealEstateValue = properties.reduce((s, p) => s + (Number(p.estimated_value) || 0), 0);
+  const totalRealEstateEquity = properties.reduce(
+    (s, p) => s + Math.max(0, (Number(p.estimated_value) || 0) - (Number(p.mortgage_balance) || 0)),
+    0,
+  );
+
   return (
     <MobileShell title="Legacy" subtitle="Trust & Estate">
+      {/* Real estate — properties with photos and AI valuations */}
+      <div className="px-5">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="label-mono">
+            Real estate {properties.length > 0 ? `· ${fmtCurrency(totalRealEstateValue, { compact: true })}` : ""}
+          </p>
+          <Link
+            to="/connections"
+            className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-foreground"
+          >
+            <Plus className="h-3 w-3" /> Add property
+          </Link>
+        </div>
+
+        {propertiesLoading ? (
+          <LuxCard className="flex items-center justify-center p-6">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </LuxCard>
+        ) : properties.length === 0 ? (
+          <LuxCard className="p-6 text-center">
+            <Home className="mx-auto h-6 w-6 text-muted-foreground" />
+            <p className="mt-2 font-serif text-base text-foreground">No properties yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add a home to track its value, equity, and AI-estimated worth over time.
+            </p>
+            <Link
+              to="/connections"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full gradient-violet px-4 py-2 text-xs font-medium text-foreground glow-violet"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add your first property
+            </Link>
+          </LuxCard>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* Equity summary banner */}
+            <LuxCard className="gradient-hero p-4">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/30 blur-3xl" />
+              <div className="relative grid grid-cols-2 gap-3">
+                <div>
+                  <p className="label-mono">Total value</p>
+                  <p className="mt-1 font-serif text-2xl text-foreground">
+                    {fmtCurrency(totalRealEstateValue, { compact: true })}
+                  </p>
+                </div>
+                <div>
+                  <p className="label-mono">Equity</p>
+                  <p className="mt-1 font-serif text-2xl text-foreground">
+                    {fmtCurrency(totalRealEstateEquity, { compact: true })}
+                  </p>
+                </div>
+              </div>
+            </LuxCard>
+
+            {properties.map((p, i) => (
+              <PropertyCard
+                key={p.id}
+                property={p}
+                valuation={valuationsByProperty[p.id]?.[0] ?? null}
+                delay={i * 0.05}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Trust accounts — demo data only for the test account */}
       {trustAccounts.length > 0 ? (
-        <div className="px-5">
+        <div className="mt-6 px-5">
           <p className="label-mono mb-2">Trust accounts · {fmtCurrency(trustTotal, { compact: true })}</p>
           <div className="flex flex-col gap-2">
             {trustAccounts.map((t, i) => (
