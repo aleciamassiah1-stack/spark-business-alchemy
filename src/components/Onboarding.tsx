@@ -1017,6 +1017,13 @@ export function Welcome({
   const navigate = useNavigate();
   const handleCreate = onCreate ?? (() => navigate({ to: "/signup" }));
   const handleSignIn = onSignIn ?? (() => navigate({ to: "/signin" }));
+  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
+  const tiers = {
+    essential: { monthly: "$149", annual: "$1,490" },
+    private: { monthly: "$399", annual: "$3,990" },
+    family: { monthly: "$1,499", annual: "$14,990" },
+  } as const;
+  const cadence = billing === "annual" ? "/yr" : "/mo";
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center overflow-hidden bg-background px-6 py-10">
       <div
