@@ -110,11 +110,19 @@ function AdminPage() {
               <h1 className="font-serif text-xl text-foreground">Admin Console</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-success" />
-            <span className="font-mono text-[10px] uppercase tracking-wider text-success">
-              {metrics?.environment ?? "—"}
-            </span>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/property-image-test"
+              className="hidden sm:inline-flex items-center rounded-full border border-border/40 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            >
+              Image diagnostics
+            </Link>
+            <div className="flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-success" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-success">
+                {metrics?.environment ?? "—"}
+              </span>
+            </div>
           </div>
         </div>
       </header>
