@@ -26,6 +26,7 @@ import { Route as EligibilityRouteImport } from './routes/eligibility'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 
@@ -114,6 +115,11 @@ const BeneficiariesRoute = BeneficiariesRouteImport.update({
   path: '/beneficiaries',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -127,6 +133,7 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/beneficiaries'
     | '/business'
     | '/connections'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/beneficiaries'
     | '/business'
     | '/connections'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/beneficiaries'
     | '/business'
     | '/connections'
@@ -257,6 +269,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   BeneficiariesRoute: typeof BeneficiariesRoute
   BusinessRoute: typeof BusinessRoute
   ConnectionsRoute: typeof ConnectionsRoute
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BeneficiariesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -417,6 +437,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   BeneficiariesRoute: BeneficiariesRoute,
   BusinessRoute: BusinessRoute,
   ConnectionsRoute: ConnectionsRoute,
