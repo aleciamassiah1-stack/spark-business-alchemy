@@ -1087,20 +1087,86 @@ ${form.email || "[email]"}`;
               </dl>
             </div>
 
-            {hasSavedProfile && (
-              <div className="flex items-center justify-between rounded-lg border border-success/20 bg-success/[0.06] px-3 py-2">
-                <div className="flex items-center gap-2 text-[11px] text-foreground/80">
-                  <Check className="h-3 w-3 text-success" />
-                  <span>Loaded from your saved profile</span>
-                </div>
+            {/* Profile picker */}
+            <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Company profile
+                </p>
                 <button
-                  onClick={clearSavedProfile}
-                  className="text-[10px] text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={addNewProfile}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/25"
                 >
-                  Clear
+                  <Plus className="h-2.5 w-2.5" />
+                  New
                 </button>
               </div>
-            )}
+
+              {state.profiles.length > 0 ? (
+                <div className="mt-2 space-y-2">
+                  {renaming && activeProfile ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitRename();
+                          if (e.key === "Escape") setRenaming(false);
+                        }}
+                        className="flex-1 rounded-md border border-primary/40 bg-white/[0.04] px-2 py-1 text-xs text-foreground focus:outline-none"
+                      />
+                      <button
+                        onClick={commitRename}
+                        className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-medium text-primary"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={state.activeId ?? ""}
+                      onChange={(e) => switchProfile(e.target.value)}
+                      className="w-full rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-1.5 text-xs text-foreground focus:border-primary/40 focus:outline-none"
+                    >
+                      {state.profiles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label}
+                          {p.companyName && p.label !== p.companyName ? ` — ${p.companyName}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {activeProfile && !renaming && (
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <button
+                        onClick={startRename}
+                        className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                        Rename
+                      </button>
+                      <button
+                        onClick={deleteActiveProfile}
+                        className="inline-flex items-center gap-1 hover:text-destructive hover:underline"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                        Delete
+                      </button>
+                      <span className="ml-auto inline-flex items-center gap-1 text-success">
+                        <Check className="h-2.5 w-2.5" />
+                        Auto-saved
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  No saved profiles yet — start typing below and we'll create one for you.
+                </p>
+              )}
+            </div>
 
             <FormRow label="Company name">
               <input
