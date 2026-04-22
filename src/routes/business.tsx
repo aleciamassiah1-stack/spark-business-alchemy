@@ -1543,12 +1543,18 @@ function DocumentsBlock({
   state: BusinessState;
   update: (p: (s: BusinessState) => BusinessState) => void;
 }) {
-  const add = () => {
-    const name = prompt("Document name", "Operating Agreement.pdf");
-    if (!name) return;
-    const d = makeDocument({ name, category: "Operating Agreement" });
-    update((s) => ({ ...s, documents: [...s.documents, d] }));
-  };
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [parsing, setParsing] = useState(false);
+  const [parseStatus, setParseStatus] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewDraft, setReviewDraft] = useState<TaxReturnReviewDraft | null>(null);
+  const [reviewFileName, setReviewFileName] = useState<string | undefined>();
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<{ name: string } | null>(null);
+
+  const totalAssets = state.assets.reduce((s, a) => s + a.value, 0);
+  const totalLiabilities = state.liabilities.reduce((s, l) => s + l.balance, 0);
+
   const remove = (id: string) =>
     update((s) => ({ ...s, documents: s.documents.filter((d) => d.id !== id) }));
   const editField = <K extends keyof BusinessDocument>(
@@ -1562,68 +1568,293 @@ function DocumentsBlock({
     }));
   };
 
-  if (state.documents.length === 0) {
-    return (
-      <EmptyState
-        icon={ScrollText}
-        line="Vault for formation docs, tax returns, agreements and exit plans."
-        cta="Upload Document"
-        onClick={add}
-      />
-    );
-  }
+  const handleFile = async (file: File) => {
+    if (file.size > 8 * 1024 * 1024) {
+      setParseStatus("File too large (max 8 MB)");
+      return;
+    }
+    setParsing(true);
+    setParseStatus("Reading file…");
+    try {
+      const base64 = await fileToBase64(file);
+      setParseStatus("AI extracting financials…");
+      const parsed = await parseTaxReturnPdf({
+        data: { fileName: file.name, base64, mimeType: file.type || "application/pdf" },
+      });
+
+      const fallbackName = file.name.replace(/\.[^.]+$/, "");
+      let draft: TaxReturnReviewDraft;
+
+      if (!parsed.ok || !parsed.extracted) {
+        draft = {
+          form_type: "other",
+          tax_year: null,
+          business_name: fallbackName,
+          revenue: null,
+          net_profit: null,
+          total_assets: null,
+          total_liabilities: null,
+          cost_of_goods_sold: null,
+          total_expenses: null,
+          depreciation: null,
+          officer_compensation: null,
+          notes: parsed.error ?? "AI could not extract values — review manually.",
+          parsed_by_ai: false,
+          apply: { revenue: false, net_profit: false, total_assets: false, total_liabilities: false },
+        };
+        setParseStatus(parsed.error ?? "AI parse failed — review manually");
+      } else {
+        const e = parsed.extracted;
+        draft = {
+          form_type: e.form_type ?? "other",
+          tax_year: e.tax_year ?? null,
+          business_name: e.business_name ?? fallbackName,
+          revenue: e.revenue ?? null,
+          net_profit: e.net_profit ?? null,
+          total_assets: e.total_assets ?? null,
+          total_liabilities: e.total_liabilities ?? null,
+          cost_of_goods_sold: e.cost_of_goods_sold ?? null,
+          total_expenses: e.total_expenses ?? null,
+          depreciation: e.depreciation ?? null,
+          officer_compensation: e.officer_compensation ?? null,
+          notes: e.notes ?? null,
+          parsed_by_ai: true,
+          apply: {
+            revenue: e.revenue != null,
+            net_profit: e.net_profit != null,
+            total_assets: e.total_assets != null,
+            total_liabilities: e.total_liabilities != null,
+          },
+        };
+        setParseStatus(null);
+      }
+
+      setPendingFile({ name: file.name });
+      setReviewDraft(draft);
+      setReviewFileName(file.name);
+      setReviewError(null);
+      setReviewOpen(true);
+    } catch (err) {
+      setParseStatus(err instanceof Error ? err.message : "Failed to process file");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleConfirmApply = (draft: TaxReturnReviewDraft) => {
+    update((s) => {
+      let next: BusinessState = { ...s };
+
+      // Apply selected scalar financials
+      if (draft.apply.revenue && draft.revenue != null) {
+        const newRev = draft.revenue;
+        const prevRev = next.annualRevenue;
+        const mom = prevRev > 0 ? ((newRev - prevRev) / prevRev) * 100 : next.revenueMoM;
+        next = { ...next, annualRevenue: newRev, revenueMoM: Number(mom.toFixed(2)) };
+      }
+      if (draft.apply.net_profit && draft.net_profit != null) {
+        const np = draft.net_profit;
+        const refRevenue = draft.apply.revenue && draft.revenue != null ? draft.revenue : next.annualRevenue;
+        const margin = refRevenue > 0 ? (np / refRevenue) * 100 : next.netProfitMargin;
+        next = { ...next, netProfit: np, netProfitMargin: Number(margin.toFixed(1)) };
+      }
+
+      // For total assets/liabilities, replace any prior tax-return roll-up line
+      // and add a single fresh line so user-managed items are preserved.
+      const yearLabel = draft.tax_year ? ` ${draft.tax_year}` : "";
+      const taxAssetMarker = "Tax Return — Assets";
+      const taxLiabMarker = "Tax Return — Liabilities";
+
+      if (draft.apply.total_assets && draft.total_assets != null) {
+        const stripped = next.assets.filter((a) => !a.name.startsWith(taxAssetMarker));
+        const userTotal = stripped.reduce((s, a) => s + a.value, 0);
+        const delta = Math.max(0, draft.total_assets - userTotal);
+        const line = makeAsset({
+          name: `${taxAssetMarker}${yearLabel}`,
+          type: "Other",
+          value: delta,
+        });
+        next = { ...next, assets: [...stripped, line] };
+      }
+      if (draft.apply.total_liabilities && draft.total_liabilities != null) {
+        const stripped = next.liabilities.filter((l) => !l.name.startsWith(taxLiabMarker));
+        const userTotal = stripped.reduce((s, l) => s + l.balance, 0);
+        const delta = Math.max(0, draft.total_liabilities - userTotal);
+        const line = makeLiability({
+          name: `${taxLiabMarker}${yearLabel}`,
+          lender: "Per tax return",
+          balance: delta,
+        });
+        next = { ...next, liabilities: [...stripped, line] };
+      }
+
+      // Always file the document itself in the documents list
+      const doc = makeDocument({
+        name: pendingFile?.name ?? "Tax Return.pdf",
+        category: "Tax Return",
+        status: "current",
+      });
+      next = { ...next, documents: [...next.documents, doc] };
+
+      return next;
+    });
+
+    setReviewOpen(false);
+    setReviewDraft(null);
+    setPendingFile(null);
+    setParseStatus("Applied to your business");
+    window.setTimeout(() => setParseStatus(null), 2500);
+  };
+
+  const handleCloseReview = () => {
+    setReviewOpen(false);
+    setReviewDraft(null);
+    setPendingFile(null);
+    setReviewError(null);
+  };
+
+  const triggerUpload = () => fileRef.current?.click();
+
+  const addManual = () => {
+    const name = prompt("Document name", "Operating Agreement.pdf");
+    if (!name) return;
+    const d = makeDocument({ name, category: "Operating Agreement" });
+    update((s) => ({ ...s, documents: [...s.documents, d] }));
+  };
 
   return (
     <>
-      <div className="space-y-2">
-        {state.documents.map((d) => (
-          <LuxCard key={d.id} className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/15">
-                <FileText className="h-4 w-4 text-gold" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-serif text-sm text-foreground">{d.name}</p>
-                <select
-                  value={d.category}
-                  onChange={(e) =>
-                    editField(d.id, "category", e.target.value as BusinessDocument["category"])
-                  }
-                  className="bg-transparent font-mono text-[10px] text-muted-foreground focus:outline-none"
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/pdf,image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          e.target.value = "";
+        }}
+      />
+
+      <LuxCard className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-gold">
+            <Wand2 className="h-4 w-4 text-background" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-base text-foreground">Upload tax return</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              AI extracts revenue, net profit, total assets and liabilities. You review and
+              confirm every value before anything is applied.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={triggerUpload}
+          disabled={parsing}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground glow-violet disabled:opacity-50"
+        >
+          {parsing ? (
+            <>
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" /> {parseStatus ?? "Working…"}
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3.5 w-3.5" /> Upload &amp; AI parse
+            </>
+          )}
+        </button>
+        {!parsing && parseStatus && (
+          <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
+            {parseStatus}
+          </p>
+        )}
+      </LuxCard>
+
+      {state.documents.length > 0 ? (
+        <div className="space-y-2 pt-2">
+          {state.documents.map((d) => (
+            <LuxCard key={d.id} className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/15">
+                  <FileText className="h-4 w-4 text-gold" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-serif text-sm text-foreground">{d.name}</p>
+                  <select
+                    value={d.category}
+                    onChange={(e) =>
+                      editField(d.id, "category", e.target.value as BusinessDocument["category"])
+                    }
+                    className="bg-transparent font-mono text-[10px] text-muted-foreground focus:outline-none"
+                  >
+                    {(["Articles of Incorporation", "Operating Agreement", "Tax Return", "Buy-Sell Agreement", "Succession Plan", "Exit Planning", "Other"] as const).map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <span
+                  className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] uppercase ${
+                    d.status === "current"
+                      ? "bg-success/15 text-success"
+                      : d.status === "review"
+                        ? "bg-warning/15 text-warning"
+                        : "bg-destructive/15 text-destructive"
+                  }`}
                 >
-                  {(["Articles of Incorporation", "Operating Agreement", "Tax Return", "Buy-Sell Agreement", "Succession Plan", "Exit Planning", "Other"] as const).map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  {d.status}
+                </span>
+                <button onClick={() => remove(d.id)} className="text-muted-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <span
-                className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] uppercase ${
-                  d.status === "current"
-                    ? "bg-success/15 text-success"
-                    : d.status === "review"
-                      ? "bg-warning/15 text-warning"
-                      : "bg-destructive/15 text-destructive"
-                }`}
-              >
-                {d.status}
-              </span>
-              <button onClick={() => remove(d.id)} className="text-muted-foreground">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </LuxCard>
-        ))}
-      </div>
+            </LuxCard>
+          ))}
+        </div>
+      ) : (
+        <p className="px-1 pt-2 text-center text-[11px] text-muted-foreground">
+          Vault for formation docs, tax returns, agreements and exit plans.
+        </p>
+      )}
+
       <button
-        onClick={add}
+        onClick={addManual}
         className="flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] py-2.5 text-[11px] text-foreground"
       >
-        <Upload className="h-3.5 w-3.5" /> Upload Document
+        <Plus className="h-3.5 w-3.5" /> Add document manually
       </button>
+
+      <TaxReturnReviewModal
+        open={reviewOpen}
+        initial={reviewDraft}
+        fileName={reviewFileName}
+        current={{
+          annualRevenue: state.annualRevenue,
+          netProfit: state.netProfit,
+          totalAssets,
+          totalLiabilities,
+        }}
+        onClose={handleCloseReview}
+        onSave={handleConfirmApply}
+        error={reviewError}
+      />
     </>
   );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1] ?? "";
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
 }
 
 function ExplainerSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
