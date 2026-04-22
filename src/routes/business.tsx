@@ -48,9 +48,10 @@ import { Button } from "@/components/ui/button";
 import {
   TaxReturnReviewModal,
   type TaxReturnReviewDraft,
+  type TaxReturnReviewSource,
 } from "@/components/TaxReturnReviewModal";
 import { fmtCurrency, fmtPct } from "@/lib/format";
-import { parseTaxReturnPdf } from "@/lib/wealth.functions";
+import { parseTaxReturnDocuments } from "@/lib/wealth.functions";
 import {
   type BusinessState,
   type BusinessAsset,
@@ -1549,8 +1550,9 @@ function DocumentsBlock({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewDraft, setReviewDraft] = useState<TaxReturnReviewDraft | null>(null);
   const [reviewFileName, setReviewFileName] = useState<string | undefined>();
+  const [reviewSources, setReviewSources] = useState<TaxReturnReviewSource[] | undefined>();
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<{ name: string } | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<Array<{ name: string }>>([]);
 
   const totalAssets = state.assets.reduce((s, a) => s + a.value, 0);
   const totalLiabilities = state.liabilities.reduce((s, l) => s + l.balance, 0);
@@ -1568,24 +1570,41 @@ function DocumentsBlock({
     }));
   };
 
-  const handleFile = async (file: File) => {
-    if (file.size > 8 * 1024 * 1024) {
-      setParseStatus("File too large (max 8 MB)");
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    if (files.length > 8) {
+      setParseStatus("Up to 8 files per upload");
+      return;
+    }
+    const oversized = files.find((f) => f.size > 8 * 1024 * 1024);
+    if (oversized) {
+      setParseStatus(`"${oversized.name}" exceeds 8 MB`);
       return;
     }
     setParsing(true);
-    setParseStatus("Reading file…");
+    setParseStatus(
+      files.length > 1 ? `Reading ${files.length} files…` : "Reading file…",
+    );
     try {
-      const base64 = await fileToBase64(file);
-      setParseStatus("AI extracting financials…");
-      const parsed = await parseTaxReturnPdf({
-        data: { fileName: file.name, base64, mimeType: file.type || "application/pdf" },
-      });
+      const payloads = await Promise.all(
+        files.map(async (file) => ({
+          fileName: file.name,
+          base64: await fileToBase64(file),
+          mimeType: file.type || "application/pdf",
+        })),
+      );
+      setParseStatus(
+        files.length > 1
+          ? `AI extracting & aggregating ${files.length} documents…`
+          : "AI extracting financials…",
+      );
+      const parsed = await parseTaxReturnDocuments({ data: { files: payloads } });
 
-      const fallbackName = file.name.replace(/\.[^.]+$/, "");
+      const fallbackName = files[0].name.replace(/\.[^.]+$/, "");
       let draft: TaxReturnReviewDraft;
+      let sources: TaxReturnReviewSource[] = [];
 
-      if (!parsed.ok || !parsed.extracted) {
+      if (!parsed.ok || !parsed.aggregated) {
         draft = {
           form_type: "other",
           tax_year: null,
@@ -1602,9 +1621,10 @@ function DocumentsBlock({
           parsed_by_ai: false,
           apply: { revenue: false, net_profit: false, total_assets: false, total_liabilities: false },
         };
+        sources = parsed.aggregated?.sources ?? [];
         setParseStatus(parsed.error ?? "AI parse failed — review manually");
       } else {
-        const e = parsed.extracted;
+        const e = parsed.aggregated;
         draft = {
           form_type: e.form_type ?? "other",
           tax_year: e.tax_year ?? null,
@@ -1626,16 +1646,22 @@ function DocumentsBlock({
             total_liabilities: e.total_liabilities != null,
           },
         };
+        sources = e.sources ?? [];
         setParseStatus(null);
       }
 
-      setPendingFile({ name: file.name });
+      setPendingFiles(files.map((f) => ({ name: f.name })));
       setReviewDraft(draft);
-      setReviewFileName(file.name);
+      setReviewFileName(
+        files.length === 1
+          ? files[0].name
+          : `${files.length} documents · ${files[0].name}`,
+      );
+      setReviewSources(sources.length > 0 ? sources : undefined);
       setReviewError(null);
       setReviewOpen(true);
     } catch (err) {
-      setParseStatus(err instanceof Error ? err.message : "Failed to process file");
+      setParseStatus(err instanceof Error ? err.message : "Failed to process files");
     } finally {
       setParsing(false);
     }
@@ -1688,20 +1714,24 @@ function DocumentsBlock({
         next = { ...next, liabilities: [...stripped, line] };
       }
 
-      // Always file the document itself in the documents list
-      const doc = makeDocument({
-        name: pendingFile?.name ?? "Tax Return.pdf",
-        category: "Tax Return",
-        status: "current",
-      });
-      next = { ...next, documents: [...next.documents, doc] };
+      // File every uploaded source document in the documents list. Schedules go
+      // in as "Tax Return" too — they're part of the return package.
+      const docsToAdd = pendingFiles.map((f) =>
+        makeDocument({
+          name: f.name || "Tax Return.pdf",
+          category: "Tax Return",
+          status: "current",
+        }),
+      );
+      next = { ...next, documents: [...next.documents, ...docsToAdd] };
 
       return next;
     });
 
     setReviewOpen(false);
     setReviewDraft(null);
-    setPendingFile(null);
+    setReviewSources(undefined);
+    setPendingFiles([]);
     setParseStatus("Applied to your business");
     window.setTimeout(() => setParseStatus(null), 2500);
   };
@@ -1709,7 +1739,8 @@ function DocumentsBlock({
   const handleCloseReview = () => {
     setReviewOpen(false);
     setReviewDraft(null);
-    setPendingFile(null);
+    setReviewSources(undefined);
+    setPendingFiles([]);
     setReviewError(null);
   };
 
@@ -1728,10 +1759,11 @@ function DocumentsBlock({
         ref={fileRef}
         type="file"
         accept="application/pdf,image/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleFile(f);
+          const fs = Array.from(e.target.files ?? []);
+          if (fs.length > 0) handleFiles(fs);
           e.target.value = "";
         }}
       />
@@ -1742,10 +1774,10 @@ function DocumentsBlock({
             <Wand2 className="h-4 w-4 text-background" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-base text-foreground">Upload tax return</p>
+            <p className="font-serif text-base text-foreground">Upload tax return &amp; schedules</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-              AI extracts revenue, net profit, total assets and liabilities. You review and
-              confirm every value before anything is applied.
+              Drop the main return plus any schedules (Schedule C, L, K-1, E, Form 4562). AI
+              extracts and aggregates them — you review every value before anything is applied.
             </p>
           </div>
         </div>
@@ -1830,6 +1862,7 @@ function DocumentsBlock({
         open={reviewOpen}
         initial={reviewDraft}
         fileName={reviewFileName}
+        sources={reviewSources}
         current={{
           annualRevenue: state.annualRevenue,
           netProfit: state.netProfit,
