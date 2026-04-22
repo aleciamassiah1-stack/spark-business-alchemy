@@ -720,8 +720,19 @@ export const parseTaxReturnPdf = createServerFn({ method: "POST" })
       };
     }
 
-    const systemPrompt = `You are a precise extraction assistant for US business tax returns (Form 1120, 1120-S, 1065, Schedule C of 1040). Extract numeric line items as numbers in USD with no currency symbols, commas, or thousands separators. If a value is not present or unreadable, return null — do not guess. For revenue prefer Line 1a (Gross receipts or sales) less returns/allowances if shown, otherwise total revenue. For net_profit use ordinary business income (Form 1120 Line 28, Form 1120-S Line 21, Form 1065 Line 22, or Schedule C Line 31). Total assets and liabilities should come from Schedule L (balance sheet) end-of-year column when present.`;
-    const userPrompt = `Extract the structured financials from this tax return document. Return ONLY the structured data via the tool call.`;
+    const systemPrompt = `You are a precise extraction assistant for US business tax returns and their schedules. The document may be a primary return (Form 1120, 1120-S, 1065, Schedule C of 1040) OR an attached schedule (Schedule L balance sheet, Schedule K-1 partner/shareholder share, Schedule E supplemental income, Schedule M-1/M-2 reconciliation, Form 4562 depreciation).
+
+Detection rules:
+- Set form_type to the most specific form printed on the document.
+- Set is_schedule=true when the document is a schedule/attachment, not a primary return.
+- Schedule L → fill total_assets and total_liabilities (end-of-year column) only.
+- Schedule K-1 → fill k1_ordinary_income (box 1) and k1_ownership_pct (profit %); leave revenue/net_profit null.
+- Schedule E → fill sch_e_net_income (Part II totals).
+- Form 4562 → fill depreciation only.
+- Schedule M-1/M-2 → fill notes describing reconciliation; leave numerics null.
+
+Extract numbers as plain USD (no symbols, commas, or thousands separators). If a value is not present or unreadable, return null — never guess. For revenue prefer Line 1a (Gross receipts or sales) less returns/allowances if shown, otherwise total revenue. For net_profit use ordinary business income (Form 1120 Line 28, Form 1120-S Line 21, Form 1065 Line 22, or Schedule C Line 31).`;
+    const userPrompt = `Extract the structured financials from this tax document. Return ONLY the structured data via the tool call.`;
 
     const body = {
       model: "google/gemini-2.5-flash",
@@ -743,14 +754,31 @@ export const parseTaxReturnPdf = createServerFn({ method: "POST" })
           type: "function",
           function: {
             name: "extract_tax_return",
-            description: "Extract structured financials from a US business tax return.",
+            description: "Extract structured financials from a US business tax return or schedule.",
             parameters: {
               type: "object",
               properties: {
                 form_type: {
                   type: "string",
-                  enum: ["1120", "1120-S", "1065", "Schedule C", "1040", "other"],
-                  description: "Detected tax form",
+                  enum: [
+                    "1120",
+                    "1120-S",
+                    "1065",
+                    "Schedule C",
+                    "Schedule L",
+                    "Schedule K-1",
+                    "Schedule E",
+                    "Schedule M-1",
+                    "Schedule M-2",
+                    "Form 4562",
+                    "1040",
+                    "other",
+                  ],
+                  description: "Detected tax form or schedule",
+                },
+                is_schedule: {
+                  type: "boolean",
+                  description: "True when the document is an attached schedule, not a primary return",
                 },
                 tax_year: { type: ["number", "null"], description: "Tax year (e.g. 2023)" },
                 business_name: { type: ["string", "null"] },
@@ -762,9 +790,12 @@ export const parseTaxReturnPdf = createServerFn({ method: "POST" })
                 total_liabilities: { type: ["number", "null"], description: "Schedule L end-of-year total liabilities" },
                 depreciation: { type: ["number", "null"] },
                 officer_compensation: { type: ["number", "null"] },
+                k1_ordinary_income: { type: ["number", "null"], description: "K-1 box 1 ordinary business income share" },
+                k1_ownership_pct: { type: ["number", "null"], description: "K-1 partner/shareholder profit percentage 0-100" },
+                sch_e_net_income: { type: ["number", "null"], description: "Schedule E net income from partnerships/S-corps" },
                 notes: { type: ["string", "null"], description: "Short note on extraction confidence or caveats" },
               },
-              required: ["form_type"],
+              required: ["form_type", "is_schedule"],
               additionalProperties: false,
             },
           },
@@ -826,6 +857,224 @@ export const parseTaxReturnPdf = createServerFn({ method: "POST" })
       return { ok: false as const, error: msg, extracted: null };
     }
   });
+
+// Parse multiple tax return / schedule PDFs in one call and aggregate them into
+// a single set of financials. Primary forms (1120/1120-S/1065/Schedule C) provide
+// top-line revenue/net_profit; Schedule L provides balance sheet; K-1s sum up to
+// supplement net_profit when no primary return is present.
+export const parseTaxReturnDocuments = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { files: Array<{ fileName: string; base64: string; mimeType: string }> }) =>
+      z
+        .object({
+          files: z
+            .array(
+              z.object({
+                fileName: z.string().trim().min(1).max(255),
+                base64: z.string().min(10),
+                mimeType: z.string().trim().min(3).max(80),
+              }),
+            )
+            .min(1)
+            .max(8),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    await requireUserId();
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error: "LOVABLE_API_KEY not configured",
+        aggregated: null as TaxReturnAggregated | null,
+      };
+    }
+
+    // Process all files in parallel — each file calls parseTaxReturnPdf's handler
+    // logic. We re-use the same server function via direct invocation by reading
+    // its handler indirectly: call .fn equivalent by invoking through fetch is
+    // overkill; instead inline the per-file extraction by calling the existing
+    // exported function.
+    const perFile = await Promise.all(
+      data.files.map(async (f) => {
+        try {
+          const res = await parseTaxReturnPdf({
+            data: { fileName: f.fileName, base64: f.base64, mimeType: f.mimeType },
+          });
+          return { file: f, result: res };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "parse failed";
+          return {
+            file: f,
+            result: {
+              ok: false as const,
+              error: msg,
+              extracted: null as TaxReturnExtraction | null,
+            },
+          };
+        }
+      }),
+    );
+
+    const sources: TaxReturnSource[] = [];
+    const extractions: Array<{ fileName: string; e: TaxReturnExtraction }> = [];
+    for (const item of perFile) {
+      if (item.result.ok && item.result.extracted) {
+        const e = item.result.extracted;
+        extractions.push({ fileName: item.file.fileName, e });
+        sources.push({
+          fileName: item.file.fileName,
+          form_type: e.form_type,
+          is_schedule: !!e.is_schedule,
+          tax_year: e.tax_year ?? null,
+          used_fields: [],
+          error: null,
+        });
+      } else {
+        sources.push({
+          fileName: item.file.fileName,
+          form_type: "other",
+          is_schedule: false,
+          tax_year: null,
+          used_fields: [],
+          error: item.result.error ?? "parse failed",
+        });
+      }
+    }
+
+    if (extractions.length === 0) {
+      return {
+        ok: false as const,
+        error: "No documents could be parsed.",
+        aggregated: { ...emptyAggregated(), sources } as TaxReturnAggregated,
+      };
+    }
+
+    // Decide primary return: prefer 1120/1120-S/1065/Schedule C (not flagged as schedule)
+    const primaryFormPriority: TaxFormType[] = ["1120", "1120-S", "1065", "Schedule C", "1040"];
+    const primaryIdx = extractions.findIndex(
+      (x) => !x.e.is_schedule && primaryFormPriority.includes(x.e.form_type),
+    );
+    const primary = primaryIdx >= 0 ? extractions[primaryIdx] : extractions[0];
+
+    const agg: TaxReturnAggregated = {
+      form_type: primary.e.form_type,
+      tax_year: primary.e.tax_year ?? null,
+      business_name: primary.e.business_name ?? null,
+      revenue: null,
+      cost_of_goods_sold: null,
+      total_expenses: null,
+      net_profit: null,
+      total_assets: null,
+      total_liabilities: null,
+      depreciation: null,
+      officer_compensation: null,
+      notes: null,
+      sources,
+    };
+
+    // Helper to record which file contributed which field
+    const credit = (fileName: string, field: string) => {
+      const s = sources.find((x) => x.fileName === fileName);
+      if (s && !s.used_fields.includes(field)) s.used_fields.push(field);
+    };
+
+    // Top-line numerics: take from primary, else fall back to any extraction
+    const pickFirst = <K extends keyof TaxReturnExtraction>(field: K): { val: TaxReturnExtraction[K]; src: string | null } => {
+      // Primary first
+      const p = primary.e[field];
+      if (p != null) return { val: p, src: primary.fileName };
+      for (const x of extractions) {
+        if (x === primary) continue;
+        const v = x.e[field];
+        if (v != null) return { val: v, src: x.fileName };
+      }
+      return { val: null as TaxReturnExtraction[K], src: null };
+    };
+
+    for (const f of [
+      "revenue",
+      "cost_of_goods_sold",
+      "total_expenses",
+      "net_profit",
+      "depreciation",
+      "officer_compensation",
+    ] as const) {
+      const { val, src } = pickFirst(f);
+      if (val != null && src) {
+        (agg as Record<string, number | null | string>)[f] = val as number;
+        credit(src, f);
+      }
+    }
+
+    // Balance sheet: prefer the extraction that explicitly carries Schedule L
+    // values (highest precedence: a Schedule L attachment).
+    const schedL = extractions.find((x) => x.e.form_type === "Schedule L");
+    const balanceSrc =
+      schedL ??
+      extractions.find((x) => x.e.total_assets != null || x.e.total_liabilities != null);
+    if (balanceSrc) {
+      if (balanceSrc.e.total_assets != null) {
+        agg.total_assets = balanceSrc.e.total_assets;
+        credit(balanceSrc.fileName, "total_assets");
+      }
+      if (balanceSrc.e.total_liabilities != null) {
+        agg.total_liabilities = balanceSrc.e.total_liabilities;
+        credit(balanceSrc.fileName, "total_liabilities");
+      }
+    }
+
+    // K-1 supplementation: if no primary net_profit but K-1s present, sum their
+    // ordinary income shares as the user's share of pass-through income.
+    if (agg.net_profit == null) {
+      const k1s = extractions.filter(
+        (x) => x.e.form_type === "Schedule K-1" && x.e.k1_ordinary_income != null,
+      );
+      if (k1s.length > 0) {
+        const sum = k1s.reduce((s, x) => s + (x.e.k1_ordinary_income ?? 0), 0);
+        agg.net_profit = sum;
+        for (const x of k1s) credit(x.fileName, "net_profit");
+      }
+    }
+
+    // Schedule E backfill for net_profit if still missing
+    if (agg.net_profit == null) {
+      const schE = extractions.find(
+        (x) => x.e.form_type === "Schedule E" && x.e.sch_e_net_income != null,
+      );
+      if (schE) {
+        agg.net_profit = schE.e.sch_e_net_income;
+        credit(schE.fileName, "net_profit");
+      }
+    }
+
+    // Aggregate notes: prefix each with the form type so the user sees source
+    const noteLines = extractions
+      .filter((x) => x.e.notes && x.e.notes.trim().length > 0)
+      .map((x) => `${x.e.form_type}: ${x.e.notes}`);
+    agg.notes = noteLines.length > 0 ? noteLines.join(" · ") : null;
+
+    return { ok: true as const, error: null, aggregated: agg };
+  });
+
+function emptyAggregated(): TaxReturnAggregated {
+  return {
+    form_type: "other",
+    tax_year: null,
+    business_name: null,
+    revenue: null,
+    cost_of_goods_sold: null,
+    total_expenses: null,
+    net_profit: null,
+    total_assets: null,
+    total_liabilities: null,
+    depreciation: null,
+    officer_compensation: null,
+    notes: null,
+    sources: [],
+  };
+}
 
 // =================================================================
 // Estate Documents
