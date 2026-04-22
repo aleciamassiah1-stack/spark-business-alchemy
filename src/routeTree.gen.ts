@@ -21,6 +21,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as FamilyRouteImport } from './routes/family'
+import { Route as EligibilityRouteImport } from './routes/eligibility'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as IndexRouteImport } from './routes/index'
@@ -85,6 +86,11 @@ const FamilyRoute = FamilyRouteImport.update({
   path: '/family',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EligibilityRoute = EligibilityRouteImport.update({
+  id: '/eligibility',
+  path: '/eligibility',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConnectionsRoute = ConnectionsRouteImport.update({
   id: '/connections',
   path: '/connections',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/connections': typeof ConnectionsRoute
+  '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/connections': typeof ConnectionsRoute
+  '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/beneficiaries': typeof BeneficiariesRoute
   '/connections': typeof ConnectionsRoute
+  '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/'
     | '/beneficiaries'
     | '/connections'
+    | '/eligibility'
     | '/family'
     | '/legacy'
     | '/more'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/beneficiaries'
     | '/connections'
+    | '/eligibility'
     | '/family'
     | '/legacy'
     | '/more'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/beneficiaries'
     | '/connections'
+    | '/eligibility'
     | '/family'
     | '/legacy'
     | '/more'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BeneficiariesRoute: typeof BeneficiariesRoute
   ConnectionsRoute: typeof ConnectionsRoute
+  EligibilityRoute: typeof EligibilityRoute
   FamilyRoute: typeof FamilyRoute
   LegacyRoute: typeof LegacyRoute
   MoreRoute: typeof MoreRoute
@@ -311,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamilyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eligibility': {
+      id: '/eligibility'
+      path: '/eligibility'
+      fullPath: '/eligibility'
+      preLoaderRoute: typeof EligibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/connections': {
       id: '/connections'
       path: '/connections'
@@ -339,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BeneficiariesRoute: BeneficiariesRoute,
   ConnectionsRoute: ConnectionsRoute,
+  EligibilityRoute: EligibilityRoute,
   FamilyRoute: FamilyRoute,
   LegacyRoute: LegacyRoute,
   MoreRoute: MoreRoute,

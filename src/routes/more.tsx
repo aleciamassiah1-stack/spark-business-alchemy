@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Users, BarChart3, Settings, HelpCircle, Bell, LogOut, ChevronRight, Building2, Link as LinkIcon } from "lucide-react";
+import { Users, BarChart3, Settings, HelpCircle, Bell, LogOut, ChevronRight, Building2, Link as LinkIcon, Sparkles } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
@@ -44,6 +44,7 @@ function MorePage() {
         </NavGroup>
 
         <NavGroup title="Connections">
+          <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
           <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
           <NavRow to="/more" icon={Building2} label="Banking" desc="Manage cash & transfers" />
         </NavGroup>
