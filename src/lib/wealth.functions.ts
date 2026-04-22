@@ -285,6 +285,158 @@ export const estimatePropertyValue = createServerFn({ method: "POST" })
     }
   });
 
+// =================================================================
+// RentCast AVM (live, free tier — 50 calls/month)
+// =================================================================
+
+export const estimatePropertyValueRentCast = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      address: string;
+      beds?: number | null;
+      baths?: number | null;
+      sqft?: number | null;
+      property_type?: string;
+    }) =>
+      z
+        .object({
+          address: z.string().trim().min(5).max(300),
+          beds: z.number().min(0).max(50).optional().nullable(),
+          baths: z.number().min(0).max(50).optional().nullable(),
+          sqft: z.number().min(0).max(1_000_000).optional().nullable(),
+          property_type: z.string().trim().max(40).optional(),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    await requireUserId();
+    const apiKey = process.env.RENTCAST_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error: "RentCast not configured. Add RENTCAST_API_KEY.",
+        valuation: null as PropertyValuation | null,
+      };
+    }
+
+    // RentCast expects propertyType values like: Single Family, Condo, Townhouse, Manufactured, Multi-Family, Apartment, Land
+    const ptMap: Record<string, string> = {
+      residential: "Single Family",
+      single_family: "Single Family",
+      condo: "Condo",
+      townhouse: "Townhouse",
+      multi_family: "Multi-Family",
+      apartment: "Apartment",
+      land: "Land",
+    };
+    const propertyType = ptMap[(data.property_type ?? "").toLowerCase()] ?? "Single Family";
+
+    const params = new URLSearchParams();
+    params.set("address", data.address);
+    params.set("propertyType", propertyType);
+    if (data.beds != null) params.set("bedrooms", String(data.beds));
+    if (data.baths != null) params.set("bathrooms", String(data.baths));
+    if (data.sqft != null) params.set("squareFootage", String(Math.round(data.sqft)));
+    params.set("compCount", "5");
+
+    try {
+      const res = await fetch(`https://api.rentcast.io/v1/avm/value?${params.toString()}`, {
+        method: "GET",
+        headers: { "X-Api-Key": apiKey, Accept: "application/json" },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("RentCast AVM error:", res.status, text);
+        if (res.status === 401) {
+          return { ok: false as const, error: "Invalid RentCast API key.", valuation: null };
+        }
+        if (res.status === 429) {
+          return {
+            ok: false as const,
+            error: "RentCast rate limit / monthly quota reached.",
+            valuation: null,
+          };
+        }
+        if (res.status === 404) {
+          return {
+            ok: false as const,
+            error: "RentCast couldn't find this address. Try a fuller street address.",
+            valuation: null,
+          };
+        }
+        return { ok: false as const, error: `RentCast failed (${res.status})`, valuation: null };
+      }
+
+      type RcComp = {
+        formattedAddress?: string;
+        addressLine1?: string;
+        price?: number;
+        listedDate?: string;
+        removedDate?: string;
+        lastSeenDate?: string;
+        bedrooms?: number;
+        bathrooms?: number;
+        squareFootage?: number;
+        distance?: number;
+        correlation?: number;
+      };
+      const json = (await res.json()) as {
+        price?: number;
+        priceRangeLow?: number;
+        priceRangeHigh?: number;
+        comparables?: RcComp[];
+      };
+
+      if (typeof json.price !== "number") {
+        return {
+          ok: false as const,
+          error: "RentCast returned no estimate for this address.",
+          valuation: null,
+        };
+      }
+
+      const estimated = Math.round(json.price);
+      const low = Math.round(json.priceRangeLow ?? estimated * 0.95);
+      const high = Math.round(json.priceRangeHigh ?? estimated * 1.05);
+      const spread = estimated > 0 ? (high - low) / estimated : 1;
+      const confidence: "low" | "medium" | "high" =
+        spread <= 0.1 ? "high" : spread <= 0.2 ? "medium" : "low";
+
+      const ppsf =
+        data.sqft && data.sqft > 0 ? Math.round(estimated / data.sqft) : null;
+
+      const comps = (json.comparables ?? []).slice(0, 5).map((c) => ({
+        address: c.formattedAddress ?? c.addressLine1 ?? "Unknown address",
+        sold_price: Math.round(c.price ?? 0),
+        distance_mi: typeof c.distance === "number" ? Number(c.distance.toFixed(2)) : null,
+        beds: c.bedrooms ?? null,
+        baths: c.bathrooms ?? null,
+        sqft: c.squareFootage ?? null,
+        note: c.listedDate
+          ? `Listed ${new Date(c.listedDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`
+          : null,
+      }));
+
+      const valuation: PropertyValuation = {
+        estimated_value: estimated,
+        value_low: low,
+        value_high: high,
+        confidence,
+        price_per_sqft: ppsf,
+        comps,
+        market_summary: `RentCast AVM based on ${comps.length} recent comparable ${comps.length === 1 ? "sale" : "sales"} within the local market. Range reflects model uncertainty (${Math.round(spread * 100)}% spread).`,
+        assumptions: `Property type: ${propertyType}${data.beds ? ` · ${data.beds} bed` : ""}${data.baths ? ` · ${data.baths} bath` : ""}${data.sqft ? ` · ${Math.round(data.sqft).toLocaleString()} sqft` : ""}.`,
+      };
+
+      return { ok: true as const, error: null, valuation };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "RentCast request failed";
+      console.error("estimatePropertyValueRentCast error:", msg);
+      return { ok: false as const, error: msg, valuation: null };
+    }
+  });
+
 // Save a valuation snapshot to a property's history
 export const savePropertyValuation = createServerFn({ method: "POST" })
   .inputValidator(
