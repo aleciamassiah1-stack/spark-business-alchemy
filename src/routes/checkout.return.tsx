@@ -40,8 +40,8 @@ function CheckoutReturnPage() {
             Welcome aboard. Let's personalize your private office…
           </p>
           {session_id && (
-            <p className="mt-4 break-all font-mono text-[10px] text-muted-foreground/70">
-              Ref: {session_id}
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60">
+              Confirmation · {session_id.slice(-8).toUpperCase()}
             </p>
           )}
           <div className="mt-6 flex flex-col gap-2">
