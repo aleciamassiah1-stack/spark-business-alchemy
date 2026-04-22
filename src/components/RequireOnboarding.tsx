@@ -29,7 +29,7 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const onb = useOnboarding();
   const access = useAccess();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -39,10 +39,10 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   }, [auth.ready, auth.user, navigate]);
 
   useEffect(() => {
-    if (auth.ready && auth.user && !auth.emailConfirmed && location.pathname !== "/verify-email") {
+    if (auth.ready && auth.user && !auth.emailConfirmed) {
       navigate({ to: "/verify-email" });
     }
-  }, [auth.ready, auth.user, auth.emailConfirmed, location.pathname, navigate]);
+  }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
   useEffect(() => {
     if (
