@@ -11,6 +11,7 @@ import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 const UNPAID_ALLOWED = new Set([
   "/pricing",
   "/profile",
+  "/intake",
   "/checkout/return",
   "/signin",
   "/signup",
