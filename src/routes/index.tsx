@@ -10,8 +10,10 @@ import { CompletionBanner } from "@/components/CompletionBanner";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
 import { useWealth } from "@/lib/wealth-context";
-import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
+import { recentActivity as demoActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { useAuth } from "@/lib/auth-context";
+import { displayNameFromUser, initialsFromName, useIsTestAccount } from "@/lib/test-account";
 import { loadBusiness, subscribeBusiness, netBusinessEquity } from "@/lib/business-store";
 import {
   loadAutoRefreshPrefs,
@@ -71,6 +73,10 @@ function HomePage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
   const [business, setBusiness] = useState(() => loadBusiness());
   const { setSyncing } = useWealth();
+  const { user } = useAuth();
+  const isTestAccount = useIsTestAccount();
+  const displayName = displayNameFromUser(user) || "Welcome";
+  const userInitials = initialsFromName(displayName);
 
   useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
@@ -189,7 +195,7 @@ function HomePage() {
   const isLoading = loading;
   const hasNoData = !isLoading && total === 0 && accounts.length === 0;
 
-  // Activity — prefer real Plaid transactions, fall back to mock
+  // Activity — prefer real Plaid transactions; only fall back to demo data for the test account
   const activity = transactions.length > 0
     ? transactions.slice(0, 5).map((t) => ({
         id: t.id,
@@ -201,7 +207,9 @@ function HomePage() {
         }),
         amount: -t.amount, // Plaid: positive = outflow
       }))
-    : fallbackActivity;
+    : isTestAccount
+      ? demoActivity
+      : [];
 
   return (
     <MobileShell>
@@ -210,7 +218,7 @@ function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="label-mono">Good morning</p>
-            <h1 className="font-serif text-2xl text-foreground">James Whitfield</h1>
+            <h1 className="font-serif text-2xl text-foreground">{displayName}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -223,7 +231,7 @@ function HomePage() {
             </button>
             <HideToggle />
             <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
-              JW
+              {userInitials}
             </div>
           </div>
         </div>
