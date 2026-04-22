@@ -39,8 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const user = session?.user ?? null;
+  const emailConfirmed = !!user?.email_confirmed_at;
+
   return (
-    <Ctx.Provider value={{ ready, session, user: session?.user ?? null, signOut }}>
+    <Ctx.Provider value={{ ready, session, user, emailConfirmed, signOut }}>
       {children}
     </Ctx.Provider>
   );
@@ -50,6 +53,7 @@ const noop: AuthCtx = {
   ready: false,
   session: null,
   user: null,
+  emailConfirmed: false,
   signOut: async () => {},
 };
 
