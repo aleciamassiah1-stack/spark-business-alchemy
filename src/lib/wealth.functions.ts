@@ -638,8 +638,23 @@ export type InsuranceExtraction = {
 // Tax Return AI Extraction
 // =================================================================
 
+export type TaxFormType =
+  | "1120"
+  | "1120-S"
+  | "1065"
+  | "Schedule C"
+  | "Schedule L"
+  | "Schedule K-1"
+  | "Schedule E"
+  | "Schedule M-1"
+  | "Schedule M-2"
+  | "Form 4562"
+  | "1040"
+  | "other";
+
 export type TaxReturnExtraction = {
-  form_type: string; // e.g. "1120", "1120-S", "1065", "Schedule C", "1040", "other"
+  form_type: TaxFormType; // detected form / schedule
+  is_schedule: boolean; // true when this is an attachment, not a primary return
   tax_year: number | null;
   business_name: string | null;
   revenue: number | null; // gross receipts / total revenue
@@ -650,7 +665,36 @@ export type TaxReturnExtraction = {
   total_liabilities: number | null; // Schedule L
   depreciation: number | null;
   officer_compensation: number | null;
+  // Schedule-specific values that may appear on attachments
+  k1_ordinary_income: number | null; // K-1 box 1 ordinary business income share
+  k1_ownership_pct: number | null; // K-1 partner/shareholder %
+  sch_e_net_income: number | null; // Schedule E net income from partnerships/S-corps
   notes: string | null;
+};
+
+export type TaxReturnSource = {
+  fileName: string;
+  form_type: TaxFormType;
+  is_schedule: boolean;
+  tax_year: number | null;
+  used_fields: string[]; // which aggregated fields this source contributed to
+  error: string | null;
+};
+
+export type TaxReturnAggregated = {
+  form_type: TaxFormType; // primary detected form
+  tax_year: number | null;
+  business_name: string | null;
+  revenue: number | null;
+  cost_of_goods_sold: number | null;
+  total_expenses: number | null;
+  net_profit: number | null;
+  total_assets: number | null;
+  total_liabilities: number | null;
+  depreciation: number | null;
+  officer_compensation: number | null;
+  notes: string | null;
+  sources: TaxReturnSource[];
 };
 
 // AI parse a tax return PDF — accepts base64 PDF/image, returns extracted financials.
