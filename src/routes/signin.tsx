@@ -21,12 +21,15 @@ function SigninRoute() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (auth.user) {
-      // Account step is implicitly complete once a verified session exists.
-      markStep("account");
-      navigate({ to: "/" });
+    if (!auth.user) return;
+    if (!auth.emailConfirmed) {
+      navigate({ to: "/verify-email" });
+      return;
     }
-  }, [auth.user, markStep, navigate]);
+    // Account step is implicitly complete once a verified session exists.
+    markStep("account");
+    navigate({ to: "/" });
+  }, [auth.user, auth.emailConfirmed, markStep, navigate]);
 
   return (
     <div className="relative min-h-[100dvh] bg-background px-6 py-10">
