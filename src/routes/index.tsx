@@ -12,6 +12,7 @@ import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/li
 import { useWealth } from "@/lib/wealth-context";
 import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { loadBusiness, subscribeBusiness, netBusinessEquity } from "@/lib/business-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,7 +62,10 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [business, setBusiness] = useState(() => loadBusiness());
   const { setSyncing } = useWealth();
+
+  useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
   const loadAll = useCallback(async () => {
     const [agg, props, ins, est] = await Promise.all([
