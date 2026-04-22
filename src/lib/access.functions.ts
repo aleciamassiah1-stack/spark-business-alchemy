@@ -122,6 +122,8 @@ type MemberRow = {
   current_period_end: string | null;
   is_admin: boolean;
   has_manual_access: boolean;
+  pending_deletion_at: string | null;
+  pending_purge_after: string | null;
 };
 
 export const adminListMembers = createServerFn({ method: "GET" }).handler(async () => {
@@ -146,23 +148,28 @@ export const adminListMembers = createServerFn({ method: "GET" }).handler(async 
     page += 1;
   }
 
-  const [{ data: subs }, { data: roles }, { data: comps }] = await Promise.all([
+  const [{ data: subs }, { data: roles }, { data: comps }, { data: pending }] = await Promise.all([
     supabaseAdmin
       .from("subscriptions")
       .select("user_id, price_id, status, current_period_end")
       .eq("environment", env),
     supabaseAdmin.from("user_roles").select("user_id, role").eq("role", "admin"),
     supabaseAdmin.from("manual_access").select("user_id, expires_at"),
+    supabaseAdmin
+      .from("pending_account_deletions")
+      .select("user_id, scheduled_at, purge_after"),
   ]);
 
   const subMap = new Map((subs ?? []).map((s) => [s.user_id, s]));
   const adminSet = new Set((roles ?? []).map((r) => r.user_id));
   const compMap = new Map((comps ?? []).map((c) => [c.user_id, c]));
+  const pendingMap = new Map((pending ?? []).map((p) => [p.user_id, p]));
 
   const members: MemberRow[] = allUsers.map((u) => {
     const sub = subMap.get(u.id);
     const comp = compMap.get(u.id);
     const compActive = comp ? !comp.expires_at || new Date(comp.expires_at) > new Date() : false;
+    const pend = pendingMap.get(u.id);
     return {
       user_id: u.id,
       email: u.email,
@@ -173,6 +180,8 @@ export const adminListMembers = createServerFn({ method: "GET" }).handler(async 
       current_period_end: sub?.current_period_end ?? null,
       is_admin: adminSet.has(u.id),
       has_manual_access: compActive,
+      pending_deletion_at: pend?.scheduled_at ?? null,
+      pending_purge_after: pend?.purge_after ?? null,
     };
   });
 
