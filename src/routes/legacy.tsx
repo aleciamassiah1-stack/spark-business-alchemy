@@ -684,11 +684,14 @@ function PropertyCard({
   property,
   valuation,
   delay = 0,
+  onValuationSaved,
 }: {
   property: Property;
   valuation: Valuation | null;
   delay?: number;
+  onValuationSaved?: () => void | Promise<void>;
 }) {
+  const [running, setRunning] = useState(false);
   const value = Number(property.estimated_value) || 0;
   const mortgage = Number(property.mortgage_balance) || 0;
   const equity = Math.max(0, value - mortgage);
@@ -701,6 +704,47 @@ function PropertyCard({
     medium: "bg-primary/15 text-primary",
     low: "bg-warning/15 text-warning",
   };
+  const source = (valuation?.source ?? "ai").toLowerCase();
+  const isRentCast = source === "rentcast";
+
+  async function runRentCast() {
+    setRunning(true);
+    try {
+      const res = await estimatePropertyValueRentCast({
+        data: {
+          address: property.address,
+          beds: property.beds,
+          baths: property.baths,
+          sqft: property.sqft,
+        },
+      });
+      if (!res.ok || !res.valuation) {
+        toast.error(res.error ?? "Couldn't get RentCast valuation");
+        return;
+      }
+      const saved = await savePropertyValuation({
+        data: {
+          property_id: property.id,
+          valuation: res.valuation,
+          input_address: property.address,
+          input_beds: property.beds,
+          input_baths: property.baths,
+          input_sqft: property.sqft,
+          source: "rentcast",
+        },
+      });
+      if (!saved.ok) {
+        toast.error(saved.error ?? "Couldn't save valuation");
+        return;
+      }
+      toast.success(
+        `RentCast: ${fmtCurrency(res.valuation.estimated_value, { compact: true })}`,
+      );
+      await onValuationSaved?.();
+    } finally {
+      setRunning(false);
+    }
+  }
 
   return (
     <LuxCard delay={delay} className="overflow-hidden">
@@ -771,13 +815,15 @@ function PropertyCard({
         </div>
       )}
 
-      {/* AI valuation block */}
+      {/* Latest valuation block */}
       {valuation ? (
         <div className="border-t border-white/[0.04] bg-primary/[0.04] px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <p className="label-mono">AI valuation</p>
+              <p className="label-mono">
+                {isRentCast ? "RentCast AVM (live)" : "AI valuation"}
+              </p>
             </div>
             {confidence ? (
               <span
@@ -814,16 +860,24 @@ function PropertyCard({
             </p>
           ) : null}
         </div>
-      ) : (
-        <div className="border-t border-white/[0.04] px-4 py-3">
-          <Link
-            to="/connections"
-            className="flex items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-medium text-primary"
-          >
-            <Sparkles className="h-3 w-3" /> Get AI valuation
-          </Link>
-        </div>
-      )}
+      ) : null}
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 border-t border-white/[0.04] px-4 py-3">
+        <button
+          type="button"
+          onClick={runRentCast}
+          disabled={running}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full gradient-violet px-3 py-2 text-[11px] font-medium text-foreground glow-violet disabled:opacity-60"
+        >
+          {running ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="h-3 w-3" />
+          )}
+          {running ? "Fetching live comps…" : valuation ? "Refresh RentCast valuation" : "Get live RentCast valuation"}
+        </button>
+      </div>
     </LuxCard>
   );
 }
