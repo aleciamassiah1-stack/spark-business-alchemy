@@ -616,6 +616,8 @@ function ResultsCard({
         open={requestOpen}
         onOpenChange={setRequestOpen}
         country={countryLabel}
+        accounts={accounts}
+        useCases={useCases}
         gatedItems={enterpriseGated}
       />
     </motion.div>
