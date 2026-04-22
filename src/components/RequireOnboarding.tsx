@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import { Onboarding } from "@/components/Onboarding";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
+import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
