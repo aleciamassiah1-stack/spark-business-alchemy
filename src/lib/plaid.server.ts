@@ -1,7 +1,8 @@
 // Server-only Plaid REST helper. Do NOT import from client code.
 // Uses fetch directly (no node SDK) to stay Worker-runtime compatible.
 
-const PLAID_ENV = (process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production") as const;
+const PLAID_ENV: "sandbox" | "production" =
+  process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
 const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
 
 function getCreds() {
