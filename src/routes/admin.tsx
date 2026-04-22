@@ -353,6 +353,10 @@ function MemberRow({
   };
 
   const scheduleDelete = async () => {
+    if (isSelf) {
+      toast.error("You cannot schedule deletion of your own admin account");
+      return;
+    }
     const ok = window.confirm(
       `Delete ${m.email ?? "this account"}?\n\nThe account will be retained for 30 days and then permanently purged. You can cancel within that window.`,
     );
@@ -371,6 +375,10 @@ function MemberRow({
   };
 
   const cancelDelete = async () => {
+    if (isSelf) {
+      toast.error("You cannot cancel deletion of your own admin account");
+      return;
+    }
     setBusy(true);
     try {
       await adminCancelAccountDeletion({ data: { userId: m.user_id } });
