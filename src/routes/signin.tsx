@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { AuthForm } from "@/components/Onboarding";
 import { useAuth } from "@/lib/auth-context";
+import { useOnboarding } from "@/lib/onboarding-context";
 
 export const Route = createFileRoute("/signin")({
   head: () => ({
@@ -16,11 +17,16 @@ export const Route = createFileRoute("/signin")({
 
 function SigninRoute() {
   const auth = useAuth();
+  const { markStep } = useOnboarding();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (auth.user) navigate({ to: "/" });
-  }, [auth.user, navigate]);
+    if (auth.user) {
+      // Account step is implicitly complete once a verified session exists.
+      markStep("account");
+      navigate({ to: "/" });
+    }
+  }, [auth.user, markStep, navigate]);
 
   return (
     <div className="relative min-h-[100dvh] bg-background px-6 py-10">
