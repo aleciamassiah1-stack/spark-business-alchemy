@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   Loader2,
   AlertCircle,
+  Trash2,
+  Undo2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
@@ -21,6 +23,8 @@ import {
   adminGrantAccess,
   adminRevokeAccess,
   adminSetRole,
+  adminScheduleAccountDeletion,
+  adminCancelAccountDeletion,
 } from "@/lib/access.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
