@@ -45,6 +45,7 @@ import {
   savePropertyValuation,
   listPropertyValuations,
   deletePropertyValuation,
+  uploadPropertyImage,
   type PropertyValuation,
   listInsurancePolicies,
   upsertInsurancePolicy,
@@ -132,7 +133,7 @@ type Item = { id: string; institution_name: string | null; status: string; last_
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
 type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
-type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number };
+type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number; image_url: string | null; beds: number | null; baths: number | null; sqft: number | null };
 type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
 type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; signed_date: string | null };
 
@@ -719,32 +720,74 @@ function PropertiesTab({
         <div className="mt-4 flex flex-col gap-3">
           {properties.map((p) => {
             const equity = p.estimated_value - p.mortgage_balance;
+            const ltv = p.estimated_value > 0 ? (p.mortgage_balance / p.estimated_value) * 100 : 0;
             return (
-              <LuxCard key={p.id} className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Home className="h-4 w-4" />
+              <LuxCard key={p.id} className="overflow-hidden p-0">
+                {p.image_url ? (
+                  <div className="relative aspect-[16/10] w-full overflow-hidden">
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <button
+                      onClick={() => onDelete(p.id)}
+                      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-md hover:bg-destructive/70 hover:text-white"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <p className="font-serif text-lg leading-tight text-white">{p.name}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-white/70">{p.address}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-serif text-base text-foreground">{p.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{p.address}</p>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                      <Mini label="Value" value={fmtCurrency(p.estimated_value, { compact: true })} />
-                      <Mini label="Mortgage" value={fmtCurrency(p.mortgage_balance, { compact: true })} />
-                      <Mini label="Equity" value={fmtCurrency(equity, { compact: true })} positive />
+                ) : (
+                  <div className="flex items-start gap-3 px-4 pt-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <Home className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-serif text-base text-foreground">{p.name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">{p.address}</p>
                     </div>
                     <button
-                      onClick={() => onShowHistory(p)}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-medium text-primary"
+                      onClick={() => onDelete(p.id)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
                     >
-                      <History className="h-3 w-3" /> Valuation history
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                )}
+                <div className="p-4">
+                  {(p.beds || p.baths || p.sqft) && (
+                    <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
+                      {p.beds ? <span>{p.beds} bd</span> : null}
+                      {p.baths ? <span>· {p.baths} ba</span> : null}
+                      {p.sqft ? <span>· {Number(p.sqft).toLocaleString()} sf</span> : null}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <Mini label="Value" value={fmtCurrency(p.estimated_value, { compact: true })} />
+                    <Mini label="Mortgage" value={fmtCurrency(p.mortgage_balance, { compact: true })} />
+                    <Mini label="Equity" value={fmtCurrency(equity, { compact: true })} positive />
+                  </div>
+                  <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.05]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+                      style={{ width: `${Math.min(100, Math.max(0, 100 - ltv))}%` }}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+                    <span>{(100 - ltv).toFixed(0)}% equity</span>
+                    <span>LTV {ltv.toFixed(0)}%</span>
+                  </div>
                   <button
-                    onClick={() => onDelete(p.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    onClick={() => onShowHistory(p)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-medium text-primary"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <History className="h-3 w-3" /> Valuation history
                   </button>
                 </div>
               </LuxCard>
@@ -1204,6 +1247,33 @@ function PropertyFormModal({
     }
   };
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImage = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      onError("Please choose an image file");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      onError("Image too large (max 6 MB)");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const up = await uploadPropertyImage({
+        data: { fileName: file.name, base64, mimeType: file.type },
+      });
+      if (!up.ok || !up.url) throw new Error(up.error ?? "Upload failed");
+      setImageUrl(up.url);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Image upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const submit = async () => {
     if (!name.trim() || !address.trim() || !value) {
       onError("Name, address, and value are required");
@@ -1216,6 +1286,10 @@ function PropertyFormModal({
         address: address.trim(),
         estimated_value: Number(value),
         mortgage_balance: Number(mortgage) || 0,
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
+        image_url: imageUrl,
       },
     });
     // If we have an AI valuation and the property was created, persist the snapshot
@@ -1250,6 +1324,38 @@ function PropertyFormModal({
 
   return (
     <Modal title="Add property" onClose={onClose}>
+      <div className="mb-3">
+        <p className="label-mono mb-1.5">Photo (optional)</p>
+        {imageUrl ? (
+          <div className="relative overflow-hidden rounded-xl">
+            <img src={imageUrl} alt="Property" className="aspect-[16/10] w-full object-cover" />
+            <button
+              onClick={() => setImageUrl(null)}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] px-4 py-6 text-xs text-muted-foreground hover:bg-white/[0.04]">
+            {uploadingImage ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            {uploadingImage ? "Uploading…" : "Upload photo of the home"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImage(f);
+              }}
+            />
+          </label>
+        )}
+      </div>
       <Field label="Name" placeholder="Primary residence" value={name} onChange={setName} />
       <Field label="Address" placeholder="123 Main St, City, ST" value={address} onChange={setAddress} />
       <div className="mb-3 grid grid-cols-3 gap-2">

@@ -465,9 +465,12 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          baths: number | null
+          beds: number | null
           created_at: string
           estimated_value: number
           id: string
+          image_url: string | null
           iso_currency_code: string | null
           last_valued_at: string | null
           mortgage_balance: number | null
@@ -475,14 +478,18 @@ export type Database = {
           property_type: string | null
           purchase_date: string | null
           purchase_price: number | null
+          sqft: number | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           address: string
+          baths?: number | null
+          beds?: number | null
           created_at?: string
           estimated_value?: number
           id?: string
+          image_url?: string | null
           iso_currency_code?: string | null
           last_valued_at?: string | null
           mortgage_balance?: number | null
@@ -490,14 +497,18 @@ export type Database = {
           property_type?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
+          sqft?: number | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           address?: string
+          baths?: number | null
+          beds?: number | null
           created_at?: string
           estimated_value?: number
           id?: string
+          image_url?: string | null
           iso_currency_code?: string | null
           last_valued_at?: string | null
           mortgage_balance?: number | null
@@ -505,6 +516,7 @@ export type Database = {
           property_type?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
+          sqft?: number | null
           updated_at?: string
           user_id?: string | null
         }

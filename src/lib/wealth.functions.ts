@@ -15,6 +15,10 @@ const propertyInputSchema = z.object({
   mortgage_balance: z.number().min(0).max(1_000_000_000).default(0),
   purchase_price: z.number().min(0).max(1_000_000_000).optional().nullable(),
   purchase_date: z.string().optional().nullable(),
+  beds: z.number().min(0).max(50).optional().nullable(),
+  baths: z.number().min(0).max(50).optional().nullable(),
+  sqft: z.number().min(0).max(1_000_000).optional().nullable(),
+  image_url: z.string().trim().max(2048).url().optional().nullable(),
 });
 
 export const listProperties = createServerFn({ method: "GET" }).handler(async () => {
@@ -39,6 +43,10 @@ export const upsertProperty = createServerFn({ method: "POST" })
       mortgage_balance?: number;
       purchase_price?: number | null;
       purchase_date?: string | null;
+      beds?: number | null;
+      baths?: number | null;
+      sqft?: number | null;
+      image_url?: string | null;
     }) => {
       const { id, ...rest } = input;
       const parsed = propertyInputSchema.parse({
@@ -60,6 +68,10 @@ export const upsertProperty = createServerFn({ method: "POST" })
       mortgage_balance: data.mortgage_balance,
       purchase_price: data.purchase_price ?? null,
       purchase_date: data.purchase_date ?? null,
+      beds: data.beds ?? null,
+      baths: data.baths ?? null,
+      sqft: data.sqft ?? null,
+      image_url: data.image_url ?? null,
       last_valued_at: new Date().toISOString(),
     };
     if (data.id) {
@@ -1195,6 +1207,40 @@ export const uploadWealthDocument = createServerFn({ method: "POST" })
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       return { ok: false as const, path: null, url: null, error: msg };
+    }
+  });
+
+// Upload a property hero image to the public property-images bucket and return its public URL
+export const uploadPropertyImage = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { fileName: string; base64: string; mimeType: string }) =>
+      z
+        .object({
+          fileName: z.string().trim().min(1).max(255),
+          base64: z.string().min(10),
+          mimeType: z
+            .string()
+            .trim()
+            .max(80)
+            .regex(/^image\/(jpeg|jpg|png|webp|heic|heif)$/i, "Image only"),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await requireUserId();
+      const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${userId}/${Date.now()}_${safeName}`;
+      const buf = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
+      const { error } = await supabaseAdmin.storage
+        .from("property-images")
+        .upload(path, buf, { contentType: data.mimeType, upsert: false });
+      if (error) return { ok: false as const, url: null, error: error.message };
+      const { data: pub } = supabaseAdmin.storage.from("property-images").getPublicUrl(path);
+      return { ok: true as const, url: pub.publicUrl, error: null as string | null };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      return { ok: false as const, url: null, error: msg };
     }
   });
 
