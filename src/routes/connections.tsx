@@ -356,6 +356,45 @@ function ConnectionsPage() {
               await loadAll();
             }}
             onShowHistory={(p) => setHistoryProperty(p)}
+            onRunValuation={async (p) => {
+              setSyncing(true, "Running AI valuation…");
+              try {
+                const est = await estimatePropertyValue({
+                  data: {
+                    address: p.address,
+                    beds: p.beds,
+                    baths: p.baths,
+                    sqft: p.sqft,
+                    property_type: "residential",
+                  },
+                });
+                if (!est.ok || !est.valuation) {
+                  showToast("err", est.error ?? "Could not estimate value");
+                  return;
+                }
+                const saveRes = await savePropertyValuation({
+                  data: {
+                    property_id: p.id,
+                    valuation: est.valuation,
+                    input_address: p.address,
+                    input_beds: p.beds,
+                    input_baths: p.baths,
+                    input_sqft: p.sqft,
+                    source: "ai",
+                  },
+                });
+                if (!saveRes.ok) {
+                  showToast("err", saveRes.error ?? "Failed to save valuation");
+                  return;
+                }
+                showToast("ok", `AI estimate: ${fmtCurrency(est.valuation.estimated_value, { compact: true })}`);
+                setHistoryProperty(p);
+              } catch (err) {
+                showToast("err", err instanceof Error ? err.message : "Estimation failed");
+              } finally {
+                setSyncing(false);
+              }
+            }}
           />
         )}
         {tab === "insurance" && (
@@ -696,11 +735,13 @@ function PropertiesTab({
   onAdd,
   onDelete,
   onShowHistory,
+  onRunValuation,
 }: {
   properties: Property[];
   onAdd: () => void;
   onDelete: (id: string) => void;
   onShowHistory: (p: Property) => void;
+  onRunValuation: (p: Property) => void | Promise<void>;
 }) {
   return (
     <div>
@@ -783,12 +824,20 @@ function PropertiesTab({
                     <span>{(100 - ltv).toFixed(0)}% equity</span>
                     <span>LTV {ltv.toFixed(0)}%</span>
                   </div>
-                  <button
-                    onClick={() => onShowHistory(p)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-medium text-primary"
-                  >
-                    <History className="h-3 w-3" /> Valuation history
-                  </button>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => onRunValuation(p)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium text-primary-foreground glow-violet"
+                    >
+                      <Sparkles className="h-3 w-3" /> Get AI valuation
+                    </button>
+                    <button
+                      onClick={() => onShowHistory(p)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-medium text-primary"
+                    >
+                      <History className="h-3 w-3" /> History
+                    </button>
+                  </div>
                 </div>
               </LuxCard>
             );
