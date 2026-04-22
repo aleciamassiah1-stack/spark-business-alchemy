@@ -1550,8 +1550,9 @@ function DocumentsBlock({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewDraft, setReviewDraft] = useState<TaxReturnReviewDraft | null>(null);
   const [reviewFileName, setReviewFileName] = useState<string | undefined>();
+  const [reviewSources, setReviewSources] = useState<TaxReturnReviewSource[] | undefined>();
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<{ name: string } | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<Array<{ name: string }>>([]);
 
   const totalAssets = state.assets.reduce((s, a) => s + a.value, 0);
   const totalLiabilities = state.liabilities.reduce((s, l) => s + l.balance, 0);
