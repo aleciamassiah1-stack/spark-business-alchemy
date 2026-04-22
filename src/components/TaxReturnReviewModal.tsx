@@ -139,6 +139,47 @@ export function TaxReturnReviewModal({
               <span className="font-medium text-foreground">Apply to business</span>.
             </p>
 
+            {sources && sources.length > 0 && (
+              <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                <div className="flex items-center gap-1.5">
+                  <Layers className="h-3 w-3 text-gold" />
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Aggregated from {sources.length} {sources.length === 1 ? "document" : "documents"}
+                  </p>
+                </div>
+                <ul className="mt-2 space-y-1.5">
+                  {sources.map((s) => (
+                    <li
+                      key={s.fileName}
+                      className="flex items-start justify-between gap-2 text-[11px] leading-tight"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-foreground">{s.fileName}</p>
+                        <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                          {s.form_type}
+                          {s.is_schedule ? " · schedule" : ""}
+                          {s.tax_year ? ` · ${s.tax_year}` : ""}
+                        </p>
+                      </div>
+                      {s.error ? (
+                        <span className="shrink-0 rounded-full bg-destructive/15 px-1.5 py-0.5 font-mono text-[9px] uppercase text-destructive">
+                          skipped
+                        </span>
+                      ) : s.used_fields.length > 0 ? (
+                        <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[9px] uppercase text-primary">
+                          {s.used_fields.length} field{s.used_fields.length === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="shrink-0 rounded-full bg-white/[0.05] px-1.5 py-0.5 font-mono text-[9px] uppercase text-muted-foreground">
+                          context
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Form">
