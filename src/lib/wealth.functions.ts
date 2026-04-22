@@ -635,6 +635,155 @@ export type InsuranceExtraction = {
 };
 
 // =================================================================
+// Tax Return AI Extraction
+// =================================================================
+
+export type TaxReturnExtraction = {
+  form_type: string; // e.g. "1120", "1120-S", "1065", "Schedule C", "1040", "other"
+  tax_year: number | null;
+  business_name: string | null;
+  revenue: number | null; // gross receipts / total revenue
+  cost_of_goods_sold: number | null;
+  total_expenses: number | null;
+  net_profit: number | null; // ordinary business income / net income
+  total_assets: number | null; // Schedule L
+  total_liabilities: number | null; // Schedule L
+  depreciation: number | null;
+  officer_compensation: number | null;
+  notes: string | null;
+};
+
+// AI parse a tax return PDF — accepts base64 PDF/image, returns extracted financials.
+export const parseTaxReturnPdf = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { fileName: string; base64: string; mimeType: string }) =>
+      z
+        .object({
+          fileName: z.string().trim().min(1).max(255),
+          base64: z.string().min(10),
+          mimeType: z.string().trim().min(3).max(80),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    await requireUserId();
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error: "LOVABLE_API_KEY not configured",
+        extracted: null as null | TaxReturnExtraction,
+      };
+    }
+
+    const systemPrompt = `You are a precise extraction assistant for US business tax returns (Form 1120, 1120-S, 1065, Schedule C of 1040). Extract numeric line items as numbers in USD with no currency symbols, commas, or thousands separators. If a value is not present or unreadable, return null — do not guess. For revenue prefer Line 1a (Gross receipts or sales) less returns/allowances if shown, otherwise total revenue. For net_profit use ordinary business income (Form 1120 Line 28, Form 1120-S Line 21, Form 1065 Line 22, or Schedule C Line 31). Total assets and liabilities should come from Schedule L (balance sheet) end-of-year column when present.`;
+    const userPrompt = `Extract the structured financials from this tax return document. Return ONLY the structured data via the tool call.`;
+
+    const body = {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: userPrompt },
+            {
+              type: "image_url",
+              image_url: { url: `data:${data.mimeType};base64,${data.base64}` },
+            },
+          ],
+        },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "extract_tax_return",
+            description: "Extract structured financials from a US business tax return.",
+            parameters: {
+              type: "object",
+              properties: {
+                form_type: {
+                  type: "string",
+                  enum: ["1120", "1120-S", "1065", "Schedule C", "1040", "other"],
+                  description: "Detected tax form",
+                },
+                tax_year: { type: ["number", "null"], description: "Tax year (e.g. 2023)" },
+                business_name: { type: ["string", "null"] },
+                revenue: { type: ["number", "null"], description: "Gross receipts / total revenue in USD" },
+                cost_of_goods_sold: { type: ["number", "null"] },
+                total_expenses: { type: ["number", "null"] },
+                net_profit: { type: ["number", "null"], description: "Ordinary business income / net income in USD" },
+                total_assets: { type: ["number", "null"], description: "Schedule L end-of-year total assets" },
+                total_liabilities: { type: ["number", "null"], description: "Schedule L end-of-year total liabilities" },
+                depreciation: { type: ["number", "null"] },
+                officer_compensation: { type: ["number", "null"] },
+                notes: { type: ["string", "null"], description: "Short note on extraction confidence or caveats" },
+              },
+              required: ["form_type"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "extract_tax_return" } },
+    };
+
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) {
+          return {
+            ok: false as const,
+            error: "Rate limit reached on AI parser. Please try again in a moment.",
+            extracted: null,
+          };
+        }
+        if (res.status === 402) {
+          return {
+            ok: false as const,
+            error: "AI credits exhausted. Add credits in workspace settings.",
+            extracted: null,
+          };
+        }
+        console.error("Lovable AI tax return error:", res.status, text);
+        return {
+          ok: false as const,
+          error: `AI parser failed (${res.status})`,
+          extracted: null,
+        };
+      }
+
+      const json = (await res.json()) as {
+        choices?: Array<{
+          message?: { tool_calls?: Array<{ function?: { arguments?: string } }> };
+        }>;
+      };
+
+      const argsStr = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      if (!argsStr) {
+        return { ok: false as const, error: "AI returned no extraction", extracted: null };
+      }
+
+      const parsed = JSON.parse(argsStr) as TaxReturnExtraction;
+      return { ok: true as const, error: null, extracted: parsed };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI parse failed";
+      console.error("parseTaxReturnPdf error:", msg);
+      return { ok: false as const, error: msg, extracted: null };
+    }
+  });
+
+// =================================================================
 // Estate Documents
 // =================================================================
 
