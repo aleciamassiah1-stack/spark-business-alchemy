@@ -3,6 +3,27 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getCurrentUserId, requireUserId } from "@/integrations/supabase/auth-helper";
 
+/**
+ * Public: returns whether the given email has a pending account deletion.
+ * Used by the signin form to block login during the 30-day grace period.
+ * Does not require auth — but only returns a boolean + purge date, no PII.
+ */
+export const checkPendingDeletionByEmail = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ email: z.string().email().max(320) }))
+  .handler(async ({ data }) => {
+    const email = data.email.trim().toLowerCase();
+    const { data: userList, error: userErr } = await supabaseAdmin
+      .from("pending_account_deletions")
+      .select("user_id, purge_after, email")
+      .ilike("email", email)
+      .maybeSingle();
+    if (userErr || !userList) return { pending: false } as const;
+    return {
+      pending: true,
+      purgeAfter: userList.purge_after,
+    } as const;
+  });
+
 /** Returns whether the current user has access (admin, paid sub, or comp). */
 export const checkAccess = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
