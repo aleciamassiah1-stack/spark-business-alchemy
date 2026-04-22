@@ -57,6 +57,7 @@ type Valuation = {
   confidence: string;
   price_per_sqft: number | null;
   market_summary: string | null;
+  source: string | null;
   created_at: string;
 };
 
