@@ -21,6 +21,9 @@ import {
   Copy,
   Check,
   Mail,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
