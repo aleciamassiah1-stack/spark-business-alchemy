@@ -1047,7 +1047,7 @@ export function Welcome({
       </div>
 
       {/* Tier preview — front and center */}
-      <div className="relative mt-10 w-full max-w-[400px]">
+      <div className="relative mt-10 w-full max-w-[1100px]">
         <div className="mb-3 flex items-center justify-between">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             Choose your tier
@@ -1060,7 +1060,7 @@ export function Welcome({
             <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-stretch sm:gap-4">
           <WelcomeTier
             name="Essential"
             price="$1,490"
@@ -1087,7 +1087,7 @@ export function Welcome({
             variant="family"
           />
         </div>
-        <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           Billed annually · Save up to 2 months
         </p>
       </div>
