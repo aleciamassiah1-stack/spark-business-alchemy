@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Minus, ChevronDown, X, Lock, Star } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { isStripeConfigured } from "@/lib/stripe";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
