@@ -24,6 +24,11 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Send,
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
+  FileEdit,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
