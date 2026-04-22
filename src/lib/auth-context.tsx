@@ -6,6 +6,8 @@ type AuthCtx = {
   ready: boolean;
   session: Session | null;
   user: User | null;
+  /** True only when Supabase reports the user's email as confirmed. */
+  emailConfirmed: boolean;
   signOut: () => Promise<void>;
 };
 
