@@ -129,8 +129,13 @@ function HomePage() {
     0,
   );
   const realEstateValue = properties.reduce((sum, p) => sum + (p.estimated_value ?? 0), 0);
+  const businessEquity = business.setupComplete
+    ? business.valuation > 0
+      ? business.valuation
+      : netBusinessEquity(business)
+    : 0;
 
-  const total = investmentsBalance + bankingBalance + realEstateEquity - creditBalance;
+  const total = investmentsBalance + bankingBalance + realEstateEquity - creditBalance + businessEquity;
 
   // YTD: pseudo from holdings cost basis vs value (best-effort)
   const ytdAmount = holdings.reduce(
@@ -144,6 +149,7 @@ function HomePage() {
     { key: "investments", label: "Investments", value: investmentsBalance, dot: "bg-primary" },
     { key: "banking", label: "Banking", value: bankingBalance, dot: "bg-violet-glow" },
     { key: "real_estate", label: "Real Estate", value: realEstateEquity, dot: "bg-gold" },
+    { key: "business", label: "Business", value: businessEquity, dot: "bg-warning" },
   ].filter((b) => b.value > 0);
   const allocTotal = allocBuckets.reduce((s, b) => s + b.value, 0) || 1;
   const allocPcts = allocBuckets.map((b) => ({ ...b, pct: (b.value / allocTotal) * 100 }));
