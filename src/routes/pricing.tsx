@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Minus, ChevronDown, X, Sparkles, Lock, ShieldCheck, Star } from "lucide-react";
+import { Check, Minus, ChevronDown, X, Lock, Star } from "lucide-react";
+import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 
 export const Route = createFileRoute("/pricing")({
@@ -212,11 +213,13 @@ function PricingPage() {
   const handleCta = (tier: Tier) => {
     if (tier.ctaAction === "demo") {
       setDemoOpen(true);
-    } else {
-      // Stripe checkout will be wired up after payments enablement.
-      // For now this is a no-op that surfaces the demo modal as a contact fallback.
-      setDemoOpen(true);
+      return;
     }
+    // Checkout placeholder — Stripe will be wired up later.
+    const price = billing === "annual" ? tier.annual : tier.monthly;
+    toast(`${tier.name} — Checkout coming soon`, {
+      description: `$${price.toLocaleString()} / ${billing === "annual" ? "year" : "month"}. Payments will be enabled shortly.`,
+    });
   };
 
   return (
