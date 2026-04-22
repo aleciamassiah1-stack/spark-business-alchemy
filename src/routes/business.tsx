@@ -321,7 +321,7 @@ function BusinessPage() {
                         fontSize: "11px",
                       }}
                       labelStyle={{ color: "oklch(0.96 0.01 280)", fontFamily: "JetBrains Mono" }}
-                      formatter={(v: number) => fmtCurrency(v, { compact: true })}
+                      formatter={(v) => fmtCurrency(Number(v) || 0, { compact: true })}
                     />
                     <Legend
                       wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }}
