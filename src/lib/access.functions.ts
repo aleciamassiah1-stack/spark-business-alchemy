@@ -250,3 +250,61 @@ export const adminSetRole = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/**
+ * Soft-delete an account: schedules purge 30 days from now.
+ * The account remains in the database but is marked for deletion.
+ * Use cancelAccountDeletion within 30 days to restore.
+ */
+export const adminScheduleAccountDeletion = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      userId: z.string().uuid(),
+      reason: z.string().max(500).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const adminId = await requireAdmin();
+
+    // Don't allow admins to schedule deletion of themselves
+    if (data.userId === adminId) {
+      throw new Error("You cannot schedule deletion of your own admin account");
+    }
+
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(
+      data.userId,
+    );
+    if (userErr) throw new Error(userErr.message);
+
+    const purgeAfter = new Date();
+    purgeAfter.setDate(purgeAfter.getDate() + 30);
+
+    const { error } = await supabaseAdmin.from("pending_account_deletions").upsert(
+      {
+        user_id: data.userId,
+        email: userData.user?.email ?? null,
+        scheduled_at: new Date().toISOString(),
+        purge_after: purgeAfter.toISOString(),
+        requested_by: adminId,
+        reason: data.reason ?? null,
+      },
+      { onConflict: "user_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    return { ok: true, purgeAfter: purgeAfter.toISOString() };
+  });
+
+/** Cancel a pending account deletion (within the 30-day grace period). */
+export const adminCancelAccountDeletion = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ userId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { error } = await supabaseAdmin
+      .from("pending_account_deletions")
+      .delete()
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
