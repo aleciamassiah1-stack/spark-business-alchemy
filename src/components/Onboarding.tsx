@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
+import { MarketingGallery } from "@/components/MarketingGallery";
 
 const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -1054,8 +1055,11 @@ export function Welcome({
         </p>
       </div>
 
+      {/* Marketing gallery — preview the product */}
+      <MarketingGallery />
+
       {/* Tier preview — front and center */}
-      <div className="relative mt-10 w-full max-w-[1100px]">
+      <div className="relative w-full max-w-[1100px]">
         <div className="mb-3 flex items-center justify-end">
           <Link
             to="/pricing"
