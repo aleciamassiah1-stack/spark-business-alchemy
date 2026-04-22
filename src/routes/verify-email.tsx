@@ -17,7 +17,7 @@ export const Route = createFileRoute("/verify-email")({
 
 function VerifyEmailRoute() {
   const auth = useAuth();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const [resending, setResending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
