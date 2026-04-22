@@ -21,6 +21,9 @@ import {
   Copy,
   Check,
   Mail,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -756,7 +759,60 @@ type CompanyForm = {
   notes: string;
 };
 
-const COMPANY_STORAGE_KEY = "aether.requestAccess.v1";
+const COMPANY_STORAGE_KEY = "aether.requestAccess.v1"; // legacy single-profile (migrated)
+const PROFILES_STORAGE_KEY = "aether.requestAccess.profiles.v2";
+
+type StoredProfile = CompanyForm & { id: string; label: string };
+
+type ProfilesState = {
+  profiles: StoredProfile[];
+  activeId: string | null;
+};
+
+const emptyForm: CompanyForm = {
+  companyName: "",
+  contactName: "",
+  email: "",
+  role: "Founder",
+  monthlyVolume: "<1,000",
+  notes: "",
+};
+
+function makeId() {
+  return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function loadProfilesState(): ProfilesState {
+  if (typeof window === "undefined") return { profiles: [], activeId: null };
+  try {
+    const raw = window.localStorage.getItem(PROFILES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as ProfilesState;
+      if (Array.isArray(parsed.profiles)) return parsed;
+    }
+    // Migrate legacy single profile
+    const legacy = window.localStorage.getItem(COMPANY_STORAGE_KEY);
+    if (legacy) {
+      const form = JSON.parse(legacy) as CompanyForm;
+      const profile: StoredProfile = {
+        ...form,
+        id: makeId(),
+        label: form.companyName || "Default profile",
+      };
+      const state: ProfilesState = { profiles: [profile], activeId: profile.id };
+      window.localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(state));
+      return state;
+    }
+  } catch { /* ignore */ }
+  return { profiles: [], activeId: null };
+}
+
+function saveProfilesState(state: ProfilesState) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(state));
+  } catch { /* ignore */ }
+}
 
 function RequestAccessDialog({
   open,
@@ -773,56 +829,141 @@ function RequestAccessDialog({
   useCases: UseCase[];
   gatedItems: ChecklistItem[];
 }) {
-  const emptyForm: CompanyForm = {
-    companyName: "",
-    contactName: "",
-    email: "",
-    role: "Founder",
-    monthlyVolume: "<1,000",
-    notes: "",
-  };
-
-  const loadSaved = (): CompanyForm | null => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = window.localStorage.getItem(COMPANY_STORAGE_KEY);
-      if (raw) return JSON.parse(raw) as CompanyForm;
-    } catch { /* ignore */ }
-    return null;
-  };
-
-  const [form, setForm] = useState<CompanyForm>(() => loadSaved() ?? emptyForm);
-  const [hasSavedProfile, setHasSavedProfile] = useState<boolean>(() => !!loadSaved());
+  const [state, setState] = useState<ProfilesState>(() => loadProfilesState());
+  const activeProfile = useMemo(
+    () => state.profiles.find((p) => p.id === state.activeId) ?? null,
+    [state],
+  );
+  const [form, setForm] = useState<CompanyForm>(() => {
+    const initial = loadProfilesState();
+    const active = initial.profiles.find((p) => p.id === initial.activeId);
+    return active
+      ? { companyName: active.companyName, contactName: active.contactName, email: active.email, role: active.role, monthlyVolume: active.monthlyVolume, notes: active.notes }
+      : emptyForm;
+  });
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
 
-  // Re-hydrate from saved profile every time the dialog opens
+  // Re-hydrate from saved state every time dialog opens
   useEffect(() => {
     if (!open) return;
-    const saved = loadSaved();
-    if (saved) {
-      setForm(saved);
-      setHasSavedProfile(true);
+    const fresh = loadProfilesState();
+    setState(fresh);
+    const active = fresh.profiles.find((p) => p.id === fresh.activeId);
+    if (active) {
+      setForm({
+        companyName: active.companyName,
+        contactName: active.contactName,
+        email: active.email,
+        role: active.role,
+        monthlyVolume: active.monthlyVolume,
+        notes: active.notes,
+      });
     }
   }, [open]);
 
-  // Auto-persist any change so users never lose typed data
+  // Auto-persist current form into the active profile (or create one if none exists yet)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!form.companyName && !form.contactName && !form.email) return;
-    try {
-      window.localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(form));
-      setHasSavedProfile(true);
-    } catch { /* ignore */ }
+    setState((prev) => {
+      let next: ProfilesState;
+      if (prev.activeId && prev.profiles.some((p) => p.id === prev.activeId)) {
+        next = {
+          ...prev,
+          profiles: prev.profiles.map((p) =>
+            p.id === prev.activeId
+              ? { ...p, ...form, label: p.label || form.companyName || "Untitled" }
+              : p,
+          ),
+        };
+      } else {
+        const id = makeId();
+        const profile: StoredProfile = {
+          ...form,
+          id,
+          label: form.companyName || "Untitled profile",
+        };
+        next = { profiles: [...prev.profiles, profile], activeId: id };
+      }
+      saveProfilesState(next);
+      return next;
+    });
   }, [form]);
 
-  const clearSavedProfile = () => {
-    try {
-      window.localStorage.removeItem(COMPANY_STORAGE_KEY);
-    } catch { /* ignore */ }
-    setForm(emptyForm);
-    setHasSavedProfile(false);
-    toast.success("Saved profile cleared");
+  const switchProfile = (id: string) => {
+    const target = state.profiles.find((p) => p.id === id);
+    if (!target) return;
+    const next = { ...state, activeId: id };
+    setState(next);
+    saveProfilesState(next);
+    setForm({
+      companyName: target.companyName,
+      contactName: target.contactName,
+      email: target.email,
+      role: target.role,
+      monthlyVolume: target.monthlyVolume,
+      notes: target.notes,
+    });
+    setRenaming(false);
+    toast.success(`Switched to ${target.label}`);
+  };
+
+  const addNewProfile = () => {
+    const id = makeId();
+    const profile: StoredProfile = {
+      ...emptyForm,
+      id,
+      label: `Profile ${state.profiles.length + 1}`,
+    };
+    const next = { profiles: [...state.profiles, profile], activeId: id };
+    setState(next);
+    saveProfilesState(next);
+    setForm({ ...emptyForm });
+    setRenaming(false);
+  };
+
+  const deleteActiveProfile = () => {
+    if (!activeProfile) return;
+    const remaining = state.profiles.filter((p) => p.id !== activeProfile.id);
+    const nextActive = remaining[0]?.id ?? null;
+    const next: ProfilesState = { profiles: remaining, activeId: nextActive };
+    setState(next);
+    saveProfilesState(next);
+    if (nextActive) {
+      const t = remaining[0]!;
+      setForm({
+        companyName: t.companyName,
+        contactName: t.contactName,
+        email: t.email,
+        role: t.role,
+        monthlyVolume: t.monthlyVolume,
+        notes: t.notes,
+      });
+    } else {
+      setForm({ ...emptyForm });
+    }
+    toast.success(`Deleted ${activeProfile.label}`);
+  };
+
+  const startRename = () => {
+    if (!activeProfile) return;
+    setRenameValue(activeProfile.label);
+    setRenaming(true);
+  };
+
+  const commitRename = () => {
+    if (!activeProfile) return;
+    const label = renameValue.trim() || activeProfile.label;
+    const next = {
+      ...state,
+      profiles: state.profiles.map((p) => (p.id === activeProfile.id ? { ...p, label } : p)),
+    };
+    setState(next);
+    saveProfilesState(next);
+    setRenaming(false);
   };
 
   const canSubmit =
@@ -949,20 +1090,86 @@ ${form.email || "[email]"}`;
               </dl>
             </div>
 
-            {hasSavedProfile && (
-              <div className="flex items-center justify-between rounded-lg border border-success/20 bg-success/[0.06] px-3 py-2">
-                <div className="flex items-center gap-2 text-[11px] text-foreground/80">
-                  <Check className="h-3 w-3 text-success" />
-                  <span>Loaded from your saved profile</span>
-                </div>
+            {/* Profile picker */}
+            <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Company profile
+                </p>
                 <button
-                  onClick={clearSavedProfile}
-                  className="text-[10px] text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={addNewProfile}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/25"
                 >
-                  Clear
+                  <Plus className="h-2.5 w-2.5" />
+                  New
                 </button>
               </div>
-            )}
+
+              {state.profiles.length > 0 ? (
+                <div className="mt-2 space-y-2">
+                  {renaming && activeProfile ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitRename();
+                          if (e.key === "Escape") setRenaming(false);
+                        }}
+                        className="flex-1 rounded-md border border-primary/40 bg-white/[0.04] px-2 py-1 text-xs text-foreground focus:outline-none"
+                      />
+                      <button
+                        onClick={commitRename}
+                        className="rounded-md bg-primary/20 px-2 py-1 text-[10px] font-medium text-primary"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={state.activeId ?? ""}
+                      onChange={(e) => switchProfile(e.target.value)}
+                      className="w-full rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-1.5 text-xs text-foreground focus:border-primary/40 focus:outline-none"
+                    >
+                      {state.profiles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label}
+                          {p.companyName && p.label !== p.companyName ? ` — ${p.companyName}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {activeProfile && !renaming && (
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <button
+                        onClick={startRename}
+                        className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                        Rename
+                      </button>
+                      <button
+                        onClick={deleteActiveProfile}
+                        className="inline-flex items-center gap-1 hover:text-destructive hover:underline"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                        Delete
+                      </button>
+                      <span className="ml-auto inline-flex items-center gap-1 text-success">
+                        <Check className="h-2.5 w-2.5" />
+                        Auto-saved
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  No saved profiles yet — start typing below and we'll create one for you.
+                </p>
+              )}
+            </div>
 
             <FormRow label="Company name">
               <input
