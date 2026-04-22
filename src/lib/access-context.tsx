@@ -11,6 +11,13 @@ type AccessState = {
 
 const AccessContext = createContext<AccessState | undefined>(undefined);
 
+const noop: AccessState = {
+  ready: false,
+  hasAccess: false,
+  isAdmin: false,
+  refresh: async () => {},
+};
+
 export function AccessProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const [ready, setReady] = useState(false);
@@ -66,6 +73,5 @@ export function AccessProvider({ children }: { children: ReactNode }) {
 
 export function useAccess(): AccessState {
   const ctx = useContext(AccessContext);
-  if (!ctx) throw new Error("useAccess must be used within AccessProvider");
-  return ctx;
+  return ctx ?? noop;
 }

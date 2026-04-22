@@ -60,7 +60,6 @@ function SignupRoute() {
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/signup"
-            search={{ view: undefined }}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-3.5 w-3.5" /> Back
