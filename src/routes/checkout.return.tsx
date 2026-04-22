@@ -21,9 +21,10 @@ function CheckoutReturnPage() {
   const { session_id } = useSearch({ from: "/checkout/return" });
   const navigate = useNavigate();
 
-  // Auto-redirect to profile after a short confirmation moment.
+  // After payment, send users to the intake form.
+  // /intake itself will forward them to /profile if it's already complete.
   useEffect(() => {
-    const t = setTimeout(() => navigate({ to: "/profile" }), 1800);
+    const t = setTimeout(() => navigate({ to: "/intake" }), 1600);
     return () => clearTimeout(t);
   }, [navigate]);
 
@@ -36,7 +37,7 @@ function CheckoutReturnPage() {
           </div>
           <h1 className="mt-4 font-serif text-2xl text-foreground">Payment received</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Thank you. Taking you to your profile…
+            Welcome aboard. Let's personalize your private office…
           </p>
           {session_id && (
             <p className="mt-4 break-all font-mono text-[10px] text-muted-foreground/70">
@@ -45,16 +46,16 @@ function CheckoutReturnPage() {
           )}
           <div className="mt-6 flex flex-col gap-2">
             <Link
-              to="/profile"
+              to="/intake"
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
-              Go to my profile
+              Continue to setup
             </Link>
             <Link
-              to="/"
+              to="/profile"
               className="rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-white/[0.06]"
             >
-              Dashboard
+              Skip to profile
             </Link>
           </div>
         </LuxCard>
