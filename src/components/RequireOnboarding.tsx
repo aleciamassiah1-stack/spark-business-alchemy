@@ -1,18 +1,33 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import { Onboarding } from "@/components/Onboarding";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
+import { useAccess } from "@/lib/access-context";
+
+/** Routes that an authenticated-but-unpaid user is allowed to reach. */
+const UNPAID_ALLOWED = new Set([
+  "/pricing",
+  "/profile",
+  "/checkout/return",
+  "/signin",
+  "/signup",
+]);
 
 /**
- * Gates protected routes. Redirects to /signup when unauthenticated.
- * Shows the onboarding flow when authenticated but not yet onboarded.
+ * Gates protected routes:
+ *  1. Redirects to /signup when unauthenticated.
+ *  2. Shows the onboarding flow when authenticated but not yet onboarded.
+ *  3. Redirects to /pricing when authenticated + onboarded but without an active subscription
+ *     (admins and comp'd users bypass).
  */
 export function RequireOnboarding({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const onb = useOnboarding();
+  const access = useAccess();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (auth.ready && !auth.user) {
@@ -20,7 +35,21 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
     }
   }, [auth.ready, auth.user, navigate]);
 
-  if (!auth.ready || !onb.ready) {
+  useEffect(() => {
+    if (
+      auth.ready &&
+      auth.user &&
+      onb.ready &&
+      onb.onboarded &&
+      access.ready &&
+      !access.hasAccess &&
+      !UNPAID_ALLOWED.has(location.pathname)
+    ) {
+      navigate({ to: "/pricing" });
+    }
+  }, [auth.ready, auth.user, onb.ready, onb.onboarded, access.ready, access.hasAccess, location.pathname, navigate]);
+
+  if (!auth.ready || !onb.ready || !access.ready) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
@@ -30,6 +59,10 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
 
   if (!onb.onboarded) {
     return <Onboarding forceOpen />;
+  }
+
+  if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname)) {
+    return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
   return <>{children}</>;
