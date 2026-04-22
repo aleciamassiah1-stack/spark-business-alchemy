@@ -27,11 +27,14 @@ function SignupRoute() {
   const search = Route.useSearch();
 
   useEffect(() => {
-    if (auth.user) {
-      markStep("account");
-      navigate({ to: "/" });
+    if (!auth.user) return;
+    if (!auth.emailConfirmed) {
+      navigate({ to: "/verify-email" });
+      return;
     }
-  }, [auth.user, markStep, navigate]);
+    markStep("account");
+    navigate({ to: "/" });
+  }, [auth.user, auth.emailConfirmed, markStep, navigate]);
 
   if (search.view !== "form") {
     return (
