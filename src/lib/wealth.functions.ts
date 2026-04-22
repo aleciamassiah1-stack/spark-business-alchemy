@@ -397,6 +397,7 @@ const insuranceInputSchema = z.object({
   premium_amount: z.number().min(0).max(10_000_000).optional().nullable(),
   premium_frequency: z.string().trim().max(30).default("monthly"),
   renewal_date: z.string().optional().nullable(),
+  status: z.string().trim().max(30).default("active"),
   beneficiaries: z.array(z.string().trim().max(120)).max(20).default([]),
 });
 
@@ -411,6 +412,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       premium_amount?: number | null;
       premium_frequency?: string;
       renewal_date?: string | null;
+      status?: string;
       beneficiaries?: string[];
       document_path?: string | null;
       document_url?: string | null;
@@ -421,6 +423,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       const parsed = insuranceInputSchema.parse({
         ...rest,
         premium_frequency: rest.premium_frequency ?? "monthly",
+        status: rest.status ?? "active",
         beneficiaries: rest.beneficiaries ?? [],
       });
       return {
@@ -444,6 +447,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
       premium_amount: data.premium_amount ?? null,
       premium_frequency: data.premium_frequency,
       renewal_date: data.renewal_date ?? null,
+      status: data.status,
       beneficiaries: data.beneficiaries,
       document_path: data.document_path,
       document_url: data.document_url,
