@@ -12,11 +12,13 @@ import {
   Sparkles,
   Crown,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
+import { useAccess } from "@/lib/access-context";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/more")({
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/more")({
 
 function MorePage() {
   const { signOut } = useAuth();
+  const access = useAccess();
   const navigate = useNavigate();
 
   async function handleSignOut() {
@@ -50,7 +53,6 @@ function MorePage() {
   return (
     <MobileShell title="More" subtitle="Tools & settings">
       <div className="flex flex-col gap-3 px-5">
-        {/* Membership CTA */}
         <Link
           to="/pricing"
           className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-primary/30 gradient-hero px-4 py-3.5 glow-violet"
@@ -67,6 +69,17 @@ function MorePage() {
           </div>
           <ArrowRight className="relative h-4 w-4 text-primary" />
         </Link>
+
+        {access.isAdmin && (
+          <NavGroup title="Admin">
+            <NavRow
+              to="/admin"
+              icon={ShieldCheck}
+              label="Admin Console"
+              desc="Members, access, and revenue"
+            />
+          </NavGroup>
+        )}
 
         <NavGroup title="Wealth tools">
           <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
