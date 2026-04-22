@@ -240,6 +240,51 @@ export type Database = {
         }
         Relationships: []
       }
+      family_members: {
+        Row: {
+          accounts: Json
+          age: number | null
+          created_at: string
+          id: string
+          initials: string | null
+          iso_currency_code: string | null
+          name: string
+          net_worth: number
+          relationship: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accounts?: Json
+          age?: number | null
+          created_at?: string
+          id?: string
+          initials?: string | null
+          iso_currency_code?: string | null
+          name: string
+          net_worth?: number
+          relationship: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accounts?: Json
+          age?: number | null
+          created_at?: string
+          id?: string
+          initials?: string | null
+          iso_currency_code?: string | null
+          name?: string
+          net_worth?: number
+          relationship?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       insurance_policies: {
         Row: {
           beneficiaries: Json | null
