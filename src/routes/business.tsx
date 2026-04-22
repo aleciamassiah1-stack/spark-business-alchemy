@@ -1774,10 +1774,10 @@ function DocumentsBlock({
             <Wand2 className="h-4 w-4 text-background" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-base text-foreground">Upload tax return</p>
+            <p className="font-serif text-base text-foreground">Upload tax return &amp; schedules</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-              AI extracts revenue, net profit, total assets and liabilities. You review and
-              confirm every value before anything is applied.
+              Drop the main return plus any schedules (Schedule C, L, K-1, E, Form 4562). AI
+              extracts and aggregates them — you review every value before anything is applied.
             </p>
           </div>
         </div>
