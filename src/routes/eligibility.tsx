@@ -1031,3 +1031,12 @@ function FormRow({ label, children }: { label: string; children: React.ReactNode
     </div>
   );
 }
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <dt className="w-20 shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 flex-1 text-foreground/90">{value}</dd>
+    </div>
+  );
+}
