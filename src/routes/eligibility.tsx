@@ -773,20 +773,61 @@ function RequestAccessDialog({
   useCases: UseCase[];
   gatedItems: ChecklistItem[];
 }) {
-  const [form, setForm] = useState<CompanyForm>(() => {
-    if (typeof window === "undefined") {
-      return { companyName: "", contactName: "", email: "", role: "Founder", monthlyVolume: "<1,000", notes: "" };
-    }
+  const emptyForm: CompanyForm = {
+    companyName: "",
+    contactName: "",
+    email: "",
+    role: "Founder",
+    monthlyVolume: "<1,000",
+    notes: "",
+  };
+
+  const loadSaved = (): CompanyForm | null => {
+    if (typeof window === "undefined") return null;
     try {
       const raw = window.localStorage.getItem(COMPANY_STORAGE_KEY);
       if (raw) return JSON.parse(raw) as CompanyForm;
     } catch { /* ignore */ }
-    return { companyName: "", contactName: "", email: "", role: "Founder", monthlyVolume: "<1,000", notes: "" };
-  });
+    return null;
+  };
+
+  const [form, setForm] = useState<CompanyForm>(() => loadSaved() ?? emptyForm);
+  const [hasSavedProfile, setHasSavedProfile] = useState<boolean>(() => !!loadSaved());
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const canSubmit = form.companyName.trim() && form.contactName.trim() && /\S+@\S+\.\S+/.test(form.email);
+  // Re-hydrate from saved profile every time the dialog opens
+  useEffect(() => {
+    if (!open) return;
+    const saved = loadSaved();
+    if (saved) {
+      setForm(saved);
+      setHasSavedProfile(true);
+    }
+  }, [open]);
+
+  // Auto-persist any change so users never lose typed data
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!form.companyName && !form.contactName && !form.email) return;
+    try {
+      window.localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(form));
+      setHasSavedProfile(true);
+    } catch { /* ignore */ }
+  }, [form]);
+
+  const clearSavedProfile = () => {
+    try {
+      window.localStorage.removeItem(COMPANY_STORAGE_KEY);
+    } catch { /* ignore */ }
+    setForm(emptyForm);
+    setHasSavedProfile(false);
+    toast.success("Saved profile cleared");
+  };
+
+  const canSubmit =
+    form.companyName.trim() && form.contactName.trim() && /\S+@\S+\.\S+/.test(form.email);
+
 
   // Auto-derived context from eligibility answers
   const accountLabels = useMemo(
