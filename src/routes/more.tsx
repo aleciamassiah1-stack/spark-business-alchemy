@@ -1,5 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Users, BarChart3, Settings, HelpCircle, Bell, LogOut, ChevronRight, Building2, Link as LinkIcon, Sparkles } from "lucide-react";
+import {
+  Users,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  Bell,
+  LogOut,
+  ChevronRight,
+  Building2,
+  Link as LinkIcon,
+  Sparkles,
+  Crown,
+  ArrowRight,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
@@ -37,6 +50,24 @@ function MorePage() {
   return (
     <MobileShell title="More" subtitle="Tools & settings">
       <div className="flex flex-col gap-3 px-5">
+        {/* Membership CTA */}
+        <Link
+          to="/pricing"
+          className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-primary/30 gradient-hero px-4 py-3.5 glow-violet"
+        >
+          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/30 blur-2xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
+              <Crown className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="label-mono text-primary/80">Membership</p>
+              <p className="text-sm text-foreground">Compare tiers and upgrade</p>
+            </div>
+          </div>
+          <ArrowRight className="relative h-4 w-4 text-primary" />
+        </Link>
+
         <NavGroup title="Wealth tools">
           <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
           <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
