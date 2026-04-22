@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProtectRouteImport } from './routes/protect'
@@ -26,6 +27,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesById {
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/support': typeof SupportRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/protect'
     | '/signin'
     | '/signup'
+    | '/support'
     | '/timeline'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/protect'
     | '/signin'
     | '/signup'
+    | '/support'
     | '/timeline'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/protect'
     | '/signin'
     | '/signup'
+    | '/support'
     | '/timeline'
   fileRoutesById: FileRoutesById
 }
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   ProtectRoute: typeof ProtectRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  SupportRoute: typeof SupportRoute
   TimelineRoute: typeof TimelineRoute
 }
 
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProtectRoute: ProtectRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  SupportRoute: SupportRoute,
   TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport
