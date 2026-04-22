@@ -34,6 +34,7 @@ type Tier = {
   ctaAction: "checkout" | "demo";
   features: string[];
   variant: "essential" | "private" | "family";
+  priceIds?: { monthly: string; annual: string };
 };
 
 const TIERS: Tier[] = [
