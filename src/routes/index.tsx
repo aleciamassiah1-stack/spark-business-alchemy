@@ -10,8 +10,10 @@ import { CompletionBanner } from "@/components/CompletionBanner";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
 import { useWealth } from "@/lib/wealth-context";
-import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
+import { recentActivity as demoActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { useAuth } from "@/lib/auth-context";
+import { displayNameFromUser, initialsFromName, useIsTestAccount } from "@/lib/test-account";
 import { loadBusiness, subscribeBusiness, netBusinessEquity } from "@/lib/business-store";
 import {
   loadAutoRefreshPrefs,
@@ -71,6 +73,10 @@ function HomePage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
   const [business, setBusiness] = useState(() => loadBusiness());
   const { setSyncing } = useWealth();
+  const { user } = useAuth();
+  const isTestAccount = useIsTestAccount();
+  const displayName = displayNameFromUser(user) || "Welcome";
+  const userInitials = initialsFromName(displayName);
 
   useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
@@ -189,7 +195,7 @@ function HomePage() {
   const isLoading = loading;
   const hasNoData = !isLoading && total === 0 && accounts.length === 0;
 
-  // Activity — prefer real Plaid transactions, fall back to mock
+  // Activity — prefer real Plaid transactions; only fall back to demo data for the test account
   const activity = transactions.length > 0
     ? transactions.slice(0, 5).map((t) => ({
         id: t.id,
@@ -201,7 +207,9 @@ function HomePage() {
         }),
         amount: -t.amount, // Plaid: positive = outflow
       }))
-    : fallbackActivity;
+    : isTestAccount
+      ? demoActivity
+      : [];
 
   return (
     <MobileShell>
@@ -210,7 +218,7 @@ function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="label-mono">Good morning</p>
-            <h1 className="font-serif text-2xl text-foreground">James Whitfield</h1>
+            <h1 className="font-serif text-2xl text-foreground">{displayName}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -223,7 +231,7 @@ function HomePage() {
             </button>
             <HideToggle />
             <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
-              JW
+              {userInitials}
             </div>
           </div>
         </div>
@@ -346,31 +354,33 @@ function HomePage() {
         />
       </div>
 
-      {/* Advisor card */}
-      <div className="px-5 pt-5">
-        <LuxCard className="p-5" delay={0.3}>
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-gold text-sm font-semibold text-background">
-              {advisor.initials}
-            </div>
-            <div className="flex-1">
-              <p className="label-mono">Your Advisor</p>
-              <p className="font-serif text-lg text-foreground">{advisor.name}</p>
-              <p className="text-xs text-muted-foreground">{advisor.title} · {advisor.firm}</p>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next meeting</p>
-                <p className="text-sm text-foreground">{advisor.nextMeeting}</p>
+      {/* Advisor card — demo data only for the test account */}
+      {isTestAccount ? (
+        <div className="px-5 pt-5">
+          <LuxCard className="p-5" delay={0.3}>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-gold text-sm font-semibold text-background">
+                EW
+              </div>
+              <div className="flex-1">
+                <p className="label-mono">Your Advisor</p>
+                <p className="font-serif text-lg text-foreground">Eleanor Whitfield</p>
+                <p className="text-xs text-muted-foreground">Senior Wealth Advisor · Æther Private Office</p>
               </div>
             </div>
-            <button className="rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">Join</button>
-          </div>
-        </LuxCard>
-      </div>
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next meeting</p>
+                  <p className="text-sm text-foreground">Tue, May 6 · 10:30 AM</p>
+                </div>
+              </div>
+              <button className="rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">Join</button>
+            </div>
+          </LuxCard>
+        </div>
+      ) : null}
 
       {/* Recent activity */}
       <div className="px-5 pt-6">
