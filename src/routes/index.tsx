@@ -13,6 +13,13 @@ import { useWealth } from "@/lib/wealth-context";
 import { advisor, recentActivity as fallbackActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 import { loadBusiness, subscribeBusiness, netBusinessEquity } from "@/lib/business-store";
+import {
+  loadAutoRefreshPrefs,
+  getLastSyncAt,
+  setLastSyncAt,
+  shouldAutoRefresh,
+  subscribeAutoRefreshPrefs,
+} from "@/lib/auto-refresh";
 
 export const Route = createFileRoute("/")({
   head: () => ({
