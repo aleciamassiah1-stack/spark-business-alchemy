@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, FileText, Loader2, AlertCircle, Check } from "lucide-react";
+import { X, Sparkles, FileText, Loader2, AlertCircle, Check, Layers } from "lucide-react";
 import { fmtCurrency } from "@/lib/format";
 
 export type TaxReturnReviewDraft = {
