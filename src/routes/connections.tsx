@@ -1129,9 +1129,19 @@ function EstateTab({
                         View PDF
                       </a>
                     )}
-                    <button className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-medium text-primary">
+                    <a
+                      href={d.document_url ?? undefined}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-disabled={!d.document_url}
+                      className={`rounded-full px-3 py-1 text-[10px] font-medium ${
+                        d.document_url
+                          ? "bg-primary/15 text-primary"
+                          : "bg-white/[0.04] text-muted-foreground pointer-events-none"
+                      }`}
+                    >
                       Share with attorney
-                    </button>
+                    </a>
                   </div>
                 </div>
                 <button
@@ -1647,7 +1657,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-[430px] rounded-t-3xl border border-white/[0.08] bg-card p-5 sm:rounded-3xl"
+        className="flex max-h-[88dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-3xl border border-white/[0.08] bg-card p-5 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -1656,7 +1666,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">{children}</div>
       </motion.div>
     </motion.div>
   );
