@@ -68,43 +68,52 @@ function BeneficiariesPage() {
             <Plus className="h-3 w-3" /> Add
           </button>
         </div>
-        <div className="flex flex-col gap-2">
-          {beneficiaries.map((b, i) => (
-            <LuxCard key={b.id} delay={i * 0.05} className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground">
-                  {b.initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-serif text-base text-foreground">{b.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{b.relationship}</p>
-                </div>
-                <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04]">
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-2">
-                {b.allocations.map((a) => (
-                  <div key={a.account} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-foreground">{a.account}</p>
-                      <p className="font-mono text-xs tabular-nums text-primary">{a.pct}%</p>
-                    </div>
-                    <div className="h-1 overflow-hidden rounded-full bg-white/[0.04]">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${a.pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                        className="h-full gradient-violet"
-                      />
-                    </div>
+        {beneficiaries.length === 0 ? (
+          <LuxCard className="p-6 text-center">
+            <p className="font-serif text-base text-foreground">No beneficiaries yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add the people who inherit from your accounts and estate.
+            </p>
+          </LuxCard>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {beneficiaries.map((b, i) => (
+              <LuxCard key={b.id} delay={i * 0.05} className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground">
+                    {b.initials}
                   </div>
-                ))}
-              </div>
-            </LuxCard>
-          ))}
-        </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-base text-foreground">{b.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{b.relationship}</p>
+                  </div>
+                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04]">
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2">
+                  {b.allocations.map((a) => (
+                    <div key={a.account} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-foreground">{a.account}</p>
+                        <p className="font-mono text-xs tabular-nums text-primary">{a.pct}%</p>
+                      </div>
+                      <div className="h-1 overflow-hidden rounded-full bg-white/[0.04]">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${a.pct}%` }}
+                          transition={{ duration: 0.8, delay: 0.2 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                          className="h-full gradient-violet"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </LuxCard>
+            ))}
+          </div>
+        )}
       </div>
     </MobileShell>
   );
