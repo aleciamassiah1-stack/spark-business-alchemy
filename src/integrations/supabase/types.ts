@@ -393,6 +393,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_account_deletions: {
+        Row: {
+          created_at: string
+          email: string | null
+          purge_after: string
+          reason: string | null
+          requested_by: string | null
+          scheduled_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          purge_after?: string
+          reason?: string | null
+          requested_by?: string | null
+          scheduled_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          purge_after?: string
+          reason?: string | null
+          requested_by?: string | null
+          scheduled_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plaid_items: {
         Row: {
           access_token: string
@@ -781,6 +811,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      purge_expired_account_deletions: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"
