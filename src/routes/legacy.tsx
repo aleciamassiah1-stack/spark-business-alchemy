@@ -20,7 +20,8 @@ import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
-import { trustAccounts, attorney } from "@/lib/mock-data";
+import { trustAccounts as demoTrustAccounts, attorney as demoAttorney } from "@/lib/mock-data";
+import { useIsTestAccount } from "@/lib/test-account";
 import {
   listEstateDocuments,
   upsertEstateDocument,
@@ -84,6 +85,9 @@ export const Route = createFileRoute("/legacy")({
 });
 
 function LegacyPage() {
+  const isTestAccount = useIsTestAccount();
+  const trustAccounts = isTestAccount ? demoTrustAccounts : [];
+  const attorney = isTestAccount ? demoAttorney : null;
   const trustTotal = trustAccounts.reduce((s, t) => s + t.value, 0);
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [loading, setLoading] = useState(true);
