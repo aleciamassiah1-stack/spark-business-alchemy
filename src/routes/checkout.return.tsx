@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -18,6 +19,13 @@ export const Route = createFileRoute("/checkout/return")({
 
 function CheckoutReturnPage() {
   const { session_id } = useSearch({ from: "/checkout/return" });
+  const navigate = useNavigate();
+
+  // Auto-redirect to profile after a short confirmation moment.
+  useEffect(() => {
+    const t = setTimeout(() => navigate({ to: "/profile" }), 1800);
+    return () => clearTimeout(t);
+  }, [navigate]);
 
   return (
     <MobileShell title="Payment" subtitle="Confirmation">
@@ -28,7 +36,7 @@ function CheckoutReturnPage() {
           </div>
           <h1 className="mt-4 font-serif text-2xl text-foreground">Payment received</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Thank you. Your subscription is now active.
+            Thank you. Taking you to your profile…
           </p>
           {session_id && (
             <p className="mt-4 break-all font-mono text-[10px] text-muted-foreground/70">
@@ -37,16 +45,16 @@ function CheckoutReturnPage() {
           )}
           <div className="mt-6 flex flex-col gap-2">
             <Link
-              to="/"
+              to="/profile"
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
-              Go to dashboard
+              Go to my profile
             </Link>
             <Link
-              to="/preferences"
+              to="/"
               className="rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-white/[0.06]"
             >
-              Manage subscription
+              Dashboard
             </Link>
           </div>
         </LuxCard>
