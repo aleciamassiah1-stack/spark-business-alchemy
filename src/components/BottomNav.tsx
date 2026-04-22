@@ -1,10 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, TrendingUp, Shield, Scroll, MoreHorizontal } from "lucide-react";
+import { Home, TrendingUp, Shield, Scroll, Briefcase, MoreHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 
 const items = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/portfolio", label: "Portfolio", icon: TrendingUp, exact: false },
+  { to: "/business", label: "Business", icon: Briefcase, exact: false },
   { to: "/protect", label: "Protect", icon: Shield, exact: false },
   { to: "/legacy", label: "Legacy", icon: Scroll, exact: false },
   { to: "/more", label: "More", icon: MoreHorizontal, exact: false },
