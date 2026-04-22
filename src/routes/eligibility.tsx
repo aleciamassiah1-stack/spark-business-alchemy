@@ -549,6 +549,17 @@ function ResultsCard({
   const total = checklist.length;
   const countryLabel = COUNTRIES.find((c) => c.code === country)?.label ?? country;
 
+  // Items that need a sales/enterprise key
+  const enterpriseGated = useMemo(
+    () =>
+      checklist.filter((c) =>
+        ["plaid", "business", "property", "crypto"].includes(c.id) && c.status !== "unavailable",
+      ),
+    [checklist],
+  );
+
+  const [requestOpen, setRequestOpen] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -568,13 +579,24 @@ function ResultsCard({
             {countryLabel} · {accounts.length} account type{accounts.length === 1 ? "" : "s"} ·{" "}
             {useCases.length} use case{useCases.length === 1 ? "" : "s"}
           </p>
-          <button
-            onClick={onReset}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Start over
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {enterpriseGated.length > 0 && (
+              <button
+                onClick={() => setRequestOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full gradient-violet px-3 py-1.5 text-[11px] font-medium text-foreground glow-violet"
+              >
+                <KeyRound className="h-3 w-3" />
+                Request access ({enterpriseGated.length})
+              </button>
+            )}
+            <button
+              onClick={onReset}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Start over
+            </button>
+          </div>
         </div>
       </LuxCard>
 
@@ -589,6 +611,13 @@ function ResultsCard({
       {checklist.map((item) => (
         <ChecklistRow key={item.id} item={item} />
       ))}
+
+      <RequestAccessDialog
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        country={countryLabel}
+        gatedItems={enterpriseGated}
+      />
     </motion.div>
   );
 }
