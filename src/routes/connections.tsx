@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { InsuranceReviewModal, type InsuranceReviewDraft } from "@/components/InsuranceReviewModal";
+import { setLastSyncAt } from "@/lib/auto-refresh";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
@@ -229,6 +230,7 @@ function ConnectionsPage() {
     const res = await plaidSyncAll({ data: {} });
     setSyncing(false);
     if (res.ok) {
+      setLastSyncAt();
       showToast(
         "ok",
         res.results.length === 0 ? "Nothing to refresh" : `Refreshed ${res.results.length} institution(s)`,
