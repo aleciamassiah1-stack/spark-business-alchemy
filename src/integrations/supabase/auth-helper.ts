@@ -43,19 +43,34 @@ async function resolveUser(): Promise<ResolvedUser | null> {
   }
 }
 
+/** Returns true if the user is scheduled for soft-delete (within grace period). */
+async function isPendingDeletion(userId: string): Promise<boolean> {
+  try {
+    const { supabaseAdmin } = await import("./client.server");
+    const { data } = await supabaseAdmin
+      .from("pending_account_deletions")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Resolves the authenticated user id from the inbound request.
- * Returns null if there is no valid bearer token OR the user's email
- * is not confirmed — unconfirmed users are treated as unauthenticated
- * for all data access.
+ * Returns null if there is no valid bearer token, the user's email
+ * is not confirmed, OR the account is scheduled for deletion.
  */
 export async function getCurrentUserId(): Promise<string | null> {
   const u = await resolveUser();
   if (!u || !u.emailConfirmed) return null;
+  if (await isPendingDeletion(u.userId)) return null;
   return u.userId;
 }
 
-/** Like getCurrentUserId but throws 401 when unauthenticated, and 403 when email is unconfirmed. */
+/** Like getCurrentUserId but throws 401 when unauthenticated, 403 when email is unconfirmed, and 410 when scheduled for deletion. */
 export async function requireUserId(): Promise<string> {
   const u = await resolveUser();
   if (!u) {
@@ -63,6 +78,9 @@ export async function requireUserId(): Promise<string> {
   }
   if (!u.emailConfirmed) {
     throw new Response("Email not confirmed", { status: 403 });
+  }
+  if (await isPendingDeletion(u.userId)) {
+    throw new Response("Account scheduled for deletion", { status: 410 });
   }
   return u.userId;
 }

@@ -772,6 +772,26 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         // Session is live — RequireOnboarding will pick up and continue the flow.
         navigate({ to: "/" });
       } else {
+        // Pre-check: block sign-in for accounts pending deletion (30-day grace period).
+        try {
+          const { checkPendingDeletionByEmail } = await import("@/lib/access.functions");
+          const pending = await checkPendingDeletionByEmail({ data: { email } });
+          if (pending.pending) {
+            const purge = pending.purgeAfter ? new Date(pending.purgeAfter) : null;
+            const days = purge
+              ? Math.max(0, Math.ceil((purge.getTime() - Date.now()) / 86400000))
+              : null;
+            setError(
+              days != null
+                ? `This account is scheduled for deletion in ${days} day${days === 1 ? "" : "s"}. Contact support@aetherwealth.co to restore access.`
+                : "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
+            );
+            return;
+          }
+        } catch {
+          // If the check fails, fall through to normal signin — Supabase will still authenticate.
+        }
+
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) {
           const next = attempts + 1;
@@ -784,6 +804,22 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           }
           return;
         }
+
+        // Defense-in-depth: re-check after successful auth in case of race; sign out if pending.
+        try {
+          const { checkPendingDeletionByEmail } = await import("@/lib/access.functions");
+          const pending = await checkPendingDeletionByEmail({ data: { email } });
+          if (pending.pending) {
+            await supabase.auth.signOut();
+            setError(
+              "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
+            );
+            return;
+          }
+        } catch {
+          // Non-fatal.
+        }
+
         navigate({ to: "/" });
       }
     } catch (err) {
