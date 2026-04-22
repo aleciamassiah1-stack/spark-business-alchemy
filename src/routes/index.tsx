@@ -68,7 +68,7 @@ function HomePage() {
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
   const [business, setBusiness] = useState(() => loadBusiness());
   const { setSyncing } = useWealth();
 
@@ -85,35 +85,56 @@ function HomePage() {
     setProperties((props.properties ?? []) as typeof properties);
     setPolicies((ins.policies ?? []) as typeof policies);
     setDocuments((est.documents ?? []) as typeof documents);
-    setLastRefreshed(new Date());
   }, []);
+
+  const runSync = useCallback(
+    async (label: string) => {
+      setRefreshing(true);
+      setSyncing(true, label);
+      try {
+        const result = await plaidSyncAll({ data: {} });
+        await loadAll();
+        const stamp = new Date();
+        setLastSyncAt(stamp);
+        setLastRefreshed(stamp);
+        const totalAccounts =
+          result.results?.reduce((s, r) => s + (r.accountsUpdated ?? 0), 0) ?? 0;
+        setSyncing(false, totalAccounts > 0 ? `${totalAccounts} accounts updated` : null);
+      } catch (err) {
+        console.error("Refresh failed:", err);
+        setSyncing(false, "Refresh failed");
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [loadAll, setSyncing],
+  );
 
   useEffect(() => {
     let alive = true;
     (async () => {
       await loadAll();
-      if (alive) setLoading(false);
+      if (!alive) return;
+      setLoading(false);
+      // Auto-refresh on app open if stale per user preference
+      const prefs = loadAutoRefreshPrefs();
+      const last = getLastSyncAt();
+      if (shouldAutoRefresh(prefs, last)) {
+        await runSync(
+          last
+            ? `Auto-refreshing — last sync ${Math.round((Date.now() - last.getTime()) / 36e5)}h ago`
+            : "Auto-refreshing — first sync",
+        );
+      }
     })();
     return () => {
       alive = false;
     };
-  }, [loadAll]);
+  }, [loadAll, runSync]);
 
   const handleRefresh = async () => {
     if (refreshing) return;
-    setRefreshing(true);
-    setSyncing(true, "Refreshing balances…");
-    try {
-      const result = await plaidSyncAll({ data: {} });
-      await loadAll();
-      const totalAccounts = result.results?.reduce((s, r) => s + (r.accountsUpdated ?? 0), 0) ?? 0;
-      setSyncing(false, totalAccounts > 0 ? `${totalAccounts} accounts updated` : null);
-    } catch (err) {
-      console.error("Refresh failed:", err);
-      setSyncing(false, "Refresh failed");
-    } finally {
-      setRefreshing(false);
-    }
+    await runSync("Refreshing balances…");
   };
 
   const accounts: AccountRow[] = (aggregated?.accounts as AccountRow[] | undefined) ?? [];
