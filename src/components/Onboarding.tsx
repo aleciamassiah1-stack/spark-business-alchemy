@@ -754,7 +754,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/signin`,
             data: {
               full_name: fullName,
               phone: `${country}${phone.replace(/\D/g, "")}`,
