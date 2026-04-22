@@ -49,6 +49,7 @@ const TIERS: Tier[] = [
     cta: "Get Started",
     ctaAction: "checkout",
     variant: "essential",
+    priceIds: { monthly: "essential_monthly", annual: "essential_annual" },
     features: [
       "Up to 3 connected accounts",
       "Investments, banking and insurance tracking",
