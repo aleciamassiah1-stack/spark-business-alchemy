@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Shield,
   Check,
@@ -23,6 +23,7 @@ import {
   PiggyBank,
   Bitcoin,
   CreditCard,
+  Star,
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
@@ -1017,7 +1018,7 @@ export function Welcome({
   const handleCreate = onCreate ?? (() => navigate({ to: "/signup" }));
   const handleSignIn = onSignIn ?? (() => navigate({ to: "/signin" }));
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-between overflow-hidden bg-background px-6 py-10">
+    <div className="relative flex min-h-[100dvh] flex-col items-center overflow-hidden bg-background px-6 py-10">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -1025,27 +1026,73 @@ export function Welcome({
             "radial-gradient(circle at 50% 0%, oklch(0.42 0.14 295 / 0.4) 0%, transparent 55%), radial-gradient(circle at 100% 100%, oklch(0.32 0.08 280 / 0.3) 0%, transparent 50%)",
         }}
       />
-      <div className="relative flex flex-1 flex-col items-center justify-center text-center">
+      <div className="relative flex w-full flex-col items-center text-center pt-6">
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-8 flex h-24 w-24 items-center justify-center rounded-3xl gradient-violet shadow-[0_20px_60px_-12px_oklch(0.68_0.13_295/0.6)]"
+          className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-3xl gradient-violet shadow-[0_20px_60px_-12px_oklch(0.68_0.13_295/0.6)]"
         >
-          <Sparkles className="h-10 w-10 text-foreground" strokeWidth={1.4} />
+          <Sparkles className="h-9 w-9 text-foreground" strokeWidth={1.4} />
         </motion.div>
-        <p className="label-mono mb-3">Æther Wealth</p>
-        <h1 className="font-serif text-[44px] leading-[1.05] text-foreground">
-          Your entire <br /> financial life.
+        <p className="label-mono mb-2">Æther Wealth</p>
+        <h1 className="font-serif text-[36px] leading-[1.05] text-foreground">
+          Your entire financial life.
           <br />
           <span className="text-gradient-violet">One secure place.</span>
         </h1>
-        <p className="mt-5 max-w-[320px] text-sm text-muted-foreground">
+        <p className="mt-4 max-w-[320px] text-sm text-muted-foreground">
           A private bank in your pocket — engineered with the discretion of a Swiss vault.
         </p>
       </div>
 
-      <div className="relative w-full max-w-[400px] space-y-3">
+      {/* Tier preview — front and center */}
+      <div className="relative mt-10 w-full max-w-[400px]">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Choose your tier
+          </p>
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+          >
+            Compare all
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="space-y-3">
+          <WelcomeTier
+            name="Essential"
+            price="$1,490"
+            cadence="/yr"
+            description="For individuals and independent advisors"
+            highlights={["Up to 3 accounts", "Net worth dashboard", "Estate vault — 5 docs"]}
+            variant="essential"
+          />
+          <WelcomeTier
+            name="Private"
+            price="$3,990"
+            cadence="/yr"
+            description="For high net worth individuals and advisors"
+            highlights={["Unlimited accounts", "Trust & estate suite", "AI insurance parser"]}
+            variant="private"
+            badge="Most Popular"
+          />
+          <WelcomeTier
+            name="Family Office"
+            price="$14,990"
+            cadence="/yr"
+            description="For UHNW families and enterprise firms"
+            highlights={["Unlimited members", "Full white label", "Dedicated manager"]}
+            variant="family"
+          />
+        </div>
+        <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          Billed annually · Save up to 2 months
+        </p>
+      </div>
+
+      <div className="relative mt-8 w-full max-w-[400px] space-y-3 pb-4">
         <PrimaryCta onClick={handleCreate}>Create Account</PrimaryCta>
         <button
           type="button"
@@ -1062,6 +1109,81 @@ export function Welcome({
         </div>
       </div>
     </div>
+  );
+}
+
+function WelcomeTier({
+  name,
+  price,
+  cadence,
+  description,
+  highlights,
+  variant,
+  badge,
+}: {
+  name: string;
+  price: string;
+  cadence: string;
+  description: string;
+  highlights: string[];
+  variant: "essential" | "private" | "family";
+  badge?: string;
+}) {
+  const styles = {
+    essential: {
+      border: "border-white/[0.08]",
+      bg: "gradient-card",
+      glow: "",
+      label: "text-muted-foreground",
+      price: "text-foreground",
+      check: "text-muted-foreground",
+    },
+    private: {
+      border: "border-primary/40",
+      bg: "gradient-hero",
+      glow: "shadow-[0_0_40px_-12px_oklch(0.68_0.13_295/0.5)]",
+      label: "text-primary",
+      price: "text-gradient-violet",
+      check: "text-primary",
+    },
+    family: {
+      border: "border-gold/40",
+      bg: "gradient-card",
+      glow: "shadow-[0_0_36px_-14px_oklch(0.82_0.12_85/0.35)]",
+      label: "text-gold",
+      price: "text-gradient-gold",
+      check: "text-gold",
+    },
+  }[variant];
+
+  return (
+    <Link
+      to="/pricing"
+      className={`relative block overflow-hidden rounded-2xl border ${styles.border} ${styles.bg} ${styles.glow} px-4 py-4 text-left transition-all hover:scale-[1.01]`}
+    >
+      {badge && (
+        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-gold">
+          <Star className="h-2.5 w-2.5 fill-gold" strokeWidth={0} />
+          {badge}
+        </div>
+      )}
+      <p className={`font-mono text-[10px] uppercase tracking-[0.22em] ${styles.label}`}>
+        {name}
+      </p>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className={`font-serif text-[26px] leading-none ${styles.price}`}>{price}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">{cadence}</span>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">{description}</p>
+      <ul className="mt-3 space-y-1.5">
+        {highlights.map((h) => (
+          <li key={h} className="flex items-center gap-2">
+            <Check className={`h-3 w-3 shrink-0 ${styles.check}`} strokeWidth={2.4} />
+            <span className="text-[12px] text-foreground/85">{h}</span>
+          </li>
+        ))}
+      </ul>
+    </Link>
   );
 }
 
