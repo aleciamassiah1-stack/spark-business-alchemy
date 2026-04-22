@@ -1570,24 +1570,41 @@ function DocumentsBlock({
     }));
   };
 
-  const handleFile = async (file: File) => {
-    if (file.size > 8 * 1024 * 1024) {
-      setParseStatus("File too large (max 8 MB)");
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    if (files.length > 8) {
+      setParseStatus("Up to 8 files per upload");
+      return;
+    }
+    const oversized = files.find((f) => f.size > 8 * 1024 * 1024);
+    if (oversized) {
+      setParseStatus(`"${oversized.name}" exceeds 8 MB`);
       return;
     }
     setParsing(true);
-    setParseStatus("Reading file…");
+    setParseStatus(
+      files.length > 1 ? `Reading ${files.length} files…` : "Reading file…",
+    );
     try {
-      const base64 = await fileToBase64(file);
-      setParseStatus("AI extracting financials…");
-      const parsed = await parseTaxReturnPdf({
-        data: { fileName: file.name, base64, mimeType: file.type || "application/pdf" },
-      });
+      const payloads = await Promise.all(
+        files.map(async (file) => ({
+          fileName: file.name,
+          base64: await fileToBase64(file),
+          mimeType: file.type || "application/pdf",
+        })),
+      );
+      setParseStatus(
+        files.length > 1
+          ? `AI extracting & aggregating ${files.length} documents…`
+          : "AI extracting financials…",
+      );
+      const parsed = await parseTaxReturnDocuments({ data: { files: payloads } });
 
-      const fallbackName = file.name.replace(/\.[^.]+$/, "");
+      const fallbackName = files[0].name.replace(/\.[^.]+$/, "");
       let draft: TaxReturnReviewDraft;
+      let sources: TaxReturnReviewSource[] = [];
 
-      if (!parsed.ok || !parsed.extracted) {
+      if (!parsed.ok || !parsed.aggregated) {
         draft = {
           form_type: "other",
           tax_year: null,
@@ -1604,9 +1621,10 @@ function DocumentsBlock({
           parsed_by_ai: false,
           apply: { revenue: false, net_profit: false, total_assets: false, total_liabilities: false },
         };
+        sources = parsed.aggregated?.sources ?? [];
         setParseStatus(parsed.error ?? "AI parse failed — review manually");
       } else {
-        const e = parsed.extracted;
+        const e = parsed.aggregated;
         draft = {
           form_type: e.form_type ?? "other",
           tax_year: e.tax_year ?? null,
@@ -1628,16 +1646,22 @@ function DocumentsBlock({
             total_liabilities: e.total_liabilities != null,
           },
         };
+        sources = e.sources ?? [];
         setParseStatus(null);
       }
 
-      setPendingFile({ name: file.name });
+      setPendingFiles(files.map((f) => ({ name: f.name })));
       setReviewDraft(draft);
-      setReviewFileName(file.name);
+      setReviewFileName(
+        files.length === 1
+          ? files[0].name
+          : `${files.length} documents · ${files[0].name}`,
+      );
+      setReviewSources(sources.length > 0 ? sources : undefined);
       setReviewError(null);
       setReviewOpen(true);
     } catch (err) {
-      setParseStatus(err instanceof Error ? err.message : "Failed to process file");
+      setParseStatus(err instanceof Error ? err.message : "Failed to process files");
     } finally {
       setParsing(false);
     }
