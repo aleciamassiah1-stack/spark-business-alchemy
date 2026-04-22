@@ -1862,6 +1862,7 @@ function DocumentsBlock({
         open={reviewOpen}
         initial={reviewDraft}
         fileName={reviewFileName}
+        sources={reviewSources}
         current={{
           annualRevenue: state.annualRevenue,
           netProfit: state.netProfit,
