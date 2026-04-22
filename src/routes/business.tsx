@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart,
@@ -35,6 +35,8 @@ import {
   ScrollText,
   Upload,
   Link2,
+  Wand2,
+  RefreshCw,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -43,7 +45,12 @@ import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { SectionHeader } from "@/components/SectionHeader";
 import { BusinessQuickSetup } from "@/components/BusinessQuickSetup";
 import { Button } from "@/components/ui/button";
+import {
+  TaxReturnReviewModal,
+  type TaxReturnReviewDraft,
+} from "@/components/TaxReturnReviewModal";
 import { fmtCurrency, fmtPct } from "@/lib/format";
+import { parseTaxReturnPdf } from "@/lib/wealth.functions";
 import {
   type BusinessState,
   type BusinessAsset,
