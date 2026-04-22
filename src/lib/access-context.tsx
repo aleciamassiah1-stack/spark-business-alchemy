@@ -1,0 +1,56 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { checkAccess } from "@/lib/access.functions";
+import { useAuth } from "@/lib/auth-context";
+
+type AccessState = {
+  ready: boolean;
+  hasAccess: boolean;
+  isAdmin: boolean;
+  refresh: () => Promise<void>;
+};
+
+const AccessContext = createContext<AccessState | undefined>(undefined);
+
+export function AccessProvider({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  const [ready, setReady] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const load = async () => {
+    if (!auth.user) {
+      setHasAccess(false);
+      setIsAdmin(false);
+      setReady(true);
+      return;
+    }
+    try {
+      const res = await checkAccess();
+      setHasAccess(res.hasAccess);
+      setIsAdmin(res.isAdmin);
+    } catch {
+      setHasAccess(false);
+      setIsAdmin(false);
+    } finally {
+      setReady(true);
+    }
+  };
+
+  useEffect(() => {
+    setReady(false);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.ready, auth.user?.id]);
+
+  return (
+    <AccessContext.Provider value={{ ready, hasAccess, isAdmin, refresh: load }}>
+      {children}
+    </AccessContext.Provider>
+  );
+}
+
+export function useAccess(): AccessState {
+  const ctx = useContext(AccessContext);
+  if (!ctx) throw new Error("useAccess must be used within AccessProvider");
+  return ctx;
+}
