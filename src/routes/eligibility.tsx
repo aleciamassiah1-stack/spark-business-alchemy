@@ -715,3 +715,288 @@ function StatusBadge({ status }: { status: Status }) {
     </span>
   );
 }
+
+// ── Request access modal ───────────────────────────────────────────
+
+const PROVIDER_KEY_MAP: Record<string, { name: string; access: string; contact: string; sla: string }> = {
+  plaid: {
+    name: "Plaid Production",
+    access: "Sales-gated. Sandbox is free; Production requires a signed MSA + per-item pricing.",
+    contact: "sales@plaid.com",
+    sla: "1–3 business days",
+  },
+  business: {
+    name: "Codat / Rutter",
+    access: "Enterprise sales call required for production keys.",
+    contact: "sales@codat.io",
+    sla: "3–5 business days",
+  },
+  property: {
+    name: "Rentcast / HouseCanary",
+    access: "Self-serve free tier (Rentcast) or sales contract (HouseCanary, ATTOM).",
+    contact: "support@rentcast.io",
+    sla: "Same day for Rentcast; 1–2 weeks for HouseCanary",
+  },
+  crypto: {
+    name: "Coinbase Developer Platform",
+    access: "Self-serve OAuth keys via Coinbase Developer Platform.",
+    contact: "developer-support@coinbase.com",
+    sla: "Same day",
+  },
+};
+
+type CompanyForm = {
+  companyName: string;
+  contactName: string;
+  email: string;
+  role: string;
+  monthlyVolume: string;
+  notes: string;
+};
+
+const COMPANY_STORAGE_KEY = "aether.requestAccess.v1";
+
+function RequestAccessDialog({
+  open,
+  onOpenChange,
+  country,
+  gatedItems,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  country: string;
+  gatedItems: ChecklistItem[];
+}) {
+  const [form, setForm] = useState<CompanyForm>(() => {
+    if (typeof window === "undefined") {
+      return { companyName: "", contactName: "", email: "", role: "Founder", monthlyVolume: "<1,000", notes: "" };
+    }
+    try {
+      const raw = window.localStorage.getItem(COMPANY_STORAGE_KEY);
+      if (raw) return JSON.parse(raw) as CompanyForm;
+    } catch { /* ignore */ }
+    return { companyName: "", contactName: "", email: "", role: "Founder", monthlyVolume: "<1,000", notes: "" };
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const canSubmit = form.companyName.trim() && form.contactName.trim() && /\S+@\S+\.\S+/.test(form.email);
+
+  const emailTemplates = useMemo(() => {
+    return gatedItems.map((item) => {
+      const meta = PROVIDER_KEY_MAP[item.id] ?? {
+        name: item.provider,
+        access: "Contact provider for production access.",
+        contact: "—",
+        sla: "—",
+      };
+      const subject = `[${form.companyName || "Your Company"}] Production access request — ${meta.name}`;
+      const body = `Hi ${meta.name} team,
+
+I'm ${form.contactName || "[Your Name]"}, ${form.role || "Founder"} at ${form.companyName || "[Company]"}. We're building a wealth aggregation platform on Æther and would like to request production credentials for ${meta.name}.
+
+Company snapshot
+• Company: ${form.companyName || "[Company]"}
+• Region: ${country}
+• Primary contact: ${form.contactName || "[Name]"} <${form.email || "[email]"}>
+• Estimated monthly volume: ${form.monthlyVolume} connected items
+• Use case: ${item.category} — ${item.whatYouGet}
+
+What we need
+${meta.access}
+
+${form.notes ? `Additional context\n${form.notes}\n\n` : ""}Please let us know next steps, pricing, and any compliance docs you need from us.
+
+Thanks,
+${form.contactName || "[Your Name]"}
+${form.companyName || "[Company]"}
+${form.email || "[email]"}`;
+      return { id: item.id, providerName: meta.name, contact: meta.contact, sla: meta.sla, subject, body };
+    });
+  }, [gatedItems, form, country]);
+
+  const handleSubmit = () => {
+    try {
+      window.localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(form));
+    } catch { /* ignore */ }
+    setSubmitted(true);
+  };
+
+  const copyEmail = async (subject: string, body: string, providerName: string) => {
+    const text = `Subject: ${subject}\n\n${body}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success(`${providerName} email copied`);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Couldn't copy — select and copy manually.");
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) setSubmitted(false);
+      }}
+    >
+      <DialogContent className="max-h-[85vh] overflow-y-auto border-white/[0.08] bg-card sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-[22px] leading-tight">
+            {submitted ? "Your outreach kit" : "Request integration access"}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            {submitted
+              ? "We pre-filled emails for each gated provider. Copy, paste, and send."
+              : "We'll generate ready-to-send emails for the providers that need sales keys."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {!submitted ? (
+          <div className="mt-2 space-y-3">
+            <FormRow label="Company name">
+              <input
+                value={form.companyName}
+                onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                placeholder="Æther Wealth Inc."
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
+              />
+            </FormRow>
+            <div className="grid grid-cols-2 gap-2.5">
+              <FormRow label="Your name">
+                <input
+                  value={form.contactName}
+                  onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                  placeholder="Jane Doe"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
+                />
+              </FormRow>
+              <FormRow label="Role">
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground focus:border-primary/40 focus:outline-none"
+                >
+                  <option>Founder</option>
+                  <option>CTO</option>
+                  <option>Head of Product</option>
+                  <option>Compliance</option>
+                  <option>Other</option>
+                </select>
+              </FormRow>
+            </div>
+            <FormRow label="Work email">
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="jane@aether.com"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
+              />
+            </FormRow>
+            <FormRow label="Estimated monthly connected items">
+              <select
+                value={form.monthlyVolume}
+                onChange={(e) => setForm({ ...form, monthlyVolume: e.target.value })}
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground focus:border-primary/40 focus:outline-none"
+              >
+                <option>&lt;1,000</option>
+                <option>1,000–10,000</option>
+                <option>10,000–50,000</option>
+                <option>50,000+</option>
+              </select>
+            </FormRow>
+            <FormRow label="Anything else? (optional)">
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+                placeholder="Compliance posture, target launch date, regional needs…"
+                className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:outline-none"
+              />
+            </FormRow>
+
+            <div className="rounded-lg border border-primary/15 bg-primary/[0.06] p-3">
+              <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-primary">
+                Providers we'll draft emails for
+              </p>
+              <ul className="mt-2 space-y-1">
+                {gatedItems.map((g) => (
+                  <li key={g.id} className="flex items-center gap-2 text-xs text-foreground/80">
+                    <KeyRound className="h-3 w-3 text-primary" />
+                    {PROVIDER_KEY_MAP[g.id]?.name ?? g.provider}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full gradient-violet px-5 py-2.5 text-xs font-medium text-foreground glow-violet transition-all disabled:opacity-30 disabled:glow-none"
+            >
+              Generate emails
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="mt-2 space-y-3">
+            {emailTemplates.map((t) => (
+              <div key={t.id} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                      To · {t.contact} · SLA {t.sla}
+                    </p>
+                    <h3 className="mt-0.5 text-sm font-medium text-foreground">{t.providerName}</h3>
+                  </div>
+                  <button
+                    onClick={() => copyEmail(t.subject, t.body, t.providerName)}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/25"
+                  >
+                    {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    Copy
+                  </button>
+                </div>
+                <div className="mt-2.5 rounded-lg border border-white/[0.06] bg-background/40 p-2.5">
+                  <p className="text-[11px] font-medium text-foreground/90">{t.subject}</p>
+                  <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-[11px] leading-relaxed text-muted-foreground">
+                    {t.body}
+                  </pre>
+                </div>
+                <a
+                  href={`mailto:${t.contact}?subject=${encodeURIComponent(t.subject)}&body=${encodeURIComponent(t.body)}`}
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                >
+                  <Mail className="h-3 w-3" />
+                  Open in mail app
+                </a>
+              </div>
+            ))}
+
+            <button
+              onClick={() => setSubmitted(false)}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              Edit company details
+            </button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FormRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
