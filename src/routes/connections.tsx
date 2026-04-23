@@ -928,7 +928,7 @@ function AccountsTab({
       </p>
 
       <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
-      <StripeLiveChecklist hasLiveSubscription={false} />
+      <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
 
 
       {items.length === 0 ? (
