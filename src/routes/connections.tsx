@@ -344,6 +344,7 @@ function ConnectionsPage() {
             accounts={accounts}
             holdings={holdings}
             linking={linking}
+            plaidEnv={plaidEnv}
             onConnect={handleConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
