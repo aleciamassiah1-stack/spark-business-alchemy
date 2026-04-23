@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "spark-business-alchemy"
+const SITE_NAME = "Æther Wealth"
 const SENDER_DOMAIN = "notify.aetherwealth.co"
 const ROOT_DOMAIN = "aetherwealth.co"
 const FROM_DOMAIN = "aetherwealth.co"
