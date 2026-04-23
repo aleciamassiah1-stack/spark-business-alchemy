@@ -3,6 +3,12 @@ const ALLOWED_ORIGINS = [
   "https://www.aetherwealth.co",
 ];
 
+// Hosts that are allowed as a returnUrl target after the billing portal closes.
+const ALLOWED_RETURN_HOST_SUFFIXES = [
+  "aetherwealth.co",
+  ".lovable.app",
+];
+
 function buildCorsHeaders(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -11,6 +17,22 @@ function buildCorsHeaders(origin: string | null) {
       "authorization, x-client-info, apikey, content-type",
     "Vary": "Origin",
   };
+}
+
+function isAllowedReturnUrl(raw: string | undefined | null): string | null {
+  if (!raw || typeof raw !== "string") return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  const host = url.hostname.toLowerCase();
+  const ok = ALLOWED_RETURN_HOST_SUFFIXES.some(
+    (suf) => host === suf.replace(/^\./, "") || host.endsWith(suf),
+  );
+  return ok ? url.toString() : null;
 }
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -67,9 +89,15 @@ serve(async (req) => {
       });
     }
 
+    // Validate returnUrl against allowlist; fall back to verified origin or default.
+    const origin = req.headers.get("origin");
+    const validatedReturn =
+      isAllowedReturnUrl(returnUrl) ||
+      (origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]);
+
     const portal = await stripe.billingPortal.sessions.create({
       customer: sub.stripe_customer_id,
-      ...(returnUrl && { return_url: returnUrl }),
+      return_url: validatedReturn,
     });
 
     return new Response(JSON.stringify({ url: portal.url }), {
