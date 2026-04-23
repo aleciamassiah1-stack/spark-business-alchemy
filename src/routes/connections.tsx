@@ -354,6 +354,7 @@ function ConnectionsPage() {
             holdings={holdings}
             linking={linking}
             plaidEnv={plaidEnv}
+            hasLiveSubscription={hasLiveSubscription}
             onConnect={handleConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
