@@ -177,7 +177,6 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resendIn, setResendIn] = useState(30);
-  const [hintShown, setHintShown] = useState(false);
 
   // Countdown for resend
   useEffect(() => {
@@ -202,7 +201,7 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
         update({ phoneVerified: true });
         onNext();
       } else {
-        setError("Incorrect code. Try 123456 (simulated).");
+        setError("Incorrect code. Try 123456 (preview build).");
         setVerifying(false);
         setCode("");
       }
@@ -212,7 +211,6 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   const handleResend = () => {
     if (resendIn > 0) return;
     setResendIn(30);
-    setHintShown(true);
   };
 
   return (
@@ -294,11 +292,10 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
           )}
         </div>
 
-        {hintShown && (
-          <p className="mt-3 text-[11px] text-muted-foreground/80">
-            Demo mode — use code <span className="font-mono text-foreground">123456</span>.
-          </p>
-        )}
+        <p className="mt-3 text-[11px] text-muted-foreground/80">
+          Preview build — live SMS verification is not yet wired up. Use code{" "}
+          <span className="font-mono text-foreground">123456</span> to continue.
+        </p>
       </div>
 
       <div className="mt-6 space-y-3 pb-2">
@@ -311,9 +308,16 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
             "Verify code"
           )}
         </PrimaryCta>
-        <p className="text-center text-[11px] text-muted-foreground/70">
-          Standard messaging rates may apply.
-        </p>
+        <div className="flex items-center justify-center">
+          <GhostBtn
+            onClick={() => {
+              update({ phoneVerified: false });
+              onNext();
+            }}
+          >
+            Skip for now
+          </GhostBtn>
+        </div>
       </div>
     </ScreenWrap>
   );

@@ -44,7 +44,11 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   }, [auth.user]);
 
   useEffect(() => {
+    // Reset state immediately when user identity changes so RequireOnboarding
+    // never sees a stale hasAccess from a previous session.
     setReady(false);
+    setHasAccess(false);
+    setIsAdmin(false);
     void load();
   }, [auth.ready, auth.user?.id, load]);
 
