@@ -962,6 +962,18 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         )}
       </PrimaryCta>
 
+      {mode === "signin" && (
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/forgot-password" })}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Forgot your password?
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 py-1">
         <div className="h-px flex-1 bg-white/[0.08]" />
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
