@@ -934,6 +934,20 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_my_plaid_items: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          institution_id: string
+          institution_name: string
+          item_id: string
+          last_synced_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
