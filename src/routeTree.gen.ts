@@ -35,6 +35,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
+import { Route as AdminMfaPreviewRouteImport } from './routes/admin.mfa-preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -169,6 +170,11 @@ const AdminPropertyImageTestRoute = AdminPropertyImageTestRouteImport.update({
   path: '/property-image-test',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMfaPreviewRoute = AdminMfaPreviewRouteImport.update({
+  id: '/mfa-preview',
+  path: '/mfa-preview',
+  getParentRoute: () => AdminRoute,
+} as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
+    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
+    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
+    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -591,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertyImageTestRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/mfa-preview': {
+      id: '/admin/mfa-preview'
+      path: '/mfa-preview'
+      fullPath: '/admin/mfa-preview'
+      preLoaderRoute: typeof AdminMfaPreviewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -616,10 +635,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminMfaPreviewRoute: typeof AdminMfaPreviewRoute
   AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminMfaPreviewRoute: AdminMfaPreviewRoute,
   AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
 }
 
