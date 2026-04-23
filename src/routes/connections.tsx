@@ -678,12 +678,16 @@ const CHECKLIST_STEPS: ChecklistStep[] = [
   },
 ];
 
-function PlaidLiveChecklist({
-  plaidEnv,
-  itemCount,
+function LiveChecklistCard({
+  title,
+  steps,
+  storageKey,
+  autoChecks,
 }: {
-  plaidEnv: "sandbox" | "production" | null;
-  itemCount: number;
+  title: string;
+  steps: ChecklistStep[];
+  storageKey: string;
+  autoChecks?: Record<string, boolean>;
 }) {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -691,17 +695,17 @@ function PlaidLiveChecklist({
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(CHECKLIST_STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey);
       if (raw) setChecked(JSON.parse(raw));
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [storageKey]);
 
   const persist = (next: Record<string, boolean>) => {
     setChecked(next);
     try {
-      window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
       /* ignore */
     }
@@ -709,22 +713,21 @@ function PlaidLiveChecklist({
 
   // Auto-check derived steps
   useEffect(() => {
+    if (!autoChecks) return;
     const next = { ...checked };
     let changed = false;
-    if (plaidEnv === "production" && !next["verify-env"]) {
-      next["verify-env"] = true;
-      changed = true;
-    }
-    if (itemCount > 0 && !next["test-bank"]) {
-      next["test-bank"] = true;
-      changed = true;
+    for (const [id, v] of Object.entries(autoChecks)) {
+      if (v && !next[id]) {
+        next[id] = true;
+        changed = true;
+      }
     }
     if (changed) persist(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plaidEnv, itemCount]);
+  }, [JSON.stringify(autoChecks)]);
 
-  const completed = CHECKLIST_STEPS.filter((s) => checked[s.id]).length;
-  const total = CHECKLIST_STEPS.length;
+  const completed = steps.filter((s) => checked[s.id]).length;
+  const total = steps.length;
   const pct = Math.round((completed / total) * 100);
 
   return (
@@ -738,7 +741,7 @@ function PlaidLiveChecklist({
           <ListChecks className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-serif text-sm text-foreground">Plaid Live Test Checklist</p>
+          <p className="truncate font-serif text-sm text-foreground">{title}</p>
           <p className="font-mono text-[10px] text-muted-foreground">
             {completed}/{total} complete · {pct}%
           </p>
@@ -748,10 +751,7 @@ function PlaidLiveChecklist({
         />
       </button>
       <div className="h-1 w-full bg-white/[0.04]">
-        <div
-          className="h-full bg-primary transition-all"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
       </div>
       <AnimatePresence initial={false}>
         {open && (
@@ -762,7 +762,7 @@ function PlaidLiveChecklist({
             transition={{ duration: 0.2 }}
           >
             <ol className="divide-y divide-white/[0.04] border-t border-white/[0.04]">
-              {CHECKLIST_STEPS.map((step, idx) => {
+              {steps.map((step, idx) => {
                 const isDone = !!checked[step.id];
                 return (
                   <li key={step.id} className="flex gap-3 px-4 py-3">
@@ -826,6 +826,44 @@ function PlaidLiveChecklist({
         )}
       </AnimatePresence>
     </LuxCard>
+  );
+}
+
+function PlaidLiveChecklist({
+  plaidEnv,
+  itemCount,
+}: {
+  plaidEnv: "sandbox" | "production" | null;
+  itemCount: number;
+}) {
+  return (
+    <LiveChecklistCard
+      title="Plaid Live Test Checklist"
+      steps={CHECKLIST_STEPS}
+      storageKey={CHECKLIST_STORAGE_KEY}
+      autoChecks={{
+        "verify-env": plaidEnv === "production",
+        "test-bank": itemCount > 0,
+      }}
+    />
+  );
+}
+
+function StripeLiveChecklist({
+  hasLiveSubscription,
+}: {
+  hasLiveSubscription: boolean;
+}) {
+  return (
+    <LiveChecklistCard
+      title="Stripe Live Test Checklist"
+      steps={STRIPE_CHECKLIST_STEPS}
+      storageKey={STRIPE_CHECKLIST_STORAGE_KEY}
+      autoChecks={{
+        "test-live-checkout": hasLiveSubscription,
+        "verify-webhook": hasLiveSubscription,
+      }}
+    />
   );
 }
 
