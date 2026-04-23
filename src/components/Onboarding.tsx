@@ -776,26 +776,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         // Session is live — RequireOnboarding will pick up and continue the flow.
         navigate({ to: "/" });
       } else {
-        // Pre-check: block sign-in for accounts pending deletion (30-day grace period).
-        try {
-          const { checkPendingDeletionByEmail } = await import("@/lib/access.functions");
-          const pending = await checkPendingDeletionByEmail({ data: { email } });
-          if (pending.pending) {
-            const purge = pending.purgeAfter ? new Date(pending.purgeAfter) : null;
-            const days = purge
-              ? Math.max(0, Math.ceil((purge.getTime() - Date.now()) / 86400000))
-              : null;
-            setError(
-              days != null
-                ? `This account is scheduled for deletion in ${days} day${days === 1 ? "" : "s"}. Contact support@aetherwealth.co to restore access.`
-                : "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
-            );
-            return;
-          }
-        } catch {
-          // If the check fails, fall through to normal signin — Supabase will still authenticate.
-        }
-
+        // Authenticate first — only after valid credentials do we check pending deletion.
+        // (We deliberately do NOT pre-check by email: that would let anyone probe whether
+        // an email is registered + scheduled for deletion without authenticating.)
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) {
           const next = attempts + 1;
@@ -809,14 +792,21 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           return;
         }
 
-        // Defense-in-depth: re-check after successful auth in case of race; sign out if pending.
+        // Authenticated — now safe to check pending deletion. The server function
+        // requires a valid bearer token, so this can't be used for enumeration.
         try {
-          const { checkPendingDeletionByEmail } = await import("@/lib/access.functions");
-          const pending = await checkPendingDeletionByEmail({ data: { email } });
+          const { checkMyPendingDeletion } = await import("@/lib/access.functions");
+          const pending = await checkMyPendingDeletion();
           if (pending.pending) {
             await supabase.auth.signOut();
+            const purge = pending.purgeAfter ? new Date(pending.purgeAfter) : null;
+            const days = purge
+              ? Math.max(0, Math.ceil((purge.getTime() - Date.now()) / 86400000))
+              : null;
             setError(
-              "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
+              days != null
+                ? `This account is scheduled for deletion in ${days} day${days === 1 ? "" : "s"}. Contact support@aetherwealth.co to restore access.`
+                : "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
             );
             return;
           }
