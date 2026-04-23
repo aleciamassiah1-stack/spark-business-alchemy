@@ -42,6 +42,7 @@ import {
   plaidGetEnvironment,
   getAggregatedData,
 } from "@/lib/plaid.functions";
+import { checkLiveSubscription } from "@/lib/access.functions";
 import {
   listProperties,
   upsertProperty,
@@ -162,6 +163,7 @@ function ConnectionsPage() {
   const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
   const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
+  const [hasLiveSubscription, setHasLiveSubscription] = useState(false);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
@@ -191,6 +193,9 @@ function ConnectionsPage() {
   useEffect(() => {
     loadAll();
     plaidGetEnvironment().then((r) => setPlaidEnv(r.environment)).catch(() => {});
+    checkLiveSubscription()
+      .then((r) => setHasLiveSubscription(r.hasLiveSubscription))
+      .catch(() => {});
   }, []);
 
   const handleConnect = async () => {
@@ -349,6 +354,7 @@ function ConnectionsPage() {
             holdings={holdings}
             linking={linking}
             plaidEnv={plaidEnv}
+            hasLiveSubscription={hasLiveSubscription}
             onConnect={handleConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
@@ -874,6 +880,7 @@ function AccountsTab({
   holdings,
   linking,
   plaidEnv,
+  hasLiveSubscription,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -884,6 +891,7 @@ function AccountsTab({
   holdings: Holding[];
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
+  hasLiveSubscription: boolean;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
@@ -920,7 +928,7 @@ function AccountsTab({
       </p>
 
       <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
-      <StripeLiveChecklist hasLiveSubscription={false} />
+      <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
 
 
       {items.length === 0 ? (
