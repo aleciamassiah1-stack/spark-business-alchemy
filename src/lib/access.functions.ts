@@ -7,7 +7,15 @@ import { createClient } from "@supabase/supabase-js";
 
 function getPaymentsEnvironment(): "sandbox" | "live" {
   const env = process.env.STRIPE_ENVIRONMENT;
-  return env === "live" ? "live" : "sandbox";
+  if (env === "live" || env === "sandbox") return env;
+
+  const host = getRequest()?.headers.get("host")?.toLowerCase() ?? "";
+  const isPreviewHost =
+    host.includes("lovableproject.com") ||
+    host.startsWith("id-preview--") ||
+    host.includes("-dev.lovable.app");
+
+  return isPreviewHost ? "sandbox" : "live";
 }
 
 /**
