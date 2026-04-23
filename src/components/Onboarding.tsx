@@ -1230,6 +1230,21 @@ export function Welcome({
           <Badge label="256-bit Encryption" />
           <Badge label="FINRA Compliant" />
         </div>
+
+        <div className="flex flex-col items-center gap-2 pt-5">
+          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <Link to="/terms" className="transition-colors hover:text-foreground">
+              Terms
+            </Link>
+            <span aria-hidden className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+            <Link to="/privacy" className="transition-colors hover:text-foreground">
+              Privacy
+            </Link>
+          </div>
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground/70">
+            © {new Date().getFullYear()} Æther Wealth
+          </p>
+        </div>
       </div>
     </div>
   );
