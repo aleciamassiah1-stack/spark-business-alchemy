@@ -6,10 +6,15 @@ const PLAID_ENV: "sandbox" | "production" =
 const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
 
 function getCreds() {
-  const client_id = process.env.PLAID_CLIENT_ID;
-  const secret = process.env.PLAID_SECRET;
+  // Trim — secrets pasted with stray whitespace/newlines silently break
+  // Plaid with "client_id must be a properly formatted, non-empty string".
+  const client_id = (process.env.PLAID_CLIENT_ID ?? "").trim();
+  const secret = (process.env.PLAID_SECRET ?? "").trim();
   if (!client_id || !secret) {
-    throw new Error("Plaid credentials missing (PLAID_CLIENT_ID / PLAID_SECRET)");
+    throw new Error(
+      `Plaid credentials missing or empty at runtime ` +
+        `(PLAID_CLIENT_ID len=${client_id.length}, PLAID_SECRET len=${secret.length}, PLAID_ENV=${PLAID_ENV})`,
+    );
   }
   return { client_id, secret };
 }
