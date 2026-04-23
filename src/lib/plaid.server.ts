@@ -1,9 +1,23 @@
 // Server-only Plaid REST helper. Do NOT import from client code.
 // Uses fetch directly (no node SDK) to stay Worker-runtime compatible.
+import { getRequestHost } from "@tanstack/react-start/server";
 
-const PLAID_ENV: "sandbox" | "production" =
-  process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
-const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
+function getPlaidEnvironment(): "sandbox" | "production" {
+  const host = (getRequestHost() ?? "").toLowerCase();
+  const isPreviewHost =
+    host.includes("lovableproject.com") ||
+    host.includes("-dev.lovable.app") ||
+    host.startsWith("id-preview--");
+
+  if (isPreviewHost) return "sandbox";
+
+  const configured = sanitize(process.env.PLAID_ENV)?.toLowerCase();
+  return configured === "sandbox" ? "sandbox" : "production";
+}
+
+function getPlaidBase() {
+  return `https://${getPlaidEnvironment()}.plaid.com`;
+}
 
 function sanitize(v: string | undefined): string {
   if (!v) return "";
@@ -18,16 +32,17 @@ function sanitize(v: string | undefined): string {
 }
 
 function getCreds() {
+  const env = getPlaidEnvironment();
   const client_id = sanitize(process.env.PLAID_CLIENT_ID);
   const secret = sanitize(process.env.PLAID_SECRET);
   // Always log a safe diagnostic so we can see what's actually present at runtime.
   console.log(
-    `[plaid] env=${PLAID_ENV} client_id_len=${client_id.length} client_id_prefix=${client_id.slice(0, 4)} secret_len=${secret.length}`,
+    `[plaid] env=${env} client_id_len=${client_id.length} client_id_prefix=${client_id.slice(0, 4)} secret_len=${secret.length}`,
   );
   if (!client_id || !secret) {
     throw new Error(
       `Plaid credentials missing or empty at runtime ` +
-        `(PLAID_CLIENT_ID len=${client_id.length}, PLAID_SECRET len=${secret.length}, PLAID_ENV=${PLAID_ENV})`,
+        `(PLAID_CLIENT_ID len=${client_id.length}, PLAID_SECRET len=${secret.length}, PLAID_ENV=${env})`,
     );
   }
   // Plaid client_ids are 24-char hex-like strings. Catch obvious mistakes early.
@@ -37,12 +52,12 @@ function getCreds() {
         `Re-paste it from the Plaid dashboard — make sure you copied the Client ID, not the secret.`,
     );
   }
-  return { client_id, secret };
+  return { client_id, secret, env };
 }
 
 async function plaidPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const { client_id, secret } = getCreds();
-  const res = await fetch(`${PLAID_BASE}${path}`, {
+  const res = await fetch(`${getPlaidBase()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ client_id, secret, ...body }),
