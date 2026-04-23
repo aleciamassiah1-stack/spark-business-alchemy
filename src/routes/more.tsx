@@ -13,6 +13,7 @@ import {
   Crown,
   ArrowRight,
   ShieldCheck,
+  Rocket,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -72,6 +73,12 @@ function MorePage() {
 
         {access.isAdmin && (
           <NavGroup title="Admin">
+            <NavRow
+              to="/launch"
+              icon={Rocket}
+              label="Launch Readiness"
+              desc="Critical checklist to ship live"
+            />
             <NavRow
               to="/admin"
               icon={ShieldCheck}
