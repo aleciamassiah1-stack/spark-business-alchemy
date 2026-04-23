@@ -14,13 +14,15 @@ function getPlaidEnvironment(): "sandbox" | "production" {
   } catch {
     // No active request context — fall through to default.
   }
-  const isPreviewHost =
-    host.includes("lovableproject.com") ||
-    host.includes("lovable.app") ||
-    host.startsWith("id-preview--");
+  // Only the live custom/published production domain should hit Plaid production.
+  // Everything else (localhost, preview, lovable.app/lovableproject.com) → sandbox.
+  const isProductionHost =
+    host === "aetherwealth.co" ||
+    host === "www.aetherwealth.co" ||
+    host === "spark-business-alchemy.lovable.app";
 
-  console.log(`[plaid] host=${host} preview=${isPreviewHost}`);
-  return isPreviewHost ? "sandbox" : "production";
+  console.log(`[plaid] host=${host} production=${isProductionHost}`);
+  return isProductionHost ? "production" : "sandbox";
 }
 
 function getPlaidBase() {
