@@ -21,6 +21,10 @@ import {
   Tag,
   Pencil,
   History,
+  ListChecks,
+  ChevronDown,
+  ExternalLink,
+  Circle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { InsuranceReviewModal, type InsuranceReviewDraft } from "@/components/InsuranceReviewModal";
