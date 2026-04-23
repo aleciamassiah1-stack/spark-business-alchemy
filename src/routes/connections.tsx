@@ -615,6 +615,9 @@ function AccountsTab({
             : "Detecting environment…"}
       </p>
 
+      <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
+
+
       {items.length === 0 ? (
         <div className="mt-6">
           <LuxCard className="p-6 text-center">
