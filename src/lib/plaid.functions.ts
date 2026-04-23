@@ -13,20 +13,21 @@ import {
 } from "./plaid.server";
 
 function resolvePlaidEnvironment(): "sandbox" | "production" {
+  const configured = (process.env.PLAID_ENV ?? "").trim().toLowerCase();
+  if (configured === "sandbox") return "sandbox";
+  if (configured === "production") return "production";
+
   let host = "";
   try {
     host = (getRequestHost() ?? "").toLowerCase();
   } catch {
-    // No active request context — fall through to env var.
+    // No active request context — fall through.
   }
   const isPreviewHost =
     host.includes("lovableproject.com") ||
-    host.includes("-dev.lovable.app") ||
+    host.includes("lovable.app") ||
     host.startsWith("id-preview--");
-
-  if (isPreviewHost) return "sandbox";
-
-  return process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
+  return isPreviewHost ? "sandbox" : "production";
 }
 
 // 0. Report which Plaid environment the server is using (so the UI can show it)
