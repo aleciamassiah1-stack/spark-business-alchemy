@@ -318,6 +318,11 @@ function HomePage() {
         </LuxCard>
       </div>
 
+      {/* 2FA nudge — only renders if user hasn't enabled MFA and hasn't dismissed */}
+      <div className="px-5 pt-4">
+        <MfaNudge />
+      </div>
+
       {/* Summary tiles */}
       <div className="grid grid-cols-2 gap-3 px-5 pt-5">
         <SummaryTile
