@@ -157,6 +157,7 @@ function ConnectionsPage() {
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
+  const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
