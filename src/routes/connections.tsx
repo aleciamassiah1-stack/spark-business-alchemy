@@ -193,6 +193,9 @@ function ConnectionsPage() {
   useEffect(() => {
     loadAll();
     plaidGetEnvironment().then((r) => setPlaidEnv(r.environment)).catch(() => {});
+    checkLiveSubscription()
+      .then((r) => setHasLiveSubscription(r.hasLiveSubscription))
+      .catch(() => {});
   }, []);
 
   const handleConnect = async () => {
