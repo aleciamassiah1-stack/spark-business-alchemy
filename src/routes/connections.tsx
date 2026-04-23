@@ -163,6 +163,7 @@ function ConnectionsPage() {
   const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
   const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
+  const [hasLiveSubscription, setHasLiveSubscription] = useState(false);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
