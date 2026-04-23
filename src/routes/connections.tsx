@@ -35,6 +35,7 @@ import {
   plaidExchangeToken,
   plaidSyncAll,
   plaidDisconnectItem,
+  plaidGetEnvironment,
   getAggregatedData,
 } from "@/lib/plaid.functions";
 import {
@@ -156,6 +157,7 @@ function ConnectionsPage() {
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showRuleForm, setShowRuleForm] = useState<TransactionRule | "new" | null>(null);
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
+  const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
 
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
@@ -184,6 +186,7 @@ function ConnectionsPage() {
 
   useEffect(() => {
     loadAll();
+    plaidGetEnvironment().then((r) => setPlaidEnv(r.environment)).catch(() => {});
   }, []);
 
   const handleConnect = async () => {
@@ -341,6 +344,7 @@ function ConnectionsPage() {
             accounts={accounts}
             holdings={holdings}
             linking={linking}
+            plaidEnv={plaidEnv}
             onConnect={handleConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
@@ -561,6 +565,7 @@ function AccountsTab({
   accounts,
   holdings,
   linking,
+  plaidEnv,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -570,6 +575,7 @@ function AccountsTab({
   accounts: Account[];
   holdings: Holding[];
   linking: boolean;
+  plaidEnv: "sandbox" | "production" | null;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
@@ -598,7 +604,11 @@ function AccountsTab({
         </button>
       </div>
       <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-        Plaid Sandbox · use credentials user_good / pass_good
+        {plaidEnv === "production"
+          ? "Plaid Production · sign in with your real bank, brokerage, or Robinhood credentials"
+          : plaidEnv === "sandbox"
+            ? "Plaid Sandbox · use credentials user_good / pass_good"
+            : "Detecting environment…"}
       </p>
 
       {items.length === 0 ? (

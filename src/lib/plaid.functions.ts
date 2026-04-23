@@ -11,6 +11,13 @@ import {
   syncTransactions,
 } from "./plaid.server";
 
+// 0. Report which Plaid environment the server is using (so the UI can show it)
+export const plaidGetEnvironment = createServerFn({ method: "GET" }).handler(async () => {
+  const env: "sandbox" | "production" =
+    process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
+  return { environment: env };
+});
+
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
 export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(async () => {
   try {
