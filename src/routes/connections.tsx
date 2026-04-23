@@ -563,6 +563,222 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
   );
 }
 
+// =================== Plaid Live Test Checklist ===================
+const CHECKLIST_STORAGE_KEY = "aether.plaidLiveChecklist.v1";
+
+type ChecklistStep = {
+  id: string;
+  title: string;
+  detail: string;
+  hint?: { label: string; href?: string };
+};
+
+const CHECKLIST_STEPS: ChecklistStep[] = [
+  {
+    id: "request-prod",
+    title: "Request Plaid production access",
+    detail:
+      "In your Plaid Dashboard, submit the production access request for this app. Approval typically takes 1–3 business days and requires a company name, use case, and privacy policy URL.",
+    hint: { label: "Open Plaid Dashboard → Production", href: "https://dashboard.plaid.com/overview/production" },
+  },
+  {
+    id: "set-products",
+    title: "Enable the right products",
+    detail:
+      "Confirm Transactions, Auth, Investments, and Liabilities are all enabled for production. Investments is required for Robinhood, Fidelity, and Schwab brokerage links.",
+    hint: { label: "Plaid → Products", href: "https://dashboard.plaid.com/team/products" },
+  },
+  {
+    id: "add-keys",
+    title: "Add production keys to Lovable",
+    detail:
+      "Set PLAID_CLIENT_ID, PLAID_SECRET (the production secret, not sandbox), and PLAID_ENV=production in your project secrets. The secret must come from the Production tab in the Plaid Dashboard.",
+    hint: { label: "Plaid → Keys", href: "https://dashboard.plaid.com/team/keys" },
+  },
+  {
+    id: "verify-env",
+    title: "Verify environment is reporting Production",
+    detail:
+      "The badge under the Connect bank button should read “Plaid Production”. If it still says Sandbox, redeploy after updating PLAID_ENV so the server picks up the new value.",
+  },
+  {
+    id: "allowlist-domain",
+    title: "Allow-list your published domain",
+    detail:
+      "In Plaid → API → Allowed redirect URIs, add your live domain (https://aetherwealth.co) and the Lovable preview URL. Without this, Link will fail to open in production.",
+    hint: { label: "Plaid → API settings", href: "https://dashboard.plaid.com/team/api" },
+  },
+  {
+    id: "test-bank",
+    title: "Link a real bank account",
+    detail:
+      "Tap Connect bank and sign in with your real Chase, Bank of America, or other bank credentials. A successful link should show real balances within a few seconds.",
+  },
+  {
+    id: "test-brokerage",
+    title: "Link a real brokerage (Robinhood, Fidelity)",
+    detail:
+      "Repeat with a brokerage to confirm Investments works. Holdings should appear under the institution card with real tickers and quantities.",
+  },
+  {
+    id: "verify-sync",
+    title: "Confirm scheduled sync runs",
+    detail:
+      "Hit Refresh and confirm the “Synced …” timestamp updates and that no items move into an error state. Re-run after 24h to confirm the cron job is healthy.",
+  },
+];
+
+function PlaidLiveChecklist({
+  plaidEnv,
+  itemCount,
+}: {
+  plaidEnv: "sandbox" | "production" | null;
+  itemCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(CHECKLIST_STORAGE_KEY);
+      if (raw) setChecked(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const persist = (next: Record<string, boolean>) => {
+    setChecked(next);
+    try {
+      window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Auto-check derived steps
+  useEffect(() => {
+    const next = { ...checked };
+    let changed = false;
+    if (plaidEnv === "production" && !next["verify-env"]) {
+      next["verify-env"] = true;
+      changed = true;
+    }
+    if (itemCount > 0 && !next["test-bank"]) {
+      next["test-bank"] = true;
+      changed = true;
+    }
+    if (changed) persist(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plaidEnv, itemCount]);
+
+  const completed = CHECKLIST_STEPS.filter((s) => checked[s.id]).length;
+  const total = CHECKLIST_STEPS.length;
+  const pct = Math.round((completed / total) * 100);
+
+  return (
+    <LuxCard className="mt-4 overflow-hidden p-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <ListChecks className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-serif text-sm text-foreground">Plaid Live Test Checklist</p>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            {completed}/{total} complete · {pct}%
+          </p>
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      <div className="h-1 w-full bg-white/[0.04]">
+        <div
+          className="h-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ol className="divide-y divide-white/[0.04] border-t border-white/[0.04]">
+              {CHECKLIST_STEPS.map((step, idx) => {
+                const isDone = !!checked[step.id];
+                return (
+                  <li key={step.id} className="flex gap-3 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => persist({ ...checked, [step.id]: !isDone })}
+                      className="mt-0.5 shrink-0"
+                      aria-label={isDone ? "Mark incomplete" : "Mark complete"}
+                    >
+                      {isDone ? (
+                        <CheckCircle2 className="h-5 w-5 text-success" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-sm ${
+                          isDone ? "text-muted-foreground line-through" : "text-foreground"
+                        }`}
+                      >
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>{" "}
+                        {step.title}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                        {step.detail}
+                      </p>
+                      {step.hint &&
+                        (step.hint.href ? (
+                          <a
+                            href={step.hint.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-primary hover:underline"
+                          >
+                            {step.hint.label}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <p className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {step.hint.label}
+                          </p>
+                        ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="border-t border-white/[0.04] px-4 py-3">
+              <button
+                type="button"
+                onClick={() => persist({})}
+                className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                Reset checklist
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </LuxCard>
+  );
+}
+
 // =================== Accounts Tab ===================
 function AccountsTab({
   items,
