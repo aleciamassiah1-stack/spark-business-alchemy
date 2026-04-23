@@ -49,6 +49,21 @@ export const checkAccess = createServerFn({ method: "GET" }).handler(async () =>
   return { authenticated: true, hasAccess, isAdmin } as const;
 });
 
+/** Returns whether the current user has any LIVE Stripe subscription on record. */
+export const checkLiveSubscription = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { hasLiveSubscription: false } as const;
+  const { data } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id, status")
+    .eq("user_id", userId)
+    .eq("environment", "live")
+    .in("status", ["active", "trialing", "past_due"])
+    .limit(1)
+    .maybeSingle();
+  return { hasLiveSubscription: !!data } as const;
+});
+
 /** Throws 403 if not admin, otherwise returns the userId. */
 async function requireAdmin(): Promise<string> {
   const userId = await requireUserId();
