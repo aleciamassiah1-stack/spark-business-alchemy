@@ -7,6 +7,7 @@ import { LuxCard } from "@/components/LuxCard";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { CompletionBanner } from "@/components/CompletionBanner";
+import { MfaNudge } from "@/components/MfaNudge";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
 import { useWealth } from "@/lib/wealth-context";
