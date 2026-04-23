@@ -563,8 +563,9 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
   );
 }
 
-// =================== Plaid Live Test Checklist ===================
+// =================== Live Test Checklists ===================
 const CHECKLIST_STORAGE_KEY = "aether.plaidLiveChecklist.v1";
+const STRIPE_CHECKLIST_STORAGE_KEY = "aether.stripeLiveChecklist.v1";
 
 type ChecklistStep = {
   id: string;
@@ -572,6 +573,55 @@ type ChecklistStep = {
   detail: string;
   hint?: { label: string; href?: string };
 };
+
+const STRIPE_CHECKLIST_STEPS: ChecklistStep[] = [
+  {
+    id: "claim-account",
+    title: "Connect Stripe sandbox to your account",
+    detail:
+      "Stripe is wired through Lovable Payments. Confirm a Stripe account is linked — sandbox first, then live. No API keys ever touch the codebase.",
+    hint: { label: "Open Lovable Payments tab", href: "https://lovable.dev" },
+  },
+  {
+    id: "go-live-form",
+    title: "Complete Stripe go-live form",
+    detail:
+      "Submit business details, tax ID, bank account, and statement descriptor in the Stripe Dashboard. Approval is usually instant for US/EU sole proprietors and a few hours for LLCs.",
+    hint: { label: "Stripe → Activate account", href: "https://dashboard.stripe.com/account/onboarding" },
+  },
+  {
+    id: "install-live-app",
+    title: "Install Lovable on your live Stripe account",
+    detail:
+      "Switch the Stripe Dashboard toggle from Test mode → Live, then re-install the Lovable app so it has live-mode permissions to create products, prices, and checkout sessions.",
+    hint: { label: "Stripe → Apps", href: "https://dashboard.stripe.com/apps" },
+  },
+  {
+    id: "live-keys",
+    title: "Provision live API keys",
+    detail:
+      "Lovable provisions restricted live keys automatically once the app is installed in live mode. You should NOT add your own sk_live key — Lovable manages it.",
+  },
+  {
+    id: "readiness-check",
+    title: "Pass the readiness check",
+    detail:
+      "Lovable runs a final readiness sweep: webhook endpoints registered for both env modes, at least one live price, and a successful test checkout. The Payments tab will turn green when this passes.",
+  },
+  {
+    id: "test-live-checkout",
+    title: "Run a real $1 checkout end-to-end",
+    detail:
+      "From an incognito window, sign up with a brand-new email, hit the pricing page, and pay with a real card. Refund yourself in the Stripe Dashboard immediately afterwards. Confirm the subscription row appears in the database with environment='live'.",
+    hint: { label: "Stripe → Payments", href: "https://dashboard.stripe.com/payments" },
+  },
+  {
+    id: "verify-webhook",
+    title: "Verify webhook propagated access",
+    detail:
+      "After the test purchase, the user should land on /intake (not /pricing) within ~15s. The checkout.return page now polls access.refresh() so this should be automatic. Inspect logs for the payments-webhook function if access doesn't unlock.",
+  },
+];
 
 const CHECKLIST_STEPS: ChecklistStep[] = [
   {
