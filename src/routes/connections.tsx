@@ -880,6 +880,7 @@ function AccountsTab({
   holdings,
   linking,
   plaidEnv,
+  hasLiveSubscription,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -890,6 +891,7 @@ function AccountsTab({
   holdings: Holding[];
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
+  hasLiveSubscription: boolean;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
