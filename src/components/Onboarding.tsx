@@ -294,11 +294,10 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
           )}
         </div>
 
-        {hintShown && (
-          <p className="mt-3 text-[11px] text-muted-foreground/80">
-            Demo mode — use code <span className="font-mono text-foreground">123456</span>.
-          </p>
-        )}
+        <p className="mt-3 text-[11px] text-muted-foreground/80">
+          Preview build — live SMS verification is not yet wired up. Use code{" "}
+          <span className="font-mono text-foreground">123456</span> to continue.
+        </p>
       </div>
 
       <div className="mt-6 space-y-3 pb-2">
@@ -311,9 +310,16 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
             "Verify code"
           )}
         </PrimaryCta>
-        <p className="text-center text-[11px] text-muted-foreground/70">
-          Standard messaging rates may apply.
-        </p>
+        <div className="flex items-center justify-center">
+          <GhostBtn
+            onClick={() => {
+              update({ phoneVerified: false });
+              onNext();
+            }}
+          >
+            Skip for now
+          </GhostBtn>
+        </div>
       </div>
     </ScreenWrap>
   );
