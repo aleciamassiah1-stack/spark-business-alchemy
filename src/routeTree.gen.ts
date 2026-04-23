@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProtectRouteImport } from './routes/protect'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
@@ -47,6 +49,11 @@ const TimelineRoute = TimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -70,6 +77,11 @@ const ProtectRoute = ProtectRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -190,11 +202,13 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -219,11 +233,13 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -249,11 +265,13 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -280,11 +298,13 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/preferences'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/protect'
     | '/signin'
     | '/signup'
     | '/support'
+    | '/terms'
     | '/timeline'
     | '/verify-email'
     | '/admin/property-image-test'
@@ -309,11 +329,13 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/preferences'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/protect'
     | '/signin'
     | '/signup'
     | '/support'
+    | '/terms'
     | '/timeline'
     | '/verify-email'
     | '/admin/property-image-test'
@@ -338,11 +360,13 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/preferences'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/protect'
     | '/signin'
     | '/signup'
     | '/support'
+    | '/terms'
     | '/timeline'
     | '/verify-email'
     | '/admin/property-image-test'
@@ -368,11 +392,13 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   PreferencesRoute: typeof PreferencesRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProtectRoute: typeof ProtectRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
   TimelineRoute: typeof TimelineRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -395,6 +421,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/support': {
@@ -430,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -601,11 +641,13 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   PreferencesRoute: PreferencesRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProtectRoute: ProtectRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
   TimelineRoute: TimelineRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
