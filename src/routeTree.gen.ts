@@ -22,6 +22,7 @@ import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
+import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as EligibilityRouteImport } from './routes/eligibility'
@@ -101,6 +102,11 @@ const LegacyRoute = LegacyRouteImport.update({
   path: '/legacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaunchRoute = LaunchRouteImport.update({
+  id: '/launch',
+  path: '/launch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntakeRoute = IntakeRouteImport.update({
   id: '/intake',
   path: '/intake',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/intake': typeof IntakeRoute
+  '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/intake': typeof IntakeRoute
+  '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
   '/intake': typeof IntakeRoute
+  '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/eligibility'
     | '/family'
     | '/intake'
+    | '/launch'
     | '/legacy'
     | '/more'
     | '/notifications'
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/eligibility'
     | '/family'
     | '/intake'
+    | '/launch'
     | '/legacy'
     | '/more'
     | '/notifications'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/eligibility'
     | '/family'
     | '/intake'
+    | '/launch'
     | '/legacy'
     | '/more'
     | '/notifications'
@@ -349,6 +361,7 @@ export interface RootRouteChildren {
   EligibilityRoute: typeof EligibilityRoute
   FamilyRoute: typeof FamilyRoute
   IntakeRoute: typeof IntakeRoute
+  LaunchRoute: typeof LaunchRoute
   LegacyRoute: typeof LegacyRoute
   MoreRoute: typeof MoreRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/legacy'
       fullPath: '/legacy'
       preLoaderRoute: typeof LegacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/launch': {
+      id: '/launch'
+      path: '/launch'
+      fullPath: '/launch'
+      preLoaderRoute: typeof LaunchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intake': {
@@ -574,6 +594,7 @@ const rootRouteChildren: RootRouteChildren = {
   EligibilityRoute: EligibilityRoute,
   FamilyRoute: FamilyRoute,
   IntakeRoute: IntakeRoute,
+  LaunchRoute: LaunchRoute,
   LegacyRoute: LegacyRoute,
   MoreRoute: MoreRoute,
   NotificationsRoute: NotificationsRoute,
