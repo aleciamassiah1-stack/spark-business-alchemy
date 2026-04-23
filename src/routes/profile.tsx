@@ -4,6 +4,7 @@ import { User as UserIcon, Crown, CreditCard, LogOut, Mail, Calendar, Loader2, E
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { MfaPanel } from "@/components/MfaPanel";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -188,6 +189,9 @@ function ProfilePage() {
             )}
           </LuxCard>
         </div>
+
+        {/* Two-factor auth */}
+        <MfaPanel />
 
         {/* Account actions */}
         <div>

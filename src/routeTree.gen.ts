@@ -23,6 +23,7 @@ import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
+import { Route as MfaPreviewRouteImport } from './routes/mfa-preview'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as IntakeRouteImport } from './routes/intake'
@@ -107,6 +108,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const MoreRoute = MoreRouteImport.update({
   id: '/more',
   path: '/more',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaPreviewRoute = MfaPreviewRouteImport.update({
+  id: '/mfa-preview',
+  path: '/mfa-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegacyRoute = LegacyRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -387,6 +399,7 @@ export interface RootRouteChildren {
   IntakeRoute: typeof IntakeRoute
   LaunchRoute: typeof LaunchRoute
   LegacyRoute: typeof LegacyRoute
+  MfaPreviewRoute: typeof MfaPreviewRoute
   MoreRoute: typeof MoreRoute
   NotificationsRoute: typeof NotificationsRoute
   PortfolioRoute: typeof PortfolioRoute
@@ -505,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/more'
       fullPath: '/more'
       preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa-preview': {
+      id: '/mfa-preview'
+      path: '/mfa-preview'
+      fullPath: '/mfa-preview'
+      preLoaderRoute: typeof MfaPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legacy': {
@@ -636,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRoute: IntakeRoute,
   LaunchRoute: LaunchRoute,
   LegacyRoute: LegacyRoute,
+  MfaPreviewRoute: MfaPreviewRoute,
   MoreRoute: MoreRoute,
   NotificationsRoute: NotificationsRoute,
   PortfolioRoute: PortfolioRoute,
