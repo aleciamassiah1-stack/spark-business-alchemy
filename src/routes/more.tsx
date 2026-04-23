@@ -97,7 +97,7 @@ function MorePage() {
         <NavGroup title="Connections">
           <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
           <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
-          <NavRow to="/more" icon={Building2} label="Banking" desc="Manage cash & transfers" />
+          <NavRow to="/connections" icon={Building2} label="Banking" desc="Manage cash & transfers" />
         </NavGroup>
 
         <NavGroup title="Account">
