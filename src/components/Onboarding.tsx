@@ -177,7 +177,6 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resendIn, setResendIn] = useState(30);
-  const [hintShown, setHintShown] = useState(false);
 
   // Countdown for resend
   useEffect(() => {
@@ -202,7 +201,7 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
         update({ phoneVerified: true });
         onNext();
       } else {
-        setError("Incorrect code. Try 123456 (simulated).");
+        setError("Incorrect code. Try 123456 (preview build).");
         setVerifying(false);
         setCode("");
       }
@@ -212,7 +211,6 @@ function ScreenVerify({ onNext }: { onNext: () => void }) {
   const handleResend = () => {
     if (resendIn > 0) return;
     setResendIn(30);
-    setHintShown(true);
   };
 
   return (
