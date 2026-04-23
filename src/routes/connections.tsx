@@ -565,6 +565,7 @@ function AccountsTab({
   accounts,
   holdings,
   linking,
+  plaidEnv,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -574,6 +575,7 @@ function AccountsTab({
   accounts: Account[];
   holdings: Holding[];
   linking: boolean;
+  plaidEnv: "sandbox" | "production" | null;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
