@@ -3,7 +3,12 @@
 import { getRequestHost } from "@tanstack/react-start/server";
 
 function getPlaidEnvironment(): "sandbox" | "production" {
-  const host = (getRequestHost() ?? "").toLowerCase();
+  let host = "";
+  try {
+    host = (getRequestHost() ?? "").toLowerCase();
+  } catch {
+    // No active request context — fall through to env var.
+  }
   const isPreviewHost =
     host.includes("lovableproject.com") ||
     host.includes("-dev.lovable.app") ||
