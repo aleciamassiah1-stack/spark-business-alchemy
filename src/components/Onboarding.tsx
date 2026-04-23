@@ -1116,7 +1116,7 @@ export function Welcome({
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-6 h-20 w-20 rounded-3xl object-cover shadow-[0_20px_60px_-12px_oklch(0.68_0.13_295/0.6)]"
+          className="relative mb-6 h-20 w-20 object-contain drop-shadow-[0_20px_60px_oklch(0.68_0.13_295/0.6)]"
         />
         <p className="label-mono mb-2 font-bold">Æther Wealth</p>
         <h1 className="font-serif text-[36px] leading-[1.05] text-foreground">
