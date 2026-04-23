@@ -5,6 +5,11 @@ import { getCurrentUserId, requireUserId } from "@/integrations/supabase/auth-he
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 
+function getPaymentsEnvironment(): "sandbox" | "live" {
+  const env = process.env.STRIPE_ENVIRONMENT;
+  return env === "live" ? "live" : "sandbox";
+}
+
 /**
  * Authenticated: returns whether the CURRENT (just-signed-in) user is scheduled
  * for soft-deletion. Used by the signin form immediately after a successful
@@ -55,7 +60,7 @@ export const checkAccess = createServerFn({ method: "GET" }).handler(async () =>
     return { authenticated: false, hasAccess: false, isAdmin: false } as const;
   }
 
-  const env = (process.env.STRIPE_ENVIRONMENT ?? "sandbox") as "sandbox" | "live";
+  const env = getPaymentsEnvironment();
 
   const [{ data: roleRow }, { data: hasSubRow }] = await Promise.all([
     supabaseAdmin
@@ -107,7 +112,7 @@ async function requireAdmin(): Promise<string> {
 
 export const adminGetMetrics = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
-  const env = (process.env.STRIPE_ENVIRONMENT ?? "sandbox") as "sandbox" | "live";
+  const env = getPaymentsEnvironment();
 
   const [{ data: subs }, { count: totalUsers }, { data: recent }] = await Promise.all([
     supabaseAdmin
@@ -188,7 +193,7 @@ type MemberRow = {
 
 export const adminListMembers = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
-  const env = (process.env.STRIPE_ENVIRONMENT ?? "sandbox") as "sandbox" | "live";
+  const env = getPaymentsEnvironment();
 
   // Page through all auth users (admin API caps at 1000/page)
   const allUsers: Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null }> = [];
