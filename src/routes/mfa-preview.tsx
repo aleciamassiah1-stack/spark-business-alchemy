@@ -7,7 +7,7 @@ import { LuxCard } from "@/components/LuxCard";
  * for Plaid production-access review (proof of MFA implementation).
  * Renders the same UI as MfaPanel mid-enrollment, with a static demo QR.
  */
-export const Route = createFileRoute("/admin/mfa-preview")({
+export const Route = createFileRoute("/mfa-preview")({
   head: () => ({
     meta: [{ title: "MFA Preview — Æther Wealth" }],
   }),

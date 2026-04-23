@@ -23,6 +23,7 @@ import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
+import { Route as MfaPreviewRouteImport } from './routes/mfa-preview'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as IntakeRouteImport } from './routes/intake'
@@ -35,7 +36,6 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
-import { Route as AdminMfaPreviewRouteImport } from './routes/admin.mfa-preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -110,6 +110,11 @@ const MoreRoute = MoreRouteImport.update({
   path: '/more',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MfaPreviewRoute = MfaPreviewRouteImport.update({
+  id: '/mfa-preview',
+  path: '/mfa-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LegacyRoute = LegacyRouteImport.update({
   id: '/legacy',
   path: '/legacy',
@@ -170,11 +175,6 @@ const AdminPropertyImageTestRoute = AdminPropertyImageTestRouteImport.update({
   path: '/property-image-test',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminMfaPreviewRoute = AdminMfaPreviewRouteImport.update({
-  id: '/mfa-preview',
-  path: '/mfa-preview',
-  getParentRoute: () => AdminRoute,
-} as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -203,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -217,7 +218,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -235,6 +235,7 @@ export interface FileRoutesByTo {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -249,7 +250,6 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -268,6 +268,7 @@ export interface FileRoutesById {
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
+  '/mfa-preview': typeof MfaPreviewRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
   '/portfolio': typeof PortfolioRoute
@@ -282,7 +283,6 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/timeline': typeof TimelineRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/admin/mfa-preview': typeof AdminMfaPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -302,6 +302,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -316,7 +317,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
-    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -334,6 +334,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -348,7 +349,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
-    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -366,6 +366,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/launch'
     | '/legacy'
+    | '/mfa-preview'
     | '/more'
     | '/notifications'
     | '/portfolio'
@@ -380,7 +381,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/timeline'
     | '/verify-email'
-    | '/admin/mfa-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/lovable/email/auth/preview'
@@ -399,6 +399,7 @@ export interface RootRouteChildren {
   IntakeRoute: typeof IntakeRoute
   LaunchRoute: typeof LaunchRoute
   LegacyRoute: typeof LegacyRoute
+  MfaPreviewRoute: typeof MfaPreviewRoute
   MoreRoute: typeof MoreRoute
   NotificationsRoute: typeof NotificationsRoute
   PortfolioRoute: typeof PortfolioRoute
@@ -519,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mfa-preview': {
+      id: '/mfa-preview'
+      path: '/mfa-preview'
+      fullPath: '/mfa-preview'
+      preLoaderRoute: typeof MfaPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legacy': {
       id: '/legacy'
       path: '/legacy'
@@ -603,13 +611,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertyImageTestRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/mfa-preview': {
-      id: '/admin/mfa-preview'
-      path: '/mfa-preview'
-      fullPath: '/admin/mfa-preview'
-      preLoaderRoute: typeof AdminMfaPreviewRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -635,12 +636,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
-  AdminMfaPreviewRoute: typeof AdminMfaPreviewRoute
   AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminMfaPreviewRoute: AdminMfaPreviewRoute,
   AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
 }
 
@@ -657,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRoute: IntakeRoute,
   LaunchRoute: LaunchRoute,
   LegacyRoute: LegacyRoute,
+  MfaPreviewRoute: MfaPreviewRoute,
   MoreRoute: MoreRoute,
   NotificationsRoute: NotificationsRoute,
   PortfolioRoute: PortfolioRoute,
@@ -679,3 +679,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
