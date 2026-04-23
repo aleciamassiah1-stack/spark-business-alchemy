@@ -3,8 +3,24 @@ const ALLOWED_ORIGINS = [
   "https://www.aetherwealth.co",
 ];
 
+const ALLOWED_ORIGIN_HOST_SUFFIXES = ["aetherwealth.co", ".lovable.app", ".lovableproject.com"];
+
+function isAllowedOrigin(origin: string | null): origin is string {
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return ALLOWED_ORIGIN_HOST_SUFFIXES.some(
+      (suf) => host === suf.replace(/^\./, "") || host.endsWith(suf),
+    );
+  } catch {
+    return false;
+  }
+}
+
 function buildCorsHeaders(origin: string | null) {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allow = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers":
