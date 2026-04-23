@@ -5,15 +5,36 @@ const PLAID_ENV: "sandbox" | "production" =
   process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
 const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
 
+function sanitize(v: string | undefined): string {
+  if (!v) return "";
+  // Strip ALL whitespace (spaces, tabs, newlines), zero-width chars, BOM,
+  // and surrounding straight/smart quotes. Secrets pasted from password
+  // managers or docs often carry these and Plaid rejects with
+  // "client_id must be a properly formatted, non-empty string".
+  return v
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\ufeff]/g, "")
+    .replace(/\s+/g, "")
+    .replace(/^['"\u2018\u2019\u201c\u201d]+|['"\u2018\u2019\u201c\u201d]+$/g, "");
+}
+
 function getCreds() {
-  // Trim — secrets pasted with stray whitespace/newlines silently break
-  // Plaid with "client_id must be a properly formatted, non-empty string".
-  const client_id = (process.env.PLAID_CLIENT_ID ?? "").trim();
-  const secret = (process.env.PLAID_SECRET ?? "").trim();
+  const client_id = sanitize(process.env.PLAID_CLIENT_ID);
+  const secret = sanitize(process.env.PLAID_SECRET);
+  // Always log a safe diagnostic so we can see what's actually present at runtime.
+  console.log(
+    `[plaid] env=${PLAID_ENV} client_id_len=${client_id.length} client_id_prefix=${client_id.slice(0, 4)} secret_len=${secret.length}`,
+  );
   if (!client_id || !secret) {
     throw new Error(
       `Plaid credentials missing or empty at runtime ` +
         `(PLAID_CLIENT_ID len=${client_id.length}, PLAID_SECRET len=${secret.length}, PLAID_ENV=${PLAID_ENV})`,
+    );
+  }
+  // Plaid client_ids are 24-char hex-like strings. Catch obvious mistakes early.
+  if (client_id.length !== 24) {
+    throw new Error(
+      `PLAID_CLIENT_ID has unexpected length ${client_id.length} (expected 24). ` +
+        `Re-paste it from the Plaid dashboard — make sure you copied the Client ID, not the secret.`,
     );
   }
   return { client_id, secret };
