@@ -15,6 +15,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProtectRouteImport } from './routes/protect'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -26,6 +27,7 @@ import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as IntakeRouteImport } from './routes/intake'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as EligibilityRouteImport } from './routes/eligibility'
 import { Route as ConnectionsRouteImport } from './routes/connections'
@@ -67,6 +69,11 @@ const SignupRoute = SignupRouteImport.update({
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectRoute = ProtectRouteImport.update({
@@ -122,6 +129,11 @@ const LaunchRoute = LaunchRouteImport.update({
 const IntakeRoute = IntakeRouteImport.update({
   id: '/intake',
   path: '/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FamilyRoute = FamilyRouteImport.update({
@@ -194,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
@@ -205,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -225,6 +239,7 @@ export interface FileRoutesByTo {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
@@ -236,6 +251,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -257,6 +273,7 @@ export interface FileRoutesById {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
   '/legacy': typeof LegacyRoute
@@ -268,6 +285,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -290,6 +308,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/forgot-password'
     | '/intake'
     | '/launch'
     | '/legacy'
@@ -301,6 +320,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/protect'
+    | '/reset-password'
     | '/signin'
     | '/signup'
     | '/support'
@@ -321,6 +341,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/forgot-password'
     | '/intake'
     | '/launch'
     | '/legacy'
@@ -332,6 +353,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/protect'
+    | '/reset-password'
     | '/signin'
     | '/signup'
     | '/support'
@@ -352,6 +374,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/forgot-password'
     | '/intake'
     | '/launch'
     | '/legacy'
@@ -363,6 +386,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/protect'
+    | '/reset-password'
     | '/signin'
     | '/signup'
     | '/support'
@@ -384,6 +408,7 @@ export interface RootRouteChildren {
   ConnectionsRoute: typeof ConnectionsRoute
   EligibilityRoute: typeof EligibilityRoute
   FamilyRoute: typeof FamilyRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   IntakeRoute: typeof IntakeRoute
   LaunchRoute: typeof LaunchRoute
   LegacyRoute: typeof LegacyRoute
@@ -395,6 +420,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProtectRoute: typeof ProtectRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
@@ -449,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/protect': {
@@ -526,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/intake'
       fullPath: '/intake'
       preLoaderRoute: typeof IntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/family': {
@@ -633,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectionsRoute: ConnectionsRoute,
   EligibilityRoute: EligibilityRoute,
   FamilyRoute: FamilyRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   IntakeRoute: IntakeRoute,
   LaunchRoute: LaunchRoute,
   LegacyRoute: LegacyRoute,
@@ -644,6 +685,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProtectRoute: ProtectRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
