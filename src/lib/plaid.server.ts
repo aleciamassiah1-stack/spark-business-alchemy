@@ -1,9 +1,23 @@
 // Server-only Plaid REST helper. Do NOT import from client code.
 // Uses fetch directly (no node SDK) to stay Worker-runtime compatible.
+import { getRequestHost } from "@tanstack/react-start/server";
 
-const PLAID_ENV: "sandbox" | "production" =
-  process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
-const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
+function getPlaidEnvironment(): "sandbox" | "production" {
+  const host = (getRequestHost() ?? "").toLowerCase();
+  const isPreviewHost =
+    host.includes("lovableproject.com") ||
+    host.includes("-dev.lovable.app") ||
+    host.startsWith("id-preview--");
+
+  if (isPreviewHost) return "sandbox";
+
+  const configured = sanitize(process.env.PLAID_ENV)?.toLowerCase();
+  return configured === "sandbox" ? "sandbox" : "production";
+}
+
+function getPlaidBase() {
+  return `https://${getPlaidEnvironment()}.plaid.com`;
+}
 
 function sanitize(v: string | undefined): string {
   if (!v) return "";

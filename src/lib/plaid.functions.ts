@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHost } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
@@ -11,11 +12,21 @@ import {
   syncTransactions,
 } from "./plaid.server";
 
+function resolvePlaidEnvironment(): "sandbox" | "production" {
+  const host = (getRequestHost() ?? "").toLowerCase();
+  const isPreviewHost =
+    host.includes("lovableproject.com") ||
+    host.includes("-dev.lovable.app") ||
+    host.startsWith("id-preview--");
+
+  if (isPreviewHost) return "sandbox";
+
+  return process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
+}
+
 // 0. Report which Plaid environment the server is using (so the UI can show it)
 export const plaidGetEnvironment = createServerFn({ method: "GET" }).handler(async () => {
-  const env: "sandbox" | "production" =
-    process.env.PLAID_ENV === "sandbox" ? "sandbox" : "production";
-  return { environment: env };
+  return { environment: resolvePlaidEnvironment() };
 });
 
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
