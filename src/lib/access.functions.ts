@@ -2,27 +2,51 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getCurrentUserId, requireUserId } from "@/integrations/supabase/auth-helper";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 
 /**
- * Public: returns whether the given email has a pending account deletion.
- * Used by the signin form to block login during the 30-day grace period.
- * Does not require auth — but only returns a boolean + purge date, no PII.
+ * Authenticated: returns whether the CURRENT (just-signed-in) user is scheduled
+ * for soft-deletion. Used by the signin form immediately after a successful
+ * password auth to sign the user out if their account is pending purge.
+ *
+ * Why not accept an email? An unauthenticated email lookup would let anyone
+ * probe whether an address is registered + scheduled for deletion (user
+ * enumeration). This endpoint instead reads the bearer token from the request
+ * and only reveals status for the token's own user.
+ *
+ * Note: getCurrentUserId() returns null for users in the deletion grace
+ * period, so we resolve the user via the verifier directly here (bypassing
+ * that gate) to determine whether deletion is scheduled.
  */
-export const checkPendingDeletionByEmail = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ email: z.string().email().max(320) }))
-  .handler(async ({ data }) => {
-    const email = data.email.trim().toLowerCase();
-    const { data: userList, error: userErr } = await supabaseAdmin
-      .from("pending_account_deletions")
-      .select("user_id, purge_after, email")
-      .ilike("email", email)
-      .maybeSingle();
-    if (userErr || !userList) return { pending: false } as const;
-    return {
-      pending: true,
-      purgeAfter: userList.purge_after,
-    } as const;
+export const checkMyPendingDeletion = createServerFn({ method: "GET" }).handler(async () => {
+  const req = getRequest();
+  const auth = req?.headers?.get("authorization");
+  if (!auth || !auth.startsWith("Bearer ")) {
+    return { pending: false } as const;
+  }
+  const token = auth.slice(7).trim();
+  if (!token) return { pending: false } as const;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return { pending: false } as const;
+
+  const verifier = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
+  const { data: userRes, error: userErr } = await verifier.auth.getUser(token);
+  if (userErr || !userRes?.user?.id) return { pending: false } as const;
+
+  const { data } = await supabaseAdmin
+    .from("pending_account_deletions")
+    .select("user_id, purge_after")
+    .eq("user_id", userRes.user.id)
+    .maybeSingle();
+
+  if (!data) return { pending: false } as const;
+  return { pending: true, purgeAfter: data.purge_after } as const;
+});
 
 /** Returns whether the current user has access (admin, paid sub, or comp). */
 export const checkAccess = createServerFn({ method: "GET" }).handler(async () => {
