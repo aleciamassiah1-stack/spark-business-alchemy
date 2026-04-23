@@ -3,21 +3,24 @@
 import { getRequestHost } from "@tanstack/react-start/server";
 
 function getPlaidEnvironment(): "sandbox" | "production" {
+  // Env var ALWAYS wins so users can force sandbox in any environment.
+  const configured = sanitize(process.env.PLAID_ENV)?.toLowerCase();
+  if (configured === "sandbox") return "sandbox";
+  if (configured === "production") return "production";
+
   let host = "";
   try {
     host = (getRequestHost() ?? "").toLowerCase();
   } catch {
-    // No active request context — fall through to env var.
+    // No active request context — fall through to default.
   }
   const isPreviewHost =
     host.includes("lovableproject.com") ||
-    host.includes("-dev.lovable.app") ||
+    host.includes("lovable.app") ||
     host.startsWith("id-preview--");
 
-  if (isPreviewHost) return "sandbox";
-
-  const configured = sanitize(process.env.PLAID_ENV)?.toLowerCase();
-  return configured === "sandbox" ? "sandbox" : "production";
+  console.log(`[plaid] host=${host} preview=${isPreviewHost}`);
+  return isPreviewHost ? "sandbox" : "production";
 }
 
 function getPlaidBase() {
