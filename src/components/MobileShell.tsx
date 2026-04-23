@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
+import { LegalFooter } from "./LegalFooter";
 import { motion } from "framer-motion";
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
 export function MobileShell({ children, title, subtitle }: Props) {
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
-      <div className="mx-auto min-h-screen w-full max-w-[430px] pb-28">
+      <div className="mx-auto min-h-screen w-full max-w-[430px]">
         {(title || subtitle) && (
           <header className="px-5 pb-2 pt-6">
             {subtitle && <p className="label-mono">{subtitle}</p>}
@@ -27,6 +28,7 @@ export function MobileShell({ children, title, subtitle }: Props) {
         >
           {children}
         </motion.main>
+        <LegalFooter withBottomNavSpacing />
       </div>
       <BottomNav />
     </div>
