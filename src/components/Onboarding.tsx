@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
+import aetherLogo from "@/assets/aether-logo.png";
 
 const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -1109,15 +1110,15 @@ export function Welcome({
         }}
       />
       <div className="relative flex w-full flex-col items-center text-center pt-6">
-        <motion.div
+        <motion.img
+          src={aetherLogo}
+          alt="Æther Wealth"
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-3xl gradient-violet shadow-[0_20px_60px_-12px_oklch(0.68_0.13_295/0.6)]"
-        >
-          <Sparkles className="h-9 w-9 text-foreground" strokeWidth={1.4} />
-        </motion.div>
-        <p className="label-mono mb-2">Æther Wealth</p>
+          className="relative mb-6 h-20 w-20 rounded-3xl shadow-[0_20px_60px_-12px_oklch(0.68_0.13_295/0.6)]"
+        />
+        <p className="label-mono mb-2 font-bold">Æther Wealth</p>
         <h1 className="font-serif text-[36px] leading-[1.05] text-foreground">
           Your entire financial life.
           <br />
