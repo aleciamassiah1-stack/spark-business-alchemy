@@ -35,6 +35,7 @@ import {
   plaidExchangeToken,
   plaidSyncAll,
   plaidDisconnectItem,
+  plaidGetEnvironment,
   getAggregatedData,
 } from "@/lib/plaid.functions";
 import {
