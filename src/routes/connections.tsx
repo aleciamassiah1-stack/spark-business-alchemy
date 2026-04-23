@@ -604,7 +604,11 @@ function AccountsTab({
         </button>
       </div>
       <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-        Plaid Sandbox · use credentials user_good / pass_good
+        {plaidEnv === "production"
+          ? "Plaid Production · sign in with your real bank, brokerage, or Robinhood credentials"
+          : plaidEnv === "sandbox"
+            ? "Plaid Sandbox · use credentials user_good / pass_good"
+            : "Detecting environment…"}
       </p>
 
       {items.length === 0 ? (
