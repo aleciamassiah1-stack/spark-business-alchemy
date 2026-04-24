@@ -137,8 +137,8 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     return () => abortRef.current?.abort();
   }, []);
 
-  async function send() {
-    const text = input.trim();
+  async function send(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
     if (!text || sending) return;
     const userMsg: Msg = { role: "user", content: text };
     const next = [...messages, userMsg];
