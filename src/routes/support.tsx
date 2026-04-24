@@ -325,6 +325,24 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                     </div>
                   </div>
                 )}
+                {messages.length === 1 && !sending && (
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {[
+                      "What can you help with?",
+                      "How does pricing work?",
+                      "How do I contact support?",
+                    ].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => send(q)}
+                        className="rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[12px] text-foreground/90 transition-colors hover:border-primary/45 hover:bg-primary/10"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
