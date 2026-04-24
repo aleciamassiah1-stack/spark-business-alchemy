@@ -7,7 +7,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
+import { listFamilyMembers, upsertFamilyMember, deleteFamilyMember } from "@/lib/family.functions";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -70,21 +70,19 @@ function FamilyPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("family_members")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (error) {
-      toast.error("Failed to load family members");
-    } else {
-      const rows = (data ?? []).map((r: any) => ({
+    try {
+      const { members: rows } = await listFamilyMembers();
+      const normalized = (rows ?? []).map((r: any) => ({
         ...r,
         accounts: Array.isArray(r.accounts) ? r.accounts : [],
       })) as FamilyMember[];
-      setMembers(rows);
-      if (rows.length && !open) setOpen(rows[0].id);
+      setMembers(normalized);
+      if (normalized.length && !open) setOpen(normalized[0].id);
+    } catch {
+      toast.error("Failed to load family members");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -94,12 +92,12 @@ function FamilyPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Remove this family member?")) return;
-    const { error } = await supabase.from("family_members").delete().eq("id", id);
-    if (error) {
-      toast.error("Could not delete");
-    } else {
+    try {
+      await deleteFamilyMember({ data: { id } });
       toast.success("Member removed");
       setMembers((prev) => prev.filter((m) => m.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete");
     }
   };
 
@@ -318,38 +316,28 @@ function MemberFormDialog({
       .filter((a) => a.name.length > 0);
 
     setSaving(true);
-    const payload = {
-      user_id: userId,
-      name: parsed.data.name,
-      relationship: parsed.data.relationship,
-      age: parsed.data.age,
-      initials: initialsOf(parsed.data.name),
-      net_worth: parsed.data.net_worth,
-      accounts: cleanAccounts,
-    };
-
-    let result;
-    if (editing) {
-      result = await supabase
-        .from("family_members")
-        .update(payload)
-        .eq("id", editing.id)
-        .select()
-        .single();
-    } else {
-      result = await supabase.from("family_members").insert(payload).select().single();
+    try {
+      const { member } = await upsertFamilyMember({
+        data: {
+          id: editing?.id,
+          name: parsed.data.name,
+          relationship: parsed.data.relationship,
+          age: parsed.data.age,
+          net_worth: parsed.data.net_worth,
+          initials: initialsOf(parsed.data.name),
+          accounts: cleanAccounts,
+        },
+      });
+      setSaving(false);
+      toast.success(editing ? "Member updated" : "Member added");
+      onSaved({
+        ...(member as any),
+        accounts: Array.isArray((member as any).accounts) ? (member as any).accounts : [],
+      });
+    } catch (e) {
+      setSaving(false);
+      toast.error(e instanceof Error ? e.message : "Save failed");
     }
-    setSaving(false);
-
-    if (result.error || !result.data) {
-      toast.error(result.error?.message ?? "Save failed");
-      return;
-    }
-    toast.success(editing ? "Member updated" : "Member added");
-    onSaved({
-      ...(result.data as any),
-      accounts: Array.isArray((result.data as any).accounts) ? (result.data as any).accounts : [],
-    });
   };
 
   return (
