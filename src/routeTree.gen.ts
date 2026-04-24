@@ -39,6 +39,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
+import { Route as AdminEmailPreviewRouteImport } from './routes/admin.email-preview'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -196,6 +197,11 @@ const AdminPropertyImageTestRoute = AdminPropertyImageTestRouteImport.update({
   path: '/property-image-test',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEmailPreviewRoute = AdminEmailPreviewRouteImport.update({
+  id: '/email-preview',
+  path: '/email-preview',
+  getParentRoute: () => AdminRoute,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
@@ -712,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertyImageTestRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/email-preview': {
+      id: '/admin/email-preview'
+      path: '/email-preview'
+      fullPath: '/admin/email-preview'
+      preLoaderRoute: typeof AdminEmailPreviewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -758,10 +777,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminEmailPreviewRoute: typeof AdminEmailPreviewRoute
   AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminEmailPreviewRoute: AdminEmailPreviewRoute,
   AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
 }
 
