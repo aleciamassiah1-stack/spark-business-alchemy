@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Phone, Mail, MessageCircle, Calendar, ExternalLink, Send, Sparkles, X } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, ExternalLink, Send, Sparkles, X, MailPlus } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { useAuth } from "@/lib/auth-context";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/support")({
@@ -117,6 +119,7 @@ function ContactRow({
 }
 
 function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -126,6 +129,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [emailingTeam, setEmailingTeam] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
