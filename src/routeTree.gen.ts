@@ -16,6 +16,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProtectRouteImport } from './routes/protect'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -80,6 +81,11 @@ const SignupRoute = SignupRouteImport.update({
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/protect': typeof ProtectRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/protect'
     | '/reset-password'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
     | '/support'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/protect'
     | '/reset-password'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
     | '/support'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/protect'
     | '/reset-password'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
     | '/support'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ProtectRoute: typeof ProtectRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
@@ -561,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -809,6 +829,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ProtectRoute: ProtectRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
