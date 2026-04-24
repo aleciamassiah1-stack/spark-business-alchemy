@@ -290,7 +290,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
               </button>
             </header>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
               <div className="flex flex-col gap-3">
                 {messages.map((m, i) => (
                   <div
