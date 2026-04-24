@@ -1,12 +1,35 @@
 // Concierge AI streaming chat — proxies to the Lovable AI Gateway.
-// Public endpoint (verify_jwt = false in config.toml) so unauthenticated
-// visitors on the support page can still get help.
+// Requires a Supabase auth token (anon or user JWT). The Lovable platform
+// validates the JWT before invoking this function (verify_jwt = true), which
+// gives us a basic rate-limit surface and prevents anonymous credit drain.
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://aetherwealth.co",
+  "https://www.aetherwealth.co",
+  "https://spark-business-alchemy.lovable.app",
+];
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allow =
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com")
+      ? origin
+      : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+const MAX_MESSAGES = 30;
+const MAX_MESSAGE_CHARS = 4_000;
+const MAX_TOTAL_CHARS = 20_000;
+const ALLOWED_ROLES = new Set(["user", "assistant"]);
 
 const SYSTEM_PROMPT = `You are the Æther Wealth Concierge — a warm, discreet, highly competent private-office assistant for members of Æther Wealth (https://aetherwealth.co).
 
@@ -51,24 +74,82 @@ Core areas in the app (lower-case = section name):
 - If you genuinely don't know, say so plainly and offer the team email.`;
 
 Deno.serve(async (req: Request) => {
+  const cors = corsHeadersFor(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { ...cors, "Content-Type": "application/json" } },
+    );
   }
 
   try {
-    const { messages } = await req.json();
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
+    const messages = (payload as { messages?: unknown })?.messages;
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "messages must be a non-empty array" }),
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(
+        JSON.stringify({ error: `Too many messages (max ${MAX_MESSAGES})` }),
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
+    let totalChars = 0;
+    const sanitized: Array<{ role: "user" | "assistant"; content: string }> = [];
+    for (const m of messages) {
+      const role = (m as { role?: unknown })?.role;
+      const content = (m as { content?: unknown })?.content;
+      if (typeof role !== "string" || !ALLOWED_ROLES.has(role)) {
+        return new Response(
+          JSON.stringify({ error: "Each message needs a valid role (user|assistant)" }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+      if (typeof content !== "string") {
+        return new Response(
+          JSON.stringify({ error: "Each message content must be a string" }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+      if (content.length > MAX_MESSAGE_CHARS) {
+        return new Response(
+          JSON.stringify({ error: `Message too long (max ${MAX_MESSAGE_CHARS} chars)` }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+      totalChars += content.length;
+      if (totalChars > MAX_TOTAL_CHARS) {
+        return new Response(
+          JSON.stringify({ error: `Conversation too long (max ${MAX_TOTAL_CHARS} chars)` }),
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } },
+        );
+      }
+      sanitized.push({ role: role as "user" | "assistant", content });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(
         JSON.stringify({ error: "AI is not configured." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (!Array.isArray(messages)) {
-      return new Response(
-        JSON.stringify({ error: "messages must be an array" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
 
@@ -80,7 +161,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitized],
         stream: true,
       }),
     });
@@ -88,13 +169,13 @@ Deno.serve(async (req: Request) => {
     if (response.status === 429) {
       return new Response(
         JSON.stringify({ error: "Concierge is busy right now. Please try again in a moment." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 429, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
     if (response.status === 402) {
       return new Response(
         JSON.stringify({ error: "Concierge service is temporarily unavailable." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 402, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
     if (!response.ok || !response.body) {
@@ -102,18 +183,18 @@ Deno.serve(async (req: Request) => {
       console.error("AI gateway error:", response.status, errText);
       return new Response(
         JSON.stringify({ error: "Concierge could not respond. Please email team@aetherwealth.co." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...cors, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
     console.error("concierge-chat error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ error: "Unexpected error" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
     );
   }
 });

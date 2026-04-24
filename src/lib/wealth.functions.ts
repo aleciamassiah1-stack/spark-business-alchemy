@@ -650,8 +650,24 @@ export const parseInsurancePdf = createServerFn({ method: "POST" })
       z
         .object({
           fileName: z.string().trim().min(1).max(255),
-          base64: z.string().min(10),
-          mimeType: z.string().trim().min(3).max(80),
+          base64: z
+            .string()
+            .min(10)
+            .max(14_000_000) // ~10 MB decoded payload ceiling
+            .regex(/^[A-Za-z0-9+/=\s]+$/, "Invalid base64 payload"),
+          mimeType: z
+            .string()
+            .trim()
+            .min(3)
+            .max(80)
+            .refine(
+              (v) =>
+                v === "application/pdf" ||
+                v === "image/jpeg" ||
+                v === "image/png" ||
+                v === "image/webp",
+              "Unsupported mime type",
+            ),
         })
         .parse(input),
   )
