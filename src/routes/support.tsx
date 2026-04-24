@@ -346,7 +346,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
               </div>
             </div>
 
-            <footer className="border-t border-white/[0.06] p-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+            <footer className="shrink-0 border-t border-white/[0.06] p-3 pb-[max(env(safe-area-inset-bottom),12px)]">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
