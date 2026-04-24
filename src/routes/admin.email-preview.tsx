@@ -159,6 +159,10 @@ function EmailPreviewPage() {
     }
   }, [entry, dataText]);
 
+  if (!access.ready || !access.isAdmin) {
+    return <div className="min-h-screen bg-background" aria-hidden />;
+  }
+
   return (
     <MobileShell title="Email preview" subtitle="Render any template locally">
       <div className="flex flex-col gap-4 px-5 pb-6">
