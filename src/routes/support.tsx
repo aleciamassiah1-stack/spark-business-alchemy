@@ -121,17 +121,27 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     {
       role: "assistant",
       content:
-        "Good day. I'm your Æther concierge — here to help with anything about the app, your account, or how to get the most from your private office. How can I assist?",
+        "Good day. I'm your Æther concierge. You can ask me anything — about Æther Wealth, your membership, planning workflows, or general questions — and I'll help or route you to our team when needed.",
     },
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [open]);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -355,8 +365,12 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                 className="flex items-end gap-2"
               >
                 <textarea
+                  ref={inputRef}
+                  autoFocus
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -365,7 +379,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                   }}
                   placeholder="Ask anything…"
                   rows={1}
-                  className="max-h-32 flex-1 resize-none rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none"
+                  className="pointer-events-auto max-h-32 flex-1 resize-none rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none"
                 />
                 <button
                   type="submit"
