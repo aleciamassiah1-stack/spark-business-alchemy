@@ -32,7 +32,7 @@ type FamilyMemberRow = {
 
 export const listFamilyMembers = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
-  if (!userId) return { members: [] as Array<Record<string, unknown>> };
+  if (!userId) return { members: [] as FamilyMemberRow[] };
   const { data, error } = await supabaseAdmin
     .from("family_members")
     .select("*")
@@ -40,9 +40,9 @@ export const listFamilyMembers = createServerFn({ method: "GET" }).handler(async
     .order("created_at", { ascending: true });
   if (error) {
     console.error("listFamilyMembers error", error);
-    return { members: [] as Array<Record<string, unknown>> };
+    return { members: [] as FamilyMemberRow[] };
   }
-  return { members: (data ?? []) as Array<Record<string, unknown>> };
+  return { members: (data ?? []) as unknown as FamilyMemberRow[] };
 });
 
 export const upsertFamilyMember = createServerFn({ method: "POST" })
