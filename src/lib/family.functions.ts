@@ -17,6 +17,19 @@ const memberInputSchema = z.object({
   accounts: z.array(accountSchema).max(50).default([]),
 });
 
+type FamilyMemberRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  relationship: string;
+  age: number | null;
+  initials: string | null;
+  net_worth: number;
+  iso_currency_code: string | null;
+  accounts: Array<{ name: string; balance: number }>;
+  created_at: string;
+};
+
 export const listFamilyMembers = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { members: [] as Array<Record<string, unknown>> };
