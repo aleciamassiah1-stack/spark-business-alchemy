@@ -137,8 +137,8 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     return () => abortRef.current?.abort();
   }, []);
 
-  async function send() {
-    const text = input.trim();
+  async function send(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
     if (!text || sending) return;
     const userMsg: Msg = { role: "user", content: text };
     const next = [...messages, userMsg];
@@ -323,6 +323,24 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground [animation-delay:300ms]" />
                       </span>
                     </div>
+                  </div>
+                )}
+                {messages.length === 1 && !sending && (
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {[
+                      "What can you help with?",
+                      "How does pricing work?",
+                      "How do I contact support?",
+                    ].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => send(q)}
+                        className="rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[12px] text-foreground/90 transition-colors hover:border-primary/45 hover:bg-primary/10"
+                      >
+                        {q}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
