@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import * as React from "react";
 import { render } from "@react-email/render";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { useAuth } from "@/lib/auth-context";
+import { useAccess } from "@/lib/access-context";
 import { TEMPLATES } from "@/lib/email-templates/registry";
 import { SignupEmail } from "@/lib/email-templates/signup";
 import { RecoveryEmail } from "@/lib/email-templates/recovery";
@@ -102,6 +104,17 @@ const ALL_TEMPLATES: Record<string, Entry> = {
 };
 
 function EmailPreviewPage() {
+  const auth = useAuth();
+  const access = useAccess();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (auth.ready && !auth.user) navigate({ to: "/signin" });
+  }, [auth.ready, auth.user, navigate]);
+  useEffect(() => {
+    if (access.ready && !access.isAdmin && auth.user) navigate({ to: "/" });
+  }, [access.ready, access.isAdmin, auth.user, navigate]);
+
   const names = Object.keys(ALL_TEMPLATES);
   const [selected, setSelected] = useState<string>(names[0]);
   const [dataText, setDataText] = useState<string>(() =>
