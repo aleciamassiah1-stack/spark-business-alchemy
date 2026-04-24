@@ -263,7 +263,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
           onClick={onClose}
         >
           <motion.div
-            className="relative flex h-[85vh] w-full max-w-[430px] flex-col rounded-t-3xl border-t border-white/10 bg-background"
+            className="relative flex h-[85dvh] max-h-[85dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-background"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -290,7 +290,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
               </button>
             </header>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
               <div className="flex flex-col gap-3">
                 {messages.map((m, i) => (
                   <div
@@ -346,7 +346,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
               </div>
             </div>
 
-            <footer className="border-t border-white/[0.06] p-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+            <footer className="shrink-0 border-t border-white/[0.06] p-3 pb-[max(env(safe-area-inset-bottom),12px)]">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
