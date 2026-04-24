@@ -266,6 +266,55 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     }
   }
 
+  async function sendToTeam() {
+    if (emailingTeam) return;
+    const userMessages = messages.filter((m) => m.role === "user");
+    if (userMessages.length === 0) {
+      toast.error("Type at least one message before sending the chat to the team.");
+      return;
+    }
+    if (!user?.email) {
+      toast.error("Please sign in so the team can reply to you.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Send this conversation to ${TEAM_EMAIL}? The team will reply to ${user.email}.`,
+    );
+    if (!ok) return;
+
+    setEmailingTeam(true);
+    try {
+      const transcript = messages
+        .map((m) => `${m.role === "user" ? "Member" : "Concierge"}: ${m.content}`)
+        .join("\n\n");
+      const lastUserMessage = userMessages[userMessages.length - 1].content;
+
+      await sendTransactionalEmail({
+        templateName: "concierge-message",
+        idempotencyKey: `concierge-${user.id}-${Date.now()}`,
+        templateData: {
+          fromEmail: user.email,
+          fromName: (user.user_metadata as Record<string, unknown> | undefined)?.full_name as string | undefined ?? user.email,
+          message: lastUserMessage,
+          conversation: transcript,
+          pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        },
+      });
+      toast.success("Sent to the team. They'll reply to you by email shortly.");
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `I've forwarded this conversation to **${TEAM_EMAIL}**. A team member will reply to **${user.email}** as soon as possible.`,
+        },
+      ]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send to the team.");
+    } finally {
+      setEmailingTeam(false);
+    }
+  }
   return (
     <AnimatePresence>
       {open && (
