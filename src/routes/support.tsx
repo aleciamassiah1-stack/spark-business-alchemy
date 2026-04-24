@@ -272,12 +272,8 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          <motion.div
+          <div
             className="relative flex h-[85dvh] max-h-[85dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-background"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
           >
             <header className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
@@ -397,7 +393,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                 </a>
               </p>
             </footer>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
