@@ -263,7 +263,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
           onClick={onClose}
         >
           <motion.div
-            className="relative flex h-[85vh] w-full max-w-[430px] flex-col rounded-t-3xl border-t border-white/10 bg-background"
+            className="relative flex h-[85dvh] max-h-[85dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-background"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
