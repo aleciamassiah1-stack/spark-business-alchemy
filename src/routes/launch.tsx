@@ -37,6 +37,19 @@ export const Route = createFileRoute("/launch")({
       },
     ],
   }),
+  errorComponent: ({ error, reset }) => (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
+      <p className="font-serif text-lg text-foreground">Couldn't load launch readiness.</p>
+      <p className="text-xs text-muted-foreground">{error.message}</p>
+      <button
+        type="button"
+        onClick={() => reset()}
+        className="mt-2 rounded-full border border-white/10 px-4 py-1.5 text-xs text-foreground hover:bg-white/[0.04]"
+      >
+        Try again
+      </button>
+    </div>
+  ),
   component: () => (
     <RequireOnboarding>
       <LaunchPage />
