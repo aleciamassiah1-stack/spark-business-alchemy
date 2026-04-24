@@ -339,14 +339,27 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                   <p className="text-[11px] text-muted-foreground">AI · always on</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                aria-label="Close concierge chat"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={sendToTeam}
+                  disabled={emailingTeam}
+                  className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[11px] text-foreground transition-colors hover:bg-primary/15 disabled:opacity-50"
+                  aria-label="Send conversation to the team"
+                  title={`Email this chat to ${TEAM_EMAIL}`}
+                >
+                  <MailPlus className="h-3.5 w-3.5 text-primary" />
+                  {emailingTeam ? "Sending…" : "Send to team"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                  aria-label="Close concierge chat"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </header>
 
             <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
