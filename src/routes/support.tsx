@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Phone, Mail, MessageCircle, Calendar, ExternalLink, Send, Sparkles, X } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, ExternalLink, Send, Sparkles, X, MailPlus } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { useAuth } from "@/lib/auth-context";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/support")({
@@ -117,6 +119,7 @@ function ContactRow({
 }
 
 function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -126,6 +129,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [emailingTeam, setEmailingTeam] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -262,6 +266,55 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     }
   }
 
+  async function sendToTeam() {
+    if (emailingTeam) return;
+    const userMessages = messages.filter((m) => m.role === "user");
+    if (userMessages.length === 0) {
+      toast.error("Type at least one message before sending the chat to the team.");
+      return;
+    }
+    if (!user?.email) {
+      toast.error("Please sign in so the team can reply to you.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Send this conversation to ${TEAM_EMAIL}? The team will reply to ${user.email}.`,
+    );
+    if (!ok) return;
+
+    setEmailingTeam(true);
+    try {
+      const transcript = messages
+        .map((m) => `${m.role === "user" ? "Member" : "Concierge"}: ${m.content}`)
+        .join("\n\n");
+      const lastUserMessage = userMessages[userMessages.length - 1].content;
+
+      await sendTransactionalEmail({
+        templateName: "concierge-message",
+        idempotencyKey: `concierge-${user.id}-${Date.now()}`,
+        templateData: {
+          fromEmail: user.email,
+          fromName: (user.user_metadata as Record<string, unknown> | undefined)?.full_name as string | undefined ?? user.email,
+          message: lastUserMessage,
+          conversation: transcript,
+          pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        },
+      });
+      toast.success("Sent to the team. They'll reply to you by email shortly.");
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `I've forwarded this conversation to **${TEAM_EMAIL}**. A team member will reply to **${user.email}** as soon as possible.`,
+        },
+      ]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send to the team.");
+    } finally {
+      setEmailingTeam(false);
+    }
+  }
   return (
     <AnimatePresence>
       {open && (
@@ -286,14 +339,27 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                   <p className="text-[11px] text-muted-foreground">AI · always on</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                aria-label="Close concierge chat"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={sendToTeam}
+                  disabled={emailingTeam}
+                  className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[11px] text-foreground transition-colors hover:bg-primary/15 disabled:opacity-50"
+                  aria-label="Send conversation to the team"
+                  title={`Email this chat to ${TEAM_EMAIL}`}
+                >
+                  <MailPlus className="h-3.5 w-3.5 text-primary" />
+                  {emailingTeam ? "Sending…" : "Send to team"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                  aria-label="Close concierge chat"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </header>
 
             <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
