@@ -926,6 +926,27 @@ function AccountsTab({
             ? "Plaid Sandbox · use credentials user_good / pass_good"
             : "Detecting environment…"}
       </p>
+      <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
+        By continuing, you authorize Æther Wealth to use{" "}
+        <a
+          href="https://plaid.com/legal/#end-user-privacy-policy"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
+        >
+          Plaid
+        </a>{" "}
+        to retrieve account balances, transactions, and holdings from institutions you select.
+        You can disconnect any institution at any time. See our{" "}
+        <RouterLink to="/privacy" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
+          Privacy Policy
+        </RouterLink>
+        {" "}and{" "}
+        <RouterLink to="/terms" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
+          Terms
+        </RouterLink>
+        .
+      </p>
 
       <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
       <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
