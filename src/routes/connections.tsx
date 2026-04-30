@@ -938,13 +938,13 @@ function AccountsTab({
         </a>{" "}
         to retrieve account balances, transactions, and holdings from institutions you select.
         You can disconnect any institution at any time. See our{" "}
-        <RouterLink to="/privacy" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
+        <Link to="/privacy" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
           Privacy Policy
-        </RouterLink>
+        </Link>
         {" "}and{" "}
-        <RouterLink to="/terms" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
+        <Link to="/terms" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
           Terms
-        </RouterLink>
+        </Link>
         .
       </p>
 
