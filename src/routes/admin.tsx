@@ -543,6 +543,20 @@ function MemberRow({
               <Trash2 className="h-3 w-3" /> Delete
             </button>
           )}
+          <button
+            onClick={purgeNow}
+            disabled={busy || m.is_admin || isSelf}
+            title={
+              isSelf
+                ? "You cannot purge your own admin account"
+                : m.is_admin
+                  ? "Demote admin before purging"
+                  : "Permanently purge all data NOW (no grace period)"
+            }
+            className="inline-flex items-center gap-1 rounded-full bg-destructive/20 px-2.5 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/30 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <Flame className="h-3 w-3" /> Purge
+          </button>
           {isSelf && (
             <span className="ml-1 inline-flex items-center rounded-full bg-white/[0.04] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
               You
