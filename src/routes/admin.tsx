@@ -25,6 +25,7 @@ import {
   adminSetRole,
   adminScheduleAccountDeletion,
   adminCancelAccountDeletion,
+  adminPurgeAccountNow,
 } from "@/lib/access.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
