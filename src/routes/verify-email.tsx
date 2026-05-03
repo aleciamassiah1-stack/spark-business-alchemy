@@ -28,6 +28,33 @@ function VerifyEmailRoute() {
     }
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
+  // Poll for confirmation so this tab unlocks the moment the user clicks the
+  // link in their email (in another tab, on their phone, etc.) — no need to
+  // come back here manually.
+  useEffect(() => {
+    if (!auth.ready || !auth.user || auth.emailConfirmed) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const { data } = await supabase.auth.refreshSession();
+        if (cancelled) return;
+        if (data.user?.email_confirmed_at) {
+          navigate({ to: "/" });
+        }
+      } catch {
+        // ignore transient errors
+      }
+    };
+    const id = window.setInterval(tick, 3000);
+    const onFocus = () => void tick();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
+
   const email = auth.user?.email ?? "";
 
   const resend = async () => {
