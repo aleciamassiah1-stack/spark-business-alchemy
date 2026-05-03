@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Trash2,
   Undo2,
+  Flame,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
