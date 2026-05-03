@@ -401,7 +401,33 @@ function MemberRow({
     }
   };
 
-  const isPendingDeletion = !!m.pending_deletion_at;
+  const purgeNow = async () => {
+    if (isSelf) {
+      toast.error("You cannot purge your own admin account");
+      return;
+    }
+    const label = m.email ?? "this account";
+    const ok = window.confirm(
+      `PERMANENTLY purge ${label}?\n\nThis immediately deletes ALL data and the auth user. This CANNOT be undone and skips the 30-day grace period.`,
+    );
+    if (!ok) return;
+    const confirm2 = window.prompt(`Type the email to confirm:\n${label}`);
+    if (!confirm2 || confirm2.trim().toLowerCase() !== (m.email ?? "").toLowerCase()) {
+      toast.error("Email did not match — purge cancelled");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminPurgeAccountNow({ data: { userId: m.user_id } });
+      toast.success(`Purged ${label}`);
+      onChanged();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const daysRemaining = m.pending_purge_after
     ? Math.max(
         0,
