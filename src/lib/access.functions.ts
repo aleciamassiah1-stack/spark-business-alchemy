@@ -384,3 +384,41 @@ export const adminCancelAccountDeletion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Hard-delete an account immediately: purges ALL user data and the auth user.
+ * No grace period. Cannot be undone. Works whether or not the account was
+ * previously soft-deleted. Used for cleanup of test/demo accounts.
+ */
+export const adminPurgeAccountNow = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ userId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const adminId = await requireAdmin();
+    if (data.userId === adminId) {
+      throw new Error("You cannot purge your own admin account");
+    }
+
+    const uid = data.userId;
+    // Delete app data first (mirrors purge_expired_account_deletions + admin_purge_user_by_email)
+    await supabaseAdmin.from("aggregated_transactions").delete().eq("user_id", uid);
+    await supabaseAdmin.from("aggregated_holdings").delete().eq("user_id", uid);
+    await supabaseAdmin.from("aggregated_accounts").delete().eq("user_id", uid);
+    await supabaseAdmin.from("plaid_items").delete().eq("user_id", uid);
+    await supabaseAdmin.from("sync_log").delete().eq("user_id", uid);
+    await supabaseAdmin.from("transaction_rules").delete().eq("user_id", uid);
+    await supabaseAdmin.from("estate_documents").delete().eq("user_id", uid);
+    await supabaseAdmin.from("insurance_policies").delete().eq("user_id", uid);
+    await supabaseAdmin.from("property_valuations").delete().eq("user_id", uid);
+    await supabaseAdmin.from("properties").delete().eq("user_id", uid);
+    await supabaseAdmin.from("family_members").delete().eq("user_id", uid);
+    await supabaseAdmin.from("user_intake").delete().eq("user_id", uid);
+    await supabaseAdmin.from("subscriptions").delete().eq("user_id", uid);
+    await supabaseAdmin.from("manual_access").delete().eq("user_id", uid);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+    await supabaseAdmin.from("pending_account_deletions").delete().eq("user_id", uid);
+
+    const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(uid);
+    if (authErr) throw new Error(authErr.message);
+
+    return { ok: true };
+  });
+

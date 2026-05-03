@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Trash2,
   Undo2,
+  Flame,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
@@ -25,6 +26,7 @@ import {
   adminSetRole,
   adminScheduleAccountDeletion,
   adminCancelAccountDeletion,
+  adminPurgeAccountNow,
 } from "@/lib/access.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
@@ -399,6 +401,33 @@ function MemberRow({
     }
   };
 
+  const purgeNow = async () => {
+    if (isSelf) {
+      toast.error("You cannot purge your own admin account");
+      return;
+    }
+    const label = m.email ?? "this account";
+    const ok = window.confirm(
+      `PERMANENTLY purge ${label}?\n\nThis immediately deletes ALL data and the auth user. This CANNOT be undone and skips the 30-day grace period.`,
+    );
+    if (!ok) return;
+    const confirm2 = window.prompt(`Type the email to confirm:\n${label}`);
+    if (!confirm2 || confirm2.trim().toLowerCase() !== (m.email ?? "").toLowerCase()) {
+      toast.error("Email did not match — purge cancelled");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminPurgeAccountNow({ data: { userId: m.user_id } });
+      toast.success(`Purged ${label}`);
+      onChanged();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const isPendingDeletion = !!m.pending_deletion_at;
   const daysRemaining = m.pending_purge_after
     ? Math.max(
@@ -514,6 +543,20 @@ function MemberRow({
               <Trash2 className="h-3 w-3" /> Delete
             </button>
           )}
+          <button
+            onClick={purgeNow}
+            disabled={busy || m.is_admin || isSelf}
+            title={
+              isSelf
+                ? "You cannot purge your own admin account"
+                : m.is_admin
+                  ? "Demote admin before purging"
+                  : "Permanently purge all data NOW (no grace period)"
+            }
+            className="inline-flex items-center gap-1 rounded-full bg-destructive/20 px-2.5 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/30 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <Flame className="h-3 w-3" /> Purge
+          </button>
           {isSelf && (
             <span className="ml-1 inline-flex items-center rounded-full bg-white/[0.04] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
               You
