@@ -428,6 +428,7 @@ function MemberRow({
     }
   };
 
+  const isPendingDeletion = !!m.pending_deletion_at;
   const daysRemaining = m.pending_purge_after
     ? Math.max(
         0,
