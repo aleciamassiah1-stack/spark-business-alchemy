@@ -18,6 +18,7 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import { toast } from "sonner";
@@ -70,6 +71,8 @@ function MorePage() {
           </div>
           <ArrowRight className="relative h-4 w-4 text-primary" />
         </Link>
+
+        <InstallPwaButton className="w-full justify-center rounded-2xl" />
 
         {access.isAdmin && (
           <NavGroup title="Admin">
