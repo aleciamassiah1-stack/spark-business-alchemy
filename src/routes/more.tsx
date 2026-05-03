@@ -72,7 +72,7 @@ function MorePage() {
           <ArrowRight className="relative h-4 w-4 text-primary" />
         </Link>
 
-        <InstallPwaButton className="w-full justify-center rounded-2xl" />
+        
 
         {access.isAdmin && (
           <NavGroup title="Admin">
