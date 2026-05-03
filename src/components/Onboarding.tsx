@@ -769,6 +769,26 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         if (err) throw err;
         update({ fullName });
         markStep("account");
+
+        // Supabase returns a "fake" user object (identities: []) when the email
+        // is already registered, to prevent account enumeration. In that case
+        // no confirmation email is sent — we must explicitly resend it.
+        const isRepeatSignup =
+          !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+        if (isRepeatSignup) {
+          const { error: resendErr } = await supabase.auth.resend({
+            type: "signup",
+            email,
+            options: { emailRedirectTo: `${window.location.origin}/signin` },
+          });
+          setError(
+            resendErr
+              ? "This email already has an account. Try signing in, or reset your password."
+              : "This email already has an unconfirmed account. We just sent a fresh confirmation link — check your inbox.",
+          );
+          return;
+        }
+
         // If email confirmation is required, no session is created. Surface that.
         if (!data.session) {
           setError("Check your email to confirm your account, then sign in.");
