@@ -18,6 +18,7 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import { toast } from "sonner";
