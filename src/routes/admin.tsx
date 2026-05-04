@@ -27,17 +27,32 @@ import {
   adminScheduleAccountDeletion,
   adminCancelAccountDeletion,
   adminPurgeAccountNow,
+  checkAccess,
 } from "@/lib/access.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
+import { redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Admin — Æther Wealth" },
       { name: "description", content: "Operations console for revenue, members, and access." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  // Server-side guard: prevent the admin page shell from being served to
+  // anyone who isn't an authenticated admin. Defense in depth — server
+  // functions also independently enforce requireAdmin().
+  beforeLoad: async () => {
+    const result = await checkAccess();
+    if (!result.authenticated) {
+      throw redirect({ to: "/signin" });
+    }
+    if (!result.isAdmin) {
+      throw redirect({ to: "/" });
+    }
+  },
   component: AdminPage,
 });
 
