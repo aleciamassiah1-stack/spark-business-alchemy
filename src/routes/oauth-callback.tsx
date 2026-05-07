@@ -70,11 +70,10 @@ function OAuthCallbackPage() {
         }
 
         await loadPlaidScript();
-        // @ts-expect-error global injected by Plaid
-        if (!window.Plaid) throw new Error("Plaid Link unavailable");
+        const Plaid = getPlaid();
+        if (!Plaid) throw new Error("Plaid Link unavailable");
 
-        // @ts-expect-error global injected by Plaid
-        const handler = window.Plaid.create({
+        const handler = Plaid.create({
           token: linkToken,
           receivedRedirectUri: window.location.href,
           onSuccess: async (
