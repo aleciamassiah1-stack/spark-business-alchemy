@@ -206,6 +206,14 @@ function ConnectionsPage() {
       if (!tokenRes.link_token) throw new Error(tokenRes.error ?? "No link token");
       if (!window.Plaid) throw new Error("Plaid Link unavailable");
 
+      // Persist link_token so the OAuth callback route can reinitialize
+      // Plaid Link in OAuth mode after the bank redirects back.
+      try {
+        sessionStorage.setItem("aether.plaid.oauth.link_token", tokenRes.link_token);
+      } catch {
+        // ignore (private mode etc.)
+      }
+
       const handler = window.Plaid.create({
         token: tokenRes.link_token,
         onSuccess: async (public_token, metadata) => {
