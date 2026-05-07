@@ -85,12 +85,19 @@ export type PlaidLinkTokenResp = { link_token: string; expiration: string };
 export type PlaidExchangeResp = { access_token: string; item_id: string };
 
 export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResp> {
+  // OAuth redirect URI must be registered in the Plaid Dashboard
+  // (Team Settings → API → Allowed redirect URIs) for both sandbox and
+  // production. Required for OAuth institutions like Chase, BofA, Wells
+  // Fargo, PNC, US Bank.
+  const redirect_uri =
+    sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
     products: ["auth", "transactions", "investments"],
     country_codes: ["US"],
     language: "en",
+    redirect_uri,
   });
 }
 
