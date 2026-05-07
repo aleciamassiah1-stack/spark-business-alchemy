@@ -122,7 +122,31 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 font-serif text-xl text-foreground">11. Contact</h2>
+            <h2 className="mb-3 font-serif text-xl text-foreground">11. Data Services — Plaid</h2>
+            <p>
+              Æther Wealth uses Plaid Technologies, Inc. ("Plaid") to connect your financial
+              accounts. By connecting your accounts through Plaid Link, you acknowledge and agree
+              that your data will be handled in accordance with Plaid's Privacy Policy, available
+              at{" "}
+              <a
+                href="https://plaid.com/legal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                plaid.com/legal
+              </a>
+              . Plaid collects, uses, and shares your personal and financial information as
+              described in their privacy policy to provide account connection services. You grant
+              Æther Wealth and Plaid the right to access, transmit and use your financial data
+              solely to provide the services described in this Privacy Policy. You may disconnect
+              your accounts and revoke Plaid's access to your data at any time through the Security
+              Center within the Æther Wealth application.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-3 font-serif text-xl text-foreground">12. Contact</h2>
             <p>
               Privacy requests: <a href="mailto:privacy@aetherwealth.co" className="text-primary hover:underline">privacy@aetherwealth.co</a>
             </p>
