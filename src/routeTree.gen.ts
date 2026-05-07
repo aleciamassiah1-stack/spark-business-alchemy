@@ -24,6 +24,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as OauthCallbackRouteImport } from './routes/oauth-callback'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LegacyRouteImport } from './routes/legacy'
@@ -121,6 +122,11 @@ const PreferencesRoute = PreferencesRouteImport.update({
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthCallbackRoute = OauthCallbackRouteImport.update({
+  id: '/oauth-callback',
+  path: '/oauth-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
+  '/oauth-callback': typeof OauthCallbackRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
+  '/oauth-callback': typeof OauthCallbackRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/legacy': typeof LegacyRoute
   '/more': typeof MoreRoute
   '/notifications': typeof NotificationsRoute
+  '/oauth-callback': typeof OauthCallbackRoute
   '/portfolio': typeof PortfolioRoute
   '/preferences': typeof PreferencesRoute
   '/pricing': typeof PricingRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/legacy'
     | '/more'
     | '/notifications'
+    | '/oauth-callback'
     | '/portfolio'
     | '/preferences'
     | '/pricing'
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/legacy'
     | '/more'
     | '/notifications'
+    | '/oauth-callback'
     | '/portfolio'
     | '/preferences'
     | '/pricing'
@@ -459,6 +470,7 @@ export interface FileRouteTypes {
     | '/legacy'
     | '/more'
     | '/notifications'
+    | '/oauth-callback'
     | '/portfolio'
     | '/preferences'
     | '/pricing'
@@ -500,6 +512,7 @@ export interface RootRouteChildren {
   LegacyRoute: typeof LegacyRoute
   MoreRoute: typeof MoreRoute
   NotificationsRoute: typeof NotificationsRoute
+  OauthCallbackRoute: typeof OauthCallbackRoute
   PortfolioRoute: typeof PortfolioRoute
   PreferencesRoute: typeof PreferencesRoute
   PricingRoute: typeof PricingRoute
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth-callback': {
+      id: '/oauth-callback'
+      path: '/oauth-callback'
+      fullPath: '/oauth-callback'
+      preLoaderRoute: typeof OauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -822,6 +842,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegacyRoute: LegacyRoute,
   MoreRoute: MoreRoute,
   NotificationsRoute: NotificationsRoute,
+  OauthCallbackRoute: OauthCallbackRoute,
   PortfolioRoute: PortfolioRoute,
   PreferencesRoute: PreferencesRoute,
   PricingRoute: PricingRoute,

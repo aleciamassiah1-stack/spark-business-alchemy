@@ -15,11 +15,26 @@ export const Route = createFileRoute("/oauth-callback")({
 const PLAID_LINK_SRC = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
 const LINK_TOKEN_KEY = "aether.plaid.oauth.link_token";
 
+type PlaidGlobal = {
+  create: (config: {
+    token: string;
+    receivedRedirectUri?: string;
+    onSuccess: (
+      public_token: string,
+      metadata: { institution?: { institution_id: string; name: string } | null },
+    ) => void;
+    onExit: (err: unknown, metadata?: unknown) => void;
+  }) => { open: () => void };
+};
+
+function getPlaid(): PlaidGlobal | undefined {
+  return (window as unknown as { Plaid?: PlaidGlobal }).Plaid;
+}
+
 function loadPlaidScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return resolve();
-    // @ts-expect-error global injected by Plaid
-    if (window.Plaid) return resolve();
+    if (getPlaid()) return resolve();
     const existing = document.querySelector(`script[src="${PLAID_LINK_SRC}"]`);
     if (existing) {
       existing.addEventListener("load", () => resolve());
