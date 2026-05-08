@@ -55,6 +55,7 @@ type PlaidGlobal = {
       metadata: { institution?: { institution_id: string; name: string } | null },
     ) => void;
     onExit: (err: unknown, metadata?: unknown) => void;
+    onEvent?: (eventName: string, metadata: PlaidLinkEventMetadata) => void;
   }) => { open: () => void };
 };
 
