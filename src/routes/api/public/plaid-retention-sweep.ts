@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { runPlaidRetentionSweep } from "@/lib/plaid.functions";
+import { runPlaidRetentionSweep } from "@/lib/plaid-retention.server";
 
 // Cron endpoint that enforces our Plaid data-retention policy:
 //   - calls /item/remove on stale or abandoned Plaid Items
