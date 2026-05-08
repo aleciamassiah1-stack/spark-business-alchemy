@@ -92,6 +92,18 @@ export const Route = createFileRoute("/connections")({
   ),
 });
 
+type PlaidLinkEventMetadata = {
+  view_name?: string | null;
+  institution_id?: string | null;
+  institution_name?: string | null;
+  request_id?: string | null;
+  link_session_id?: string | null;
+  error_code?: string | null;
+  error_type?: string | null;
+  error_message?: string | null;
+  exit_status?: string | null;
+};
+
 declare global {
   interface Window {
     Plaid?: {
@@ -102,9 +114,37 @@ declare global {
           metadata: { institution?: { institution_id: string; name: string } | null },
         ) => void;
         onExit: (err: unknown, metadata: unknown) => void;
+        onEvent?: (eventName: string, metadata: PlaidLinkEventMetadata) => void;
       }) => { open: () => void };
     };
   }
+}
+
+// Fire-and-forget Plaid Link event logger. Used to monitor Link conversion
+// (OPEN → SELECT_INSTITUTION → SUBMIT_CREDENTIALS → HANDOFF) and surface
+// drop-off / errors without depending on Plaid's own analytics.
+function reportPlaidLinkEvent(
+  eventName: string,
+  metadata: PlaidLinkEventMetadata,
+  opts: { isUpdateMode?: boolean } = {},
+): void {
+  void plaidLogLinkEvent({
+    data: {
+      eventName,
+      viewName: metadata.view_name ?? null,
+      institutionId: metadata.institution_id ?? null,
+      institutionName: metadata.institution_name ?? null,
+      requestId: metadata.request_id ?? null,
+      linkSessionId: metadata.link_session_id ?? null,
+      errorCode: metadata.error_code ?? null,
+      errorType: metadata.error_type ?? null,
+      errorMessage: metadata.error_message ?? null,
+      exitStatus: metadata.exit_status ?? null,
+      isUpdateMode: opts.isUpdateMode ?? false,
+    },
+  }).catch(() => {
+    // Logging is best-effort; never block the user.
+  });
 }
 
 const PLAID_LINK_SRC = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
