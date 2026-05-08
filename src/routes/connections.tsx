@@ -439,7 +439,7 @@ function ConnectionsPage() {
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
-            onConnect={handleConnect}
+            onConnect={requestConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
             onDisconnect={handleDisconnect}
