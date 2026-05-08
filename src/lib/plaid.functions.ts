@@ -54,8 +54,13 @@ export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(a
 // Triggered after detecting ITEM_LOGIN_REQUIRED, PENDING_EXPIRATION, or
 // PENDING_DISCONNECT for the item.
 export const plaidCreateUpdateLinkToken = createServerFn({ method: "POST" })
-  .inputValidator((input: { itemId: string }) =>
-    z.object({ itemId: z.string().uuid() }).parse(input),
+  .inputValidator((input: { itemId: string; accountSelection?: boolean }) =>
+    z
+      .object({
+        itemId: z.string().uuid(),
+        accountSelection: z.boolean().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     try {
@@ -67,7 +72,11 @@ export const plaidCreateUpdateLinkToken = createServerFn({ method: "POST" })
         .eq("user_id", userId)
         .single();
       if (error || !item) throw new Error(error?.message ?? "Item not found");
-      const { link_token, expiration } = await createUpdateLinkToken(userId, item.access_token);
+      const { link_token, expiration } = await createUpdateLinkToken(
+        userId,
+        item.access_token,
+        { account_selection_enabled: data.accountSelection ?? false },
+      );
       return { link_token, expiration, error: null as string | null };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create update link token";
