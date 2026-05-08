@@ -132,6 +132,87 @@ export type Database = {
           },
         ]
       }
+      aggregated_liabilities: {
+        Row: {
+          account_id: string
+          apr: number | null
+          created_at: string
+          details: Json
+          escrow_balance: number | null
+          expected_payoff_date: string | null
+          id: string
+          interest_rate_percentage: number | null
+          interest_rate_type: string | null
+          iso_currency_code: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          last_statement_balance: number | null
+          last_statement_issue_date: string | null
+          last_synced_at: string
+          liability_type: string
+          loan_name: string | null
+          loan_status: string | null
+          minimum_payment_amount: number | null
+          next_payment_due_date: string | null
+          origination_date: string | null
+          user_id: string
+          ytd_interest_paid: number | null
+          ytd_principal_paid: number | null
+        }
+        Insert: {
+          account_id: string
+          apr?: number | null
+          created_at?: string
+          details?: Json
+          escrow_balance?: number | null
+          expected_payoff_date?: string | null
+          id?: string
+          interest_rate_percentage?: number | null
+          interest_rate_type?: string | null
+          iso_currency_code?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          last_statement_balance?: number | null
+          last_statement_issue_date?: string | null
+          last_synced_at?: string
+          liability_type: string
+          loan_name?: string | null
+          loan_status?: string | null
+          minimum_payment_amount?: number | null
+          next_payment_due_date?: string | null
+          origination_date?: string | null
+          user_id: string
+          ytd_interest_paid?: number | null
+          ytd_principal_paid?: number | null
+        }
+        Update: {
+          account_id?: string
+          apr?: number | null
+          created_at?: string
+          details?: Json
+          escrow_balance?: number | null
+          expected_payoff_date?: string | null
+          id?: string
+          interest_rate_percentage?: number | null
+          interest_rate_type?: string | null
+          iso_currency_code?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          last_statement_balance?: number | null
+          last_statement_issue_date?: string | null
+          last_synced_at?: string
+          liability_type?: string
+          loan_name?: string | null
+          loan_status?: string | null
+          minimum_payment_amount?: number | null
+          next_payment_due_date?: string | null
+          origination_date?: string | null
+          user_id?: string
+          ytd_interest_paid?: number | null
+          ytd_principal_paid?: number | null
+        }
+        Relationships: []
+      }
       aggregated_transactions: {
         Row: {
           account_id: string
