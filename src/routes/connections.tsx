@@ -136,7 +136,7 @@ const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "rules", label: "Rules", icon: Tag },
 ];
 
-type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string };
+type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string; new_accounts_available?: boolean | null };
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
 type Liability = {
@@ -289,11 +289,17 @@ function ConnectionsPage() {
     await loadAll();
   };
 
-  const handleReconnect = async (itemId: string, name: string | null) => {
+  const handleReconnect = async (
+    itemId: string,
+    name: string | null,
+    opts: { accountSelection?: boolean } = {},
+  ) => {
     setLinking(true);
     try {
       await loadPlaidScript();
-      const tokenRes = await plaidCreateUpdateLinkToken({ data: { itemId } });
+      const tokenRes = await plaidCreateUpdateLinkToken({
+        data: { itemId, accountSelection: opts.accountSelection ?? false },
+      });
       if (!tokenRes.link_token) throw new Error(tokenRes.error ?? "No link token");
       if (!window.Plaid) throw new Error("Plaid Link unavailable");
       try {
@@ -301,25 +307,28 @@ function ConnectionsPage() {
       } catch {
         // ignore
       }
+      const verb = opts.accountSelection ? "Adding accounts from" : "Reconnecting";
       const handler = window.Plaid.create({
         token: tokenRes.link_token,
         onSuccess: async () => {
-          setSyncing(true, `Reconnecting ${name ?? "institution"}…`);
-          // Update mode reuses the existing access_token, so just resync.
+          setSyncing(true, `${verb} ${name ?? "institution"}…`);
           const res = await plaidSyncAll({ data: { itemId } });
           setSyncing(false);
           if (res.ok) {
-            showToast("ok", "Reconnected · syncing");
+            showToast(
+              "ok",
+              opts.accountSelection ? "Accounts updated · syncing" : "Reconnected · syncing",
+            );
             await loadAll();
           } else {
-            showToast("err", res.error ?? "Sync failed after reconnect");
+            showToast("err", res.error ?? "Sync failed");
           }
         },
         onExit: (err) => err && console.warn("Plaid update-mode exit:", err),
       });
       handler.open();
     } catch (err) {
-      showToast("err", err instanceof Error ? err.message : "Failed to start reconnect");
+      showToast("err", err instanceof Error ? err.message : "Failed to start update mode");
     } finally {
       setLinking(false);
     }
@@ -946,7 +955,7 @@ function ReconnectBanner({
   linking,
 }: {
   items: Item[];
-  onReconnect: (id: string, name: string | null) => void;
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
   linking: boolean;
 }) {
   if (items.length === 0) return null;
@@ -995,6 +1004,61 @@ function ReconnectBanner({
   );
 }
 
+function NewAccountsBanner({
+  items,
+  onReconnect,
+  linking,
+}: {
+  items: Item[];
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
+  linking: boolean;
+}) {
+  if (items.length === 0) return null;
+  const first = items[0];
+  return (
+    <div className="mt-4">
+      <LuxCard className="border border-primary/30 bg-primary/[0.06] p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <Plus className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm text-foreground">
+              {items.length === 1
+                ? `New accounts available at ${first.institution_name ?? "your bank"}`
+                : `New accounts available at ${items.length} institutions`}
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              You opened or unhid accounts that aren't yet linked here. Choose
+              which ones to add — your existing accounts and history stay intact.
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {items.slice(0, 3).map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() =>
+                    onReconnect(it.id, it.institution_name, { accountSelection: true })
+                  }
+                  disabled={linking}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add accounts from {it.institution_name ?? "bank"}
+                </button>
+              ))}
+              {items.length > 3 && (
+                <span className="inline-flex items-center px-2 text-[11px] text-muted-foreground">
+                  +{items.length - 3} more below
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </LuxCard>
+    </div>
+  );
+}
+
 function AccountsTab({
   items,
   accounts,
@@ -1020,7 +1084,7 @@ function AccountsTab({
   onSeedDemo: () => void;
   onClearDemo: () => void;
   onDisconnect: (id: string, name: string | null) => void;
-  onReconnect: (id: string, name: string | null) => void;
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
 }) {
   const acctsByItem = (id: string) => accounts.filter((a) => a.item_id === id);
   const hasDemo = items.some((i) => i.institution_name?.includes("(Demo)"));
@@ -1078,6 +1142,12 @@ function AccountsTab({
 
       <ReconnectBanner
         items={items.filter((i) => i.status === "requires_update")}
+        onReconnect={onReconnect}
+        linking={linking}
+      />
+
+      <NewAccountsBanner
+        items={items.filter((i) => i.new_accounts_available && i.status !== "requires_update")}
         onReconnect={onReconnect}
         linking={linking}
       />

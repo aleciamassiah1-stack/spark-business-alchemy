@@ -52,6 +52,20 @@ export const Route = createFileRoute("/api/public/plaid-webhook")({
           }
         }
 
+        // NEW_ACCOUNTS_AVAILABLE — bank exposed accounts not yet linked.
+        // Flag the item so the UI can prompt the user to enter update mode
+        // with account_selection_enabled=true to add them.
+        if (webhook_type === "ITEM" && webhook_code === "NEW_ACCOUNTS_AVAILABLE") {
+          const { error } = await supabaseAdmin
+            .from("plaid_items")
+            .update({ new_accounts_available: true })
+            .eq("item_id", item_id);
+          if (error) {
+            console.error("[plaid-webhook] mark new_accounts_available failed:", error.message);
+            return new Response("db error", { status: 500 });
+          }
+        }
+
         return new Response("ok");
       },
     },
