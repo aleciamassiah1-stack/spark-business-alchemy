@@ -220,7 +220,15 @@ function ConnectionsPage() {
       .catch(() => {});
   }, []);
 
-  const handleConnect = async () => {
+  const requestConnect = () => {
+    if (hasLocalConsent("plaid_disclosure")) {
+      void runConnect();
+    } else {
+      setConsentDialog({ mode: "new" });
+    }
+  };
+
+  const runConnect = async () => {
     setLinking(true);
     try {
       await loadPlaidScript();
