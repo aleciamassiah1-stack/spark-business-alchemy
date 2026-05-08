@@ -742,7 +742,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const phoneValid = phone.replace(/\D/g, "").length >= 7;
   const nameValid = fullName.trim().length >= 2;
 
-  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid;
+  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid && agreed;
   const signinValid = emailValid && password.length >= 8;
   const valid = mode === "signup" ? signupValid : signinValid;
 
