@@ -129,7 +129,8 @@ function OAuthCallbackPage() {
               navigate({ to: "/connections", search } as never);
             }
           },
-          onExit: (err: unknown) => {
+          onExit: (err: unknown, metadata?: unknown) => {
+            reportPlaidLinkEvent("EXIT", (metadata ?? {}) as PlaidLinkEventMetadata);
             sessionStorage.removeItem(LINK_TOKEN_KEY);
             if (!cancelled) {
               if (err) {
@@ -144,6 +145,7 @@ function OAuthCallbackPage() {
               }
             }
           },
+          onEvent: (eventName, metadata) => reportPlaidLinkEvent(eventName, metadata),
         });
         handler.open();
       } catch (err) {
