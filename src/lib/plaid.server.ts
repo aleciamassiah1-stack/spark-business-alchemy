@@ -131,6 +131,7 @@ export async function createUpdateLinkToken(
 ): Promise<PlaidLinkTokenResp> {
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
+  const link_customization_name = getLinkCustomizationName();
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
@@ -139,6 +140,7 @@ export async function createUpdateLinkToken(
     access_token,
     redirect_uri,
     webhook: getPlaidWebhookUrl(),
+    ...(link_customization_name ? { link_customization_name } : {}),
     update: opts.account_selection_enabled
       ? { account_selection_enabled: true }
       : undefined,
