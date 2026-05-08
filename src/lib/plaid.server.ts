@@ -92,9 +92,23 @@ function getPlaidWebhookUrl(): string {
     : "https://project--70e40dda-83f0-429c-bb3e-310f288f91fb.lovable.app/api/public/plaid-webhook";
 }
 
+// Picks the Plaid Link customization template name for the current environment.
+// Plaid issues separate template_id values for Sandbox vs Production in the
+// Dashboard. We resolve them via env vars so the Production template is used
+// in production and the Sandbox template in development.
+function getLinkCustomizationName(): string | undefined {
+  const env = getPlaidEnvironment();
+  const perEnv =
+    env === "production"
+      ? sanitize(process.env.PLAID_LINK_CUSTOMIZATION_NAME_PRODUCTION)
+      : sanitize(process.env.PLAID_LINK_CUSTOMIZATION_NAME_SANDBOX);
+  return perEnv || sanitize(process.env.PLAID_LINK_CUSTOMIZATION_NAME);
+}
+
 export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResp> {
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
+  const link_customization_name = getLinkCustomizationName();
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
@@ -103,6 +117,7 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
     language: "en",
     redirect_uri,
     webhook: getPlaidWebhookUrl(),
+    ...(link_customization_name ? { link_customization_name } : {}),
   });
 }
 
