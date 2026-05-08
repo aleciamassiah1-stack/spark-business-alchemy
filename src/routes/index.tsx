@@ -428,6 +428,17 @@ function HomePage() {
         </Link>
       </div>
 
+      {/* Trust strip — bank-grade security attribution */}
+      <div className="px-5 pt-6">
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
+          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Bank-grade security · Powered by{" "}
+            <span className="text-foreground">Plaid</span>
+          </p>
+        </div>
+      </div>
+
     </MobileShell>
   );
 }
