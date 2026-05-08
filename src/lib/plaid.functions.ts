@@ -153,6 +153,7 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
     const acctIds = (accts ?? []).map((a) => a.id);
     if (acctIds.length > 0) {
       await supabaseAdmin.from("aggregated_holdings").delete().in("account_id", acctIds);
+      await supabaseAdmin.from("aggregated_liabilities").delete().in("account_id", acctIds);
       await supabaseAdmin.from("aggregated_transactions").delete().in("account_id", acctIds);
     }
     await supabaseAdmin
