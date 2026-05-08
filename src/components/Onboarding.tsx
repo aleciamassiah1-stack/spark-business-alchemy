@@ -865,6 +865,28 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           // Non-fatal.
         }
 
+        // Flush any pending signup consent that we couldn't record at signup
+        // time because email confirmation was required.
+        try {
+          if (sessionStorage.getItem("aether.consent.pending") === "1") {
+            const [{ recordConsent }, { CONSENT_VERSIONS, markLocalConsent }] = await Promise.all([
+              import("@/lib/consent.functions"),
+              import("@/lib/consent-versions"),
+            ]);
+            const ua =
+              typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
+            await Promise.allSettled([
+              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
+              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+            ]);
+            markLocalConsent("terms");
+            markLocalConsent("privacy");
+            sessionStorage.removeItem("aether.consent.pending");
+          }
+        } catch {
+          // Non-fatal.
+        }
+
         navigate({ to: "/" });
       }
     } catch (err) {
