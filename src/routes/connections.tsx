@@ -41,6 +41,7 @@ import {
   plaidSyncAll,
   plaidDisconnectItem,
   plaidGetEnvironment,
+  plaidLogLinkEvent,
   getAggregatedData,
 } from "@/lib/plaid.functions";
 import { checkLiveSubscription } from "@/lib/access.functions";
