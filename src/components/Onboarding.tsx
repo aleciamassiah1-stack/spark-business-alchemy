@@ -772,22 +772,33 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         markStep("account");
 
         // Record Terms + Privacy acceptance for the audit trail. Best-effort:
-        // a transient failure should not block account creation.
-        try {
-          const [{ recordConsent }, { CONSENT_VERSIONS, markLocalConsent }] = await Promise.all([
-            import("@/lib/consent.functions"),
-            import("@/lib/consent-versions"),
-          ]);
-          const ua =
-            typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
-          await Promise.allSettled([
-            recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
-            recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
-          ]);
-          markLocalConsent("terms");
-          markLocalConsent("privacy");
-        } catch (consentErr) {
-          console.warn("Failed to record signup consent:", consentErr);
+        // a transient failure should not block account creation. Only attempted
+        // when a session exists (auto-confirm). When email confirmation is
+        // required we'll record on first sign-in instead.
+        if (data.session) {
+          try {
+            const [{ recordConsent }, { CONSENT_VERSIONS, markLocalConsent }] = await Promise.all([
+              import("@/lib/consent.functions"),
+              import("@/lib/consent-versions"),
+            ]);
+            const ua =
+              typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
+            await Promise.allSettled([
+              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
+              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+            ]);
+            markLocalConsent("terms");
+            markLocalConsent("privacy");
+          } catch (consentErr) {
+            console.warn("Failed to record signup consent:", consentErr);
+          }
+        } else {
+          // Stash intent locally so we can record after first authenticated sign-in.
+          try {
+            sessionStorage.setItem("aether.consent.pending", "1");
+          } catch {
+            // ignore
+          }
         }
         // Supabase returns a "fake" user object (identities: []) when the email
         // is already registered, to prevent account enumeration. In that case
