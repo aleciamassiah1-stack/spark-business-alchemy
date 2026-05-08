@@ -107,10 +107,12 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
 }
 
 // Update mode: token is bound to an existing item's access_token.
-// Used after ITEM_LOGIN_REQUIRED / PENDING_EXPIRATION / PENDING_DISCONNECT.
+// Used after ITEM_LOGIN_REQUIRED / PENDING_EXPIRATION / PENDING_DISCONNECT,
+// or with account_selection_enabled=true after NEW_ACCOUNTS_AVAILABLE.
 export async function createUpdateLinkToken(
   userId: string,
   access_token: string,
+  opts: { account_selection_enabled?: boolean } = {},
 ): Promise<PlaidLinkTokenResp> {
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
@@ -122,6 +124,9 @@ export async function createUpdateLinkToken(
     access_token,
     redirect_uri,
     webhook: getPlaidWebhookUrl(),
+    update: opts.account_selection_enabled
+      ? { account_selection_enabled: true }
+      : undefined,
   });
 }
 
