@@ -212,7 +212,6 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
     const isDemo = (itemRow.institution_name ?? "").includes("(Demo)");
     if (!isDemo && itemRow.access_token) {
       try {
-        const { removeItem } = await import("./plaid.server");
         await removeItem(itemRow.access_token);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to remove item from Plaid";
