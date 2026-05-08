@@ -289,6 +289,42 @@ function ConnectionsPage() {
     await loadAll();
   };
 
+  const handleReconnect = async (itemId: string, name: string | null) => {
+    setLinking(true);
+    try {
+      await loadPlaidScript();
+      const tokenRes = await plaidCreateUpdateLinkToken({ data: { itemId } });
+      if (!tokenRes.link_token) throw new Error(tokenRes.error ?? "No link token");
+      if (!window.Plaid) throw new Error("Plaid Link unavailable");
+      try {
+        sessionStorage.setItem("aether.plaid.oauth.link_token", tokenRes.link_token);
+      } catch {
+        // ignore
+      }
+      const handler = window.Plaid.create({
+        token: tokenRes.link_token,
+        onSuccess: async () => {
+          setSyncing(true, `Reconnecting ${name ?? "institution"}…`);
+          // Update mode reuses the existing access_token, so just resync.
+          const res = await plaidSyncAll({ data: { itemId } });
+          setSyncing(false);
+          if (res.ok) {
+            showToast("ok", "Reconnected · syncing");
+            await loadAll();
+          } else {
+            showToast("err", res.error ?? "Sync failed after reconnect");
+          }
+        },
+        onExit: (err) => err && console.warn("Plaid update-mode exit:", err),
+      });
+      handler.open();
+    } catch (err) {
+      showToast("err", err instanceof Error ? err.message : "Failed to start reconnect");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const handleSeedDemo = async () => {
     setSyncing(true, "Seeding demo institutions…");
     const res = await seedDemoData();
