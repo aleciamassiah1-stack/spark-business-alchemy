@@ -1088,6 +1088,55 @@ function AccountsTab({
                     </div>
                   </div>
                 )}
+                {libs.length > 0 && (
+                  <div className="mt-3">
+                    <p className="label-mono mb-1.5">Debt details</p>
+                    <div className="divide-y divide-white/[0.04] rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                      {libs.map((l) => {
+                        const acct = accts.find((a) => a.id === l.account_id);
+                        const rate = l.apr ?? l.interest_rate_percentage;
+                        const typeLabel =
+                          l.liability_type === "credit"
+                            ? "Credit card"
+                            : l.liability_type === "student"
+                              ? "Student loan"
+                              : l.liability_type === "mortgage"
+                                ? "Mortgage"
+                                : l.liability_type;
+                        return (
+                          <div key={l.id} className="px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-sm text-foreground">
+                                {acct?.name ?? l.loan_name ?? typeLabel}
+                              </p>
+                              {rate != null && (
+                                <p className="font-mono text-xs tabular-nums text-foreground">
+                                  {Number(rate).toFixed(2)}%
+                                  {l.interest_rate_type ? ` ${l.interest_rate_type}` : ""}
+                                </p>
+                              )}
+                            </div>
+                            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                              {typeLabel}
+                              {l.next_payment_due_date
+                                ? ` · Due ${new Date(l.next_payment_due_date).toLocaleDateString()}`
+                                : ""}
+                              {l.minimum_payment_amount != null
+                                ? ` · Min ${fmtCurrency(Number(l.minimum_payment_amount))}`
+                                : ""}
+                              {l.expected_payoff_date
+                                ? ` · Payoff ${new Date(l.expected_payoff_date).toLocaleDateString()}`
+                                : ""}
+                              {l.escrow_balance != null
+                                ? ` · Escrow ${fmtCurrency(Number(l.escrow_balance))}`
+                                : ""}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </LuxCard>
             );
           })}
