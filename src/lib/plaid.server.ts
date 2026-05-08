@@ -134,6 +134,27 @@ export async function exchangePublicToken(public_token: string): Promise<PlaidEx
   return plaidPost<PlaidExchangeResp>("/item/public_token/exchange", { public_token });
 }
 
+// Deactivate an Item with Plaid via /item/remove. Invalidates the access_token,
+// stops further webhooks, and removes Plaid-side billing for the Item.
+// Safe to call on already-removed items: Plaid returns ITEM_NOT_FOUND, which we swallow.
+export async function removeItem(access_token: string): Promise<void> {
+  try {
+    await plaidPost<{ request_id: string }>("/item/remove", { access_token });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Idempotent: if the item is already gone or the token is invalid, treat as success.
+    if (
+      message.includes("ITEM_NOT_FOUND") ||
+      message.includes("INVALID_ACCESS_TOKEN") ||
+      message.includes("INVALID_API_KEYS")
+    ) {
+      console.warn(`[plaid] /item/remove ignored: ${message}`);
+      return;
+    }
+    throw err;
+  }
+}
+
 export type PlaidAccount = {
   account_id: string;
   name: string;
