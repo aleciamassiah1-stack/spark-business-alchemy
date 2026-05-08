@@ -178,12 +178,13 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         items: [],
         accounts: [],
         holdings: [],
+        liabilities: [],
         syncLog: [],
         transactions: [],
         error: null,
       };
     }
-    const [itemsRes, accountsRes, holdingsRes, syncRes, txRes] = await Promise.all([
+    const [itemsRes, accountsRes, holdingsRes, liabilitiesRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at")
@@ -199,6 +200,11 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         .select("*")
         .eq("user_id", userId)
         .order("institution_value", { ascending: false, nullsFirst: false }),
+      supabaseAdmin
+        .from("aggregated_liabilities")
+        .select("*")
+        .eq("user_id", userId)
+        .order("next_payment_due_date", { ascending: true, nullsFirst: false }),
       supabaseAdmin
         .from("sync_log")
         .select("*")
@@ -217,6 +223,7 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       items: itemsRes.data ?? [],
       accounts: accountsRes.data ?? [],
       holdings: holdingsRes.data ?? [],
+      liabilities: liabilitiesRes.data ?? [],
       syncLog: syncRes.data ?? [],
       transactions: txRes.data ?? [],
       error: itemsRes.error?.message ?? accountsRes.error?.message ?? null,
@@ -227,6 +234,7 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       items: [],
       accounts: [],
       holdings: [],
+      liabilities: [],
       syncLog: [],
       transactions: [],
       error: message,
