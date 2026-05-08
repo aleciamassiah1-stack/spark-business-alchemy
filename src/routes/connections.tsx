@@ -166,6 +166,7 @@ function ConnectionsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
