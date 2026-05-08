@@ -451,6 +451,26 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
         return (purchase ?? aprs[0]).apr_percentage ?? null;
       };
 
+      // Redact sensitive identifiers before persisting raw Plaid payloads.
+      // We don't need full account numbers, servicer/property addresses, payment
+      // reference numbers, or PSLF status to power the UI — keeping them out of
+      // our DB minimizes blast radius if the row is ever exposed.
+      const SENSITIVE_LIABILITY_KEYS = [
+        "account_number",
+        "payment_reference_number",
+        "sequence_number",
+        "servicer_address",
+        "property_address",
+        "pslf_status",
+      ] as const;
+      const redactLiability = <T extends Record<string, unknown>>(obj: T): Record<string, unknown> => {
+        const clone: Record<string, unknown> = { ...obj };
+        for (const k of SENSITIVE_LIABILITY_KEYS) {
+          if (k in clone) delete clone[k];
+        }
+        return clone;
+      };
+
       for (const c of libRes.liabilities.credit ?? []) {
         const ourAcctId = acctIdMap.get(`${userId}_${c.account_id}`);
         if (!ourAcctId) continue;
@@ -465,7 +485,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
           apr: pickPrimaryApr(c.aprs),
           last_statement_balance: c.last_statement_balance,
           last_statement_issue_date: c.last_statement_issue_date,
-          details: c as unknown as Record<string, unknown>,
+          details: redactLiability(c as unknown as Record<string, unknown>),
           last_synced_at: new Date().toISOString(),
         });
       }
@@ -490,7 +510,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
           ytd_principal_paid: s.ytd_principal_paid,
           loan_name: s.loan_name,
           loan_status: s.loan_status?.type ?? null,
-          details: s as unknown as Record<string, unknown>,
+          details: redactLiability(s as unknown as Record<string, unknown>),
           last_synced_at: new Date().toISOString(),
         });
       }
@@ -513,7 +533,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
           escrow_balance: m.escrow_balance,
           ytd_interest_paid: m.ytd_interest_paid,
           ytd_principal_paid: m.ytd_principal_paid,
-          details: m as unknown as Record<string, unknown>,
+          details: redactLiability(m as unknown as Record<string, unknown>),
           last_synced_at: new Date().toISOString(),
         });
       }
