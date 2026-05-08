@@ -1019,7 +1019,30 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           {!pwNum && <li>• Password must include a number</li>}
           {!pwSym && <li>• Password must include a symbol (!@#$…)</li>}
           {!phoneValid && <li>• Enter a valid phone number (7+ digits)</li>}
+          {!agreed && <li>• Agree to the Terms and Privacy Policy</li>}
         </ul>
+      )}
+
+      {mode === "signup" && (
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 cursor-pointer accent-primary"
+          />
+          <span>
+            I agree to the{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+              Privacy Policy
+            </a>
+            , and I understand that connecting a financial account uses Plaid as described in the Privacy Policy.
+          </span>
+        </label>
       )}
 
       <PrimaryCta type="submit" disabled={!valid || busy || isLocked}>
