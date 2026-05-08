@@ -398,7 +398,32 @@ export const adminPurgeAccountNow = createServerFn({ method: "POST" })
     }
 
     const uid = data.userId;
-    // Delete app data first (mirrors purge_expired_account_deletions + admin_purge_user_by_email)
+
+    // Deactivate all of the user's Plaid Items (/item/remove) BEFORE we drop
+    // the rows. This stops further webhooks and Plaid-side billing for items
+    // we no longer need. Failures are logged but don't block the purge —
+    // orphaned items eventually expire on Plaid's side.
+    const { data: plaidRows } = await supabaseAdmin
+      .from("plaid_items")
+      .select("id, access_token, institution_name")
+      .eq("user_id", uid);
+    if (plaidRows && plaidRows.length > 0) {
+      const { removeItem } = await import("./plaid.server");
+      for (const row of plaidRows) {
+        const isDemo = (row.institution_name ?? "").includes("(Demo)");
+        if (isDemo || !row.access_token) continue;
+        try {
+          await removeItem(row.access_token);
+        } catch (err) {
+          console.error(
+            `[adminPurgeAccountNow] /item/remove failed for item ${row.id}:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+
+    // Delete app data (mirrors purge_expired_account_deletions + admin_purge_user_by_email)
     await supabaseAdmin.from("aggregated_transactions").delete().eq("user_id", uid);
     await supabaseAdmin.from("aggregated_holdings").delete().eq("user_id", uid);
     await supabaseAdmin.from("aggregated_accounts").delete().eq("user_id", uid);
