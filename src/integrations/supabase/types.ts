@@ -600,6 +600,7 @@ export type Database = {
           institution_name: string | null
           item_id: string
           last_synced_at: string | null
+          new_accounts_available: boolean
           status: string
           updated_at: string
           user_id: string | null
@@ -612,6 +613,7 @@ export type Database = {
           institution_name?: string | null
           item_id: string
           last_synced_at?: string | null
+          new_accounts_available?: boolean
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -624,6 +626,7 @@ export type Database = {
           institution_name?: string | null
           item_id?: string
           last_synced_at?: string | null
+          new_accounts_available?: boolean
           status?: string
           updated_at?: string
           user_id?: string | null
