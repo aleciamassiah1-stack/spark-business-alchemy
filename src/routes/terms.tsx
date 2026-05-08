@@ -54,7 +54,7 @@ function TermsPage() {
             <p>
               You must be at least 18 years old and legally able to enter into a binding contract.
               You are responsible for safeguarding your password and for all activity under your
-              account. Notify us immediately at support@aetherwealth.co of any unauthorised use.
+              account. Notify us immediately at team@aetherwealth.co of any unauthorised use.
             </p>
           </section>
 
@@ -135,7 +135,7 @@ function TermsPage() {
           <section>
             <h2 className="mb-3 font-serif text-xl text-foreground">12. Contact</h2>
             <p>
-              Questions: <a href="mailto:legal@aetherwealth.co" className="text-primary hover:underline">legal@aetherwealth.co</a>
+              Questions: <a href="mailto:team@aetherwealth.co" className="text-primary hover:underline">team@aetherwealth.co</a>
             </p>
           </section>
         </div>
