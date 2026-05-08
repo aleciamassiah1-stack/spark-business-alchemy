@@ -187,13 +187,39 @@ export const plaidSyncAll = createServerFn({ method: "POST" })
     }
   });
 
-// 4. Disconnect an item
+// 4. Disconnect an item — calls Plaid /item/remove to deactivate, then purges local data
 export const plaidDisconnectItem = createServerFn({ method: "POST" })
   .inputValidator((input: { itemId: string }) =>
     z.object({ itemId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+
+    // Look up the access_token so we can call /item/remove on Plaid.
+    const { data: itemRow, error: itemErr } = await supabaseAdmin
+      .from("plaid_items")
+      .select("access_token, institution_name")
+      .eq("id", data.itemId)
+      .eq("user_id", userId)
+      .single();
+    if (itemErr || !itemRow) {
+      return { ok: false as const, error: itemErr?.message ?? "Item not found" };
+    }
+
+    // Deactivate on Plaid first. If this throws unexpectedly, abort so the
+    // user can retry — we don't want to silently leak active Plaid items.
+    const isDemo = (itemRow.institution_name ?? "").includes("(Demo)");
+    if (!isDemo && itemRow.access_token) {
+      try {
+        const { removeItem } = await import("./plaid.server");
+        await removeItem(itemRow.access_token);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to remove item from Plaid";
+        console.error("plaidDisconnectItem /item/remove failed:", message);
+        return { ok: false as const, error: message };
+      }
+    }
+
     // Cascade delete children explicitly (schema has no cascade configured)
     const { data: accts } = await supabaseAdmin
       .from("aggregated_accounts")
