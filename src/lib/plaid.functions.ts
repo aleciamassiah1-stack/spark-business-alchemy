@@ -502,6 +502,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
     return {
       accountsUpdated: accountRows.length,
       holdingsUpdated: holdingsCount,
+      liabilitiesUpdated: liabilitiesCount,
       transactionsUpdated: transactionsCount,
     };
   } catch (err) {
