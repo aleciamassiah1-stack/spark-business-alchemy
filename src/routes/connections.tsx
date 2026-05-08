@@ -262,6 +262,8 @@ function ConnectionsPage() {
               `Linked · ${res.accountsUpdated} accounts, ${res.holdingsUpdated} holdings, ${res.transactionsUpdated ?? 0} txns`,
             );
             await loadAll();
+          } else if (res.duplicate) {
+            showToast("err", res.error ?? "This institution is already connected.");
           } else {
             showToast("err", res.error ?? "Failed to link account");
           }
