@@ -940,6 +940,61 @@ function StripeLiveChecklist({
 }
 
 // =================== Accounts Tab ===================
+function ReconnectBanner({
+  items,
+  onReconnect,
+  linking,
+}: {
+  items: Item[];
+  onReconnect: (id: string, name: string | null) => void;
+  linking: boolean;
+}) {
+  if (items.length === 0) return null;
+  const first = items[0];
+  const more = items.length - 1;
+  return (
+    <div className="mt-4">
+      <LuxCard className="border border-warning/30 bg-warning/[0.06] p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+            <AlertCircle className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm text-foreground">
+              {items.length === 1
+                ? `${first.institution_name ?? "A bank"} needs to be reconnected`
+                : `${items.length} institutions need to be reconnected`}
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              Your bank ended the secure session — usually after a password change
+              or periodic re-verification. Sign in again to resume syncing
+              balances, transactions, and holdings. Nothing is lost.
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {items.slice(0, 3).map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() => onReconnect(it.id, it.institution_name)}
+                  disabled={linking}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-warning px-3 py-1.5 text-[11px] font-medium text-warning-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Reconnect {it.institution_name ?? "bank"}
+                </button>
+              ))}
+              {more > 2 && (
+                <span className="inline-flex items-center px-2 text-[11px] text-muted-foreground">
+                  +{more - 2} more below
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </LuxCard>
+    </div>
+  );
+}
+
 function AccountsTab({
   items,
   accounts,
