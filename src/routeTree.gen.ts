@@ -44,6 +44,7 @@ import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.prope
 import { Route as AdminEmailPreviewRouteImport } from './routes/admin.email-preview'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicPlaidWebhookRouteImport } from './routes/api/public/plaid-webhook'
+import { Route as ApiPublicPlaidRetentionSweepRouteImport } from './routes/api/public/plaid-retention-sweep'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -225,6 +226,12 @@ const ApiPublicPlaidWebhookRoute = ApiPublicPlaidWebhookRouteImport.update({
   path: '/api/public/plaid-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPlaidRetentionSweepRoute =
+  ApiPublicPlaidRetentionSweepRouteImport.update({
+    id: '/api/public/plaid-retention-sweep',
+    path: '/api/public/plaid-retention-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -288,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -330,6 +338,7 @@ export interface FileRoutesByTo {
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -373,6 +382,7 @@ export interface FileRoutesById {
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -459,6 +470,7 @@ export interface FileRouteTypes {
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -501,6 +513,7 @@ export interface FileRouteTypes {
     | '/admin/property-image-test'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -542,6 +555,7 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicPlaidRetentionSweepRoute: typeof ApiPublicPlaidRetentionSweepRoute
   ApiPublicPlaidWebhookRoute: typeof ApiPublicPlaidWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -798,6 +812,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaidWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/plaid-retention-sweep': {
+      id: '/api/public/plaid-retention-sweep'
+      path: '/api/public/plaid-retention-sweep'
+      fullPath: '/api/public/plaid-retention-sweep'
+      preLoaderRoute: typeof ApiPublicPlaidRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -880,6 +901,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicPlaidRetentionSweepRoute: ApiPublicPlaidRetentionSweepRoute,
   ApiPublicPlaidWebhookRoute: ApiPublicPlaidWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

@@ -246,6 +246,149 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
     return { ok: true as const, error: null as string | null };
   });
 
+// 4b. Data-retention sweep. Deletes Plaid-derived consumer data we no longer
+// have a business need to retain, and calls /item/remove on the corresponding
+// Plaid Items so they are deactivated server-side too.
+//
+// Policy:
+//   - Items with status='requires_update' for >90 days, OR last_synced_at
+//     older than 180 days (and never recovered) → /item/remove + purge.
+//   - Transactions older than 730 days (~24 months) → purged.
+//   - sync_log entries older than 90 days → purged.
+//   - Pending account deletions whose grace period has elapsed → /item/remove
+//     for every Plaid Item before the SQL cron purges the rows.
+//
+// Idempotent. Safe to run on a schedule. Returns a summary of what was pruned.
+export async function runPlaidRetentionSweep(opts: {
+  staleItemDays?: number;
+  reauthGraceDays?: number;
+  transactionRetentionDays?: number;
+  syncLogRetentionDays?: number;
+} = {}): Promise<{
+  itemsRemoved: number;
+  transactionsDeleted: number;
+  syncLogsDeleted: number;
+  pendingDeletionItemsRemoved: number;
+  errors: string[];
+}> {
+  const staleItemDays = opts.staleItemDays ?? 180;
+  const reauthGraceDays = opts.reauthGraceDays ?? 90;
+  const txRetentionDays = opts.transactionRetentionDays ?? 730;
+  const syncLogRetentionDays = opts.syncLogRetentionDays ?? 90;
+  const errors: string[] = [];
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const staleCutoff = new Date(now - staleItemDays * dayMs).toISOString();
+  const reauthCutoff = new Date(now - reauthGraceDays * dayMs).toISOString();
+  const txCutoff = new Date(now - txRetentionDays * dayMs).toISOString().slice(0, 10);
+  const syncCutoff = new Date(now - syncLogRetentionDays * dayMs).toISOString();
+
+  // 1. Stale + abandoned items
+  const { data: staleItems } = await supabaseAdmin
+    .from("plaid_items")
+    .select("id, user_id, access_token, institution_name, status, last_synced_at, updated_at")
+    .or(
+      `and(status.eq.requires_update,updated_at.lt.${reauthCutoff}),` +
+        `last_synced_at.lt.${staleCutoff}`,
+    );
+
+  let itemsRemoved = 0;
+  for (const row of staleItems ?? []) {
+    const isDemo = (row.institution_name ?? "").includes("(Demo)");
+    if (!isDemo && row.access_token) {
+      try {
+        await removeItem(row.access_token);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[retention] /item/remove failed for ${row.id}: ${msg}`);
+        errors.push(`item ${row.id}: ${msg}`);
+        continue; // don't purge local data if Plaid removal failed
+      }
+    }
+    const { data: accts } = await supabaseAdmin
+      .from("aggregated_accounts")
+      .select("id")
+      .eq("item_id", row.id);
+    const acctIds = (accts ?? []).map((a) => a.id);
+    if (acctIds.length > 0) {
+      await supabaseAdmin.from("aggregated_holdings").delete().in("account_id", acctIds);
+      await supabaseAdmin.from("aggregated_liabilities").delete().in("account_id", acctIds);
+      await supabaseAdmin.from("aggregated_transactions").delete().in("account_id", acctIds);
+    }
+    await supabaseAdmin.from("aggregated_accounts").delete().eq("item_id", row.id);
+    await supabaseAdmin.from("plaid_items").delete().eq("id", row.id);
+    itemsRemoved += 1;
+  }
+
+  // 2. Aged transactions (regardless of item lifecycle)
+  const { count: txDeletedCount } = await supabaseAdmin
+    .from("aggregated_transactions")
+    .delete({ count: "exact" })
+    .lt("date", txCutoff);
+
+  // 3. Aged sync_log entries
+  const { count: syncDeletedCount } = await supabaseAdmin
+    .from("sync_log")
+    .delete({ count: "exact" })
+    .lt("created_at", syncCutoff);
+
+  // 4. Pending account deletions whose grace period elapsed — remove Plaid
+  // Items now so the SQL cron purges clean rows.
+  let pendingDeletionItemsRemoved = 0;
+  const { data: expiredPending } = await supabaseAdmin
+    .from("pending_account_deletions")
+    .select("user_id")
+    .lte("purge_after", new Date(now).toISOString());
+  for (const p of expiredPending ?? []) {
+    const { data: rows } = await supabaseAdmin
+      .from("plaid_items")
+      .select("id, access_token, institution_name")
+      .eq("user_id", p.user_id);
+    for (const row of rows ?? []) {
+      const isDemo = (row.institution_name ?? "").includes("(Demo)");
+      if (isDemo || !row.access_token) continue;
+      try {
+        await removeItem(row.access_token);
+        pendingDeletionItemsRemoved += 1;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[retention] pending-deletion /item/remove failed for ${row.id}: ${msg}`);
+        errors.push(`pending ${row.id}: ${msg}`);
+      }
+    }
+  }
+
+  return {
+    itemsRemoved,
+    transactionsDeleted: txDeletedCount ?? 0,
+    syncLogsDeleted: syncDeletedCount ?? 0,
+    pendingDeletionItemsRemoved,
+    errors,
+  };
+}
+
+// Server fn wrapper so admins can trigger the sweep on demand.
+export const plaidRunRetentionSweep = createServerFn({ method: "POST" }).handler(async () => {
+  const userId = await requireUserId();
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .limit(1);
+  if (!roles || roles.length === 0) {
+    return { ok: false as const, error: "Admin only" };
+  }
+  try {
+    const summary = await runPlaidRetentionSweep();
+    return { ok: true as const, summary, error: null as string | null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Retention sweep failed";
+    console.error("plaidRunRetentionSweep error:", message);
+    return { ok: false as const, error: message };
+  }
+});
+
 // 5. Read aggregated data for the UI — current user only
 export const getAggregatedData = createServerFn({ method: "GET" }).handler(async () => {
   try {
