@@ -543,6 +543,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync error";
+    const needsReauth = /ITEM_LOGIN_REQUIRED|PENDING_EXPIRATION|PENDING_DISCONNECT/i.test(message);
     await supabaseAdmin.from("sync_log").insert({
       user_id: userId,
       item_id: itemRowId,
@@ -550,7 +551,10 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
       error_message: message,
       duration_ms: Date.now() - startedAt,
     });
-    await supabaseAdmin.from("plaid_items").update({ status: "error" }).eq("id", itemRowId);
+    await supabaseAdmin
+      .from("plaid_items")
+      .update({ status: needsReauth ? "requires_update" : "error" })
+      .eq("id", itemRowId);
     throw err;
   }
 }
