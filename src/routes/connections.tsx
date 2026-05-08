@@ -381,7 +381,12 @@ function ConnectionsPage() {
             showToast("err", res.error ?? "Sync failed");
           }
         },
-        onExit: (err) => err && console.warn("Plaid update-mode exit:", err),
+        onExit: (err, metadata) => {
+          reportPlaidLinkEvent("EXIT", (metadata ?? {}) as PlaidLinkEventMetadata, { isUpdateMode: true });
+          if (err) console.warn("Plaid update-mode exit:", err);
+        },
+        onEvent: (eventName, metadata) =>
+          reportPlaidLinkEvent(eventName, metadata, { isUpdateMode: true }),
       });
       handler.open();
     } catch (err) {
