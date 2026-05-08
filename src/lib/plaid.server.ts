@@ -84,11 +84,15 @@ async function plaidPost<T>(path: string, body: Record<string, unknown>): Promis
 export type PlaidLinkTokenResp = { link_token: string; expiration: string };
 export type PlaidExchangeResp = { access_token: string; item_id: string };
 
+function getPlaidWebhookUrl(): string {
+  const override = sanitize(process.env.PLAID_WEBHOOK_URL);
+  if (override) return override;
+  return getPlaidEnvironment() === "production"
+    ? "https://aetherwealth.co/api/public/plaid-webhook"
+    : "https://project--70e40dda-83f0-429c-bb3e-310f288f91fb.lovable.app/api/public/plaid-webhook";
+}
+
 export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResp> {
-  // OAuth redirect URI must be registered in the Plaid Dashboard
-  // (Team Settings → API → Allowed redirect URIs) for both sandbox and
-  // production. Required for OAuth institutions like Chase, BofA, Wells
-  // Fargo, PNC, US Bank.
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
@@ -98,6 +102,26 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
     country_codes: ["US"],
     language: "en",
     redirect_uri,
+    webhook: getPlaidWebhookUrl(),
+  });
+}
+
+// Update mode: token is bound to an existing item's access_token.
+// Used after ITEM_LOGIN_REQUIRED / PENDING_EXPIRATION / PENDING_DISCONNECT.
+export async function createUpdateLinkToken(
+  userId: string,
+  access_token: string,
+): Promise<PlaidLinkTokenResp> {
+  const redirect_uri =
+    sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
+  return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
+    user: { client_user_id: userId },
+    client_name: "Æther Wealth",
+    country_codes: ["US"],
+    language: "en",
+    access_token,
+    redirect_uri,
+    webhook: getPlaidWebhookUrl(),
   });
 }
 
