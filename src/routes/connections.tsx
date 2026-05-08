@@ -940,6 +940,61 @@ function StripeLiveChecklist({
 }
 
 // =================== Accounts Tab ===================
+function ReconnectBanner({
+  items,
+  onReconnect,
+  linking,
+}: {
+  items: Item[];
+  onReconnect: (id: string, name: string | null) => void;
+  linking: boolean;
+}) {
+  if (items.length === 0) return null;
+  const first = items[0];
+  const more = items.length - 1;
+  return (
+    <div className="mt-4">
+      <LuxCard className="border border-warning/30 bg-warning/[0.06] p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+            <AlertCircle className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm text-foreground">
+              {items.length === 1
+                ? `${first.institution_name ?? "A bank"} needs to be reconnected`
+                : `${items.length} institutions need to be reconnected`}
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              Your bank ended the secure session — usually after a password change
+              or periodic re-verification. Sign in again to resume syncing
+              balances, transactions, and holdings. Nothing is lost.
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {items.slice(0, 3).map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() => onReconnect(it.id, it.institution_name)}
+                  disabled={linking}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-warning px-3 py-1.5 text-[11px] font-medium text-warning-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Reconnect {it.institution_name ?? "bank"}
+                </button>
+              ))}
+              {more > 2 && (
+                <span className="inline-flex items-center px-2 text-[11px] text-muted-foreground">
+                  +{more - 2} more below
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </LuxCard>
+    </div>
+  );
+}
+
 function AccountsTab({
   items,
   accounts,
@@ -1021,6 +1076,12 @@ function AccountsTab({
       <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
       <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
 
+      <ReconnectBanner
+        items={items.filter((i) => i.status === "requires_update")}
+        onReconnect={onReconnect}
+        linking={linking}
+      />
+
 
       {items.length === 0 ? (
         <div className="mt-6">
@@ -1040,10 +1101,22 @@ function AccountsTab({
             const holds = holdings.filter((h) => acctIds.includes(h.account_id));
             const libs = liabilities.filter((l) => acctIds.includes(l.account_id));
             const isDemo = item.institution_name?.includes("(Demo)");
+            const needsUpdate = item.status === "requires_update";
             return (
-              <LuxCard key={item.id} className="p-4">
+              <LuxCard
+                key={item.id}
+                className={`p-4 ${needsUpdate ? "ring-1 ring-warning/40" : ""}`}
+              >
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isDemo ? "bg-gold/15 text-gold" : "bg-primary/15 text-primary"}`}>
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                      isDemo
+                        ? "bg-gold/15 text-gold"
+                        : needsUpdate
+                          ? "bg-warning/15 text-warning"
+                          : "bg-primary/15 text-primary"
+                    }`}
+                  >
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1052,9 +1125,17 @@ function AccountsTab({
                         {item.institution_name ?? "Institution"}
                       </p>
                       {item.status === "active" ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-success">
+                          <CheckCircle2 className="h-2.5 w-2.5" /> Live
+                        </span>
+                      ) : needsUpdate ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-warning">
+                          <AlertCircle className="h-2.5 w-2.5" /> Action needed
+                        </span>
                       ) : (
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-warning" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-destructive">
+                          <AlertCircle className="h-2.5 w-2.5" /> Error
+                        </span>
                       )}
                     </div>
                     <p className="font-mono text-[10px] text-muted-foreground">
@@ -1069,18 +1150,33 @@ function AccountsTab({
                   <button
                     onClick={() => onDisconnect(item.id, item.institution_name)}
                     className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    aria-label="Disconnect"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                {item.status === "requires_update" && (
-                  <button
-                    onClick={() => onReconnect(item.id, item.institution_name)}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning hover:bg-warning/15"
-                  >
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    Reconnect required — your bank needs you to sign in again
-                  </button>
+                {needsUpdate && (
+                  <div className="mt-3 rounded-xl border border-warning/30 bg-warning/[0.06] p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-warning">
+                          Re-authentication needed
+                        </p>
+                        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                          {item.institution_name ?? "Your bank"} needs you to sign in again to keep balances, transactions, and holdings up to date. This takes about 30 seconds — your existing history is preserved.
+                        </p>
+                        <button
+                          onClick={() => onReconnect(item.id, item.institution_name)}
+                          disabled={linking}
+                          className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-warning px-3 py-1.5 text-[11px] font-medium text-warning-foreground hover:opacity-90 disabled:opacity-50"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          {linking ? "Opening…" : "Reconnect now"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 {accts.length > 0 && (
                   <div className="mt-3 divide-y divide-white/[0.04] rounded-xl border border-white/[0.04] bg-white/[0.02]">
