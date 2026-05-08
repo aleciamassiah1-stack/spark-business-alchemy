@@ -39,6 +39,19 @@ export const Route = createFileRoute("/api/public/plaid-webhook")({
           }
         }
 
+        // LOGIN_REPAIRED — user completed update mode, item is healthy again.
+        // Clear the requires_update flag so the UI prompts dismiss automatically.
+        if (webhook_type === "ITEM" && webhook_code === "LOGIN_REPAIRED") {
+          const { error } = await supabaseAdmin
+            .from("plaid_items")
+            .update({ status: "active" })
+            .eq("item_id", item_id);
+          if (error) {
+            console.error("[plaid-webhook] clear requires_update failed:", error.message);
+            return new Response("db error", { status: 500 });
+          }
+        }
+
         return new Response("ok");
       },
     },
