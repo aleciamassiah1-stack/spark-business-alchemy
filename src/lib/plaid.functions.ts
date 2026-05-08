@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 import {
   createLinkToken,
+  createUpdateLinkToken,
   exchangePublicToken,
   getAccounts,
   getHoldings,
@@ -48,6 +49,32 @@ export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(a
     return { link_token: null, expiration: null, error: message };
   }
 });
+
+// 1b. Create an UPDATE-mode link token for an existing item that needs reauth.
+// Triggered after detecting ITEM_LOGIN_REQUIRED, PENDING_EXPIRATION, or
+// PENDING_DISCONNECT for the item.
+export const plaidCreateUpdateLinkToken = createServerFn({ method: "POST" })
+  .inputValidator((input: { itemId: string }) =>
+    z.object({ itemId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await requireUserId();
+      const { data: item, error } = await supabaseAdmin
+        .from("plaid_items")
+        .select("access_token")
+        .eq("id", data.itemId)
+        .eq("user_id", userId)
+        .single();
+      if (error || !item) throw new Error(error?.message ?? "Item not found");
+      const { link_token, expiration } = await createUpdateLinkToken(userId, item.access_token);
+      return { link_token, expiration, error: null as string | null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create update link token";
+      console.error("plaidCreateUpdateLinkToken error:", message);
+      return { link_token: null, expiration: null, error: message };
+    }
+  });
 
 // 2. Exchange a public_token for access_token, persist the item, and pull initial data
 export const plaidExchangeToken = createServerFn({ method: "POST" })
@@ -124,10 +151,24 @@ export const plaidSyncAll = createServerFn({ method: "POST" })
 
       const results = [];
       for (const item of items) {
-        // Skip demo items (no real Plaid token)
         if (item.access_token === "demo-no-token") continue;
-        const r = await syncItemInternal(item.id, item.access_token, userId);
-        results.push({ itemId: item.id, institution: item.institution_name, ...r });
+        try {
+          const r = await syncItemInternal(item.id, item.access_token, userId);
+          results.push({ itemId: item.id, institution: item.institution_name, ...r });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Sync failed";
+          const needsReauth = /ITEM_LOGIN_REQUIRED|PENDING_EXPIRATION|PENDING_DISCONNECT/i.test(msg);
+          results.push({
+            itemId: item.id,
+            institution: item.institution_name,
+            accountsUpdated: 0,
+            holdingsUpdated: 0,
+            liabilitiesUpdated: 0,
+            transactionsUpdated: 0,
+            error: msg,
+            requiresUpdate: needsReauth,
+          });
+        }
       }
       return { ok: true as const, results, error: null as string | null };
     } catch (err) {
@@ -516,6 +557,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync error";
+    const needsReauth = /ITEM_LOGIN_REQUIRED|PENDING_EXPIRATION|PENDING_DISCONNECT/i.test(message);
     await supabaseAdmin.from("sync_log").insert({
       user_id: userId,
       item_id: itemRowId,
@@ -523,7 +565,10 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
       error_message: message,
       duration_ms: Date.now() - startedAt,
     });
-    await supabaseAdmin.from("plaid_items").update({ status: "error" }).eq("id", itemRowId);
+    await supabaseAdmin
+      .from("plaid_items")
+      .update({ status: needsReauth ? "requires_update" : "error" })
+      .eq("id", itemRowId);
     throw err;
   }
 }

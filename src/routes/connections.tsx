@@ -36,6 +36,7 @@ import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { useWealth } from "@/lib/wealth-context";
 import {
   plaidCreateLinkToken,
+  plaidCreateUpdateLinkToken,
   plaidExchangeToken,
   plaidSyncAll,
   plaidDisconnectItem,
@@ -288,6 +289,42 @@ function ConnectionsPage() {
     await loadAll();
   };
 
+  const handleReconnect = async (itemId: string, name: string | null) => {
+    setLinking(true);
+    try {
+      await loadPlaidScript();
+      const tokenRes = await plaidCreateUpdateLinkToken({ data: { itemId } });
+      if (!tokenRes.link_token) throw new Error(tokenRes.error ?? "No link token");
+      if (!window.Plaid) throw new Error("Plaid Link unavailable");
+      try {
+        sessionStorage.setItem("aether.plaid.oauth.link_token", tokenRes.link_token);
+      } catch {
+        // ignore
+      }
+      const handler = window.Plaid.create({
+        token: tokenRes.link_token,
+        onSuccess: async () => {
+          setSyncing(true, `Reconnecting ${name ?? "institution"}…`);
+          // Update mode reuses the existing access_token, so just resync.
+          const res = await plaidSyncAll({ data: { itemId } });
+          setSyncing(false);
+          if (res.ok) {
+            showToast("ok", "Reconnected · syncing");
+            await loadAll();
+          } else {
+            showToast("err", res.error ?? "Sync failed after reconnect");
+          }
+        },
+        onExit: (err) => err && console.warn("Plaid update-mode exit:", err),
+      });
+      handler.open();
+    } catch (err) {
+      showToast("err", err instanceof Error ? err.message : "Failed to start reconnect");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const handleSeedDemo = async () => {
     setSyncing(true, "Seeding demo institutions…");
     const res = await seedDemoData();
@@ -387,6 +424,7 @@ function ConnectionsPage() {
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
             onDisconnect={handleDisconnect}
+            onReconnect={handleReconnect}
           />
         )}
         {tab === "properties" && (
@@ -914,6 +952,7 @@ function AccountsTab({
   onSeedDemo,
   onClearDemo,
   onDisconnect,
+  onReconnect,
 }: {
   items: Item[];
   accounts: Account[];
@@ -926,6 +965,7 @@ function AccountsTab({
   onSeedDemo: () => void;
   onClearDemo: () => void;
   onDisconnect: (id: string, name: string | null) => void;
+  onReconnect: (id: string, name: string | null) => void;
 }) {
   const acctsByItem = (id: string) => accounts.filter((a) => a.item_id === id);
   const hasDemo = items.some((i) => i.institution_name?.includes("(Demo)"));
@@ -1033,6 +1073,15 @@ function AccountsTab({
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
+                {item.status === "requires_update" && (
+                  <button
+                    onClick={() => onReconnect(item.id, item.institution_name)}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning hover:bg-warning/15"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Reconnect required — your bank needs you to sign in again
+                  </button>
+                )}
                 {accts.length > 0 && (
                   <div className="mt-3 divide-y divide-white/[0.04] rounded-xl border border-white/[0.04] bg-white/[0.02]">
                     {accts.map((a) => (
