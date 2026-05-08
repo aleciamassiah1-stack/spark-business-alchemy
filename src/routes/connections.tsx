@@ -74,6 +74,8 @@ import {
   listCategorySuggestions,
   type TransactionRule,
 } from "@/lib/rules.functions";
+import { PlaidConsentDialog } from "@/components/PlaidConsentDialog";
+import { hasLocalConsent } from "@/lib/consent-versions";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
