@@ -955,7 +955,7 @@ function ReconnectBanner({
   linking,
 }: {
   items: Item[];
-  onReconnect: (id: string, name: string | null) => void;
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
   linking: boolean;
 }) {
   if (items.length === 0) return null;
