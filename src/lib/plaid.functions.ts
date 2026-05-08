@@ -238,7 +238,7 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
     const [itemsRes, accountsRes, holdingsRes, liabilitiesRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
-        .select("id, institution_name, institution_id, status, last_synced_at, created_at")
+        .select("id, institution_name, institution_id, status, last_synced_at, created_at, new_accounts_available")
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabaseAdmin
