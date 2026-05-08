@@ -38,6 +38,73 @@ export const plaidGetEnvironment = createServerFn({ method: "GET" }).handler(asy
   return { environment: resolvePlaidEnvironment() };
 });
 
+// 0b. Log a Plaid Link conversion event (OPEN, SELECT_INSTITUTION,
+// SUBMIT_CREDENTIALS, HANDOFF, EXIT, ERROR, etc.). Used to monitor Link
+// conversion / drop-off independently of Plaid's own analytics dashboard.
+// Fire-and-forget from the client — never throws back to the caller.
+export const plaidLogLinkEvent = createServerFn({ method: "POST" })
+  .inputValidator((input: {
+    eventName: string;
+    viewName?: string | null;
+    institutionId?: string | null;
+    institutionName?: string | null;
+    requestId?: string | null;
+    linkSessionId?: string | null;
+    errorCode?: string | null;
+    errorType?: string | null;
+    errorMessage?: string | null;
+    exitStatus?: string | null;
+    isUpdateMode?: boolean;
+    metadata?: Record<string, unknown> | null;
+  }) =>
+    z
+      .object({
+        eventName: z.string().min(1).max(100),
+        viewName: z.string().max(100).nullish(),
+        institutionId: z.string().max(100).nullish(),
+        institutionName: z.string().max(200).nullish(),
+        requestId: z.string().max(200).nullish(),
+        linkSessionId: z.string().max(200).nullish(),
+        errorCode: z.string().max(100).nullish(),
+        errorType: z.string().max(100).nullish(),
+        errorMessage: z.string().max(2000).nullish(),
+        exitStatus: z.string().max(100).nullish(),
+        isUpdateMode: z.boolean().optional(),
+        metadata: z.record(z.unknown()).nullish(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) return { ok: false as const, error: "unauthenticated" };
+      const { error } = await supabaseAdmin.from("plaid_link_events").insert({
+        user_id: userId,
+        event_name: data.eventName,
+        view_name: data.viewName ?? null,
+        institution_id: data.institutionId ?? null,
+        institution_name: data.institutionName ?? null,
+        request_id: data.requestId ?? null,
+        link_session_id: data.linkSessionId ?? null,
+        error_code: data.errorCode ?? null,
+        error_type: data.errorType ?? null,
+        error_message: data.errorMessage ?? null,
+        exit_status: data.exitStatus ?? null,
+        is_update_mode: data.isUpdateMode ?? false,
+        metadata: data.metadata ?? null,
+      });
+      if (error) {
+        console.warn("plaidLogLinkEvent insert failed:", error.message);
+        return { ok: false as const, error: error.message };
+      }
+      return { ok: true as const };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "log failed";
+      console.warn("plaidLogLinkEvent error:", message);
+      return { ok: false as const, error: message };
+    }
+  });
+
 // 1. Create a Plaid Link token (called from the client to open Plaid Link)
 export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(async () => {
   try {
