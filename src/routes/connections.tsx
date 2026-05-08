@@ -379,6 +379,7 @@ function ConnectionsPage() {
             items={items}
             accounts={accounts}
             holdings={holdings}
+            liabilities={liabilities}
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
