@@ -151,10 +151,24 @@ export const plaidSyncAll = createServerFn({ method: "POST" })
 
       const results = [];
       for (const item of items) {
-        // Skip demo items (no real Plaid token)
         if (item.access_token === "demo-no-token") continue;
-        const r = await syncItemInternal(item.id, item.access_token, userId);
-        results.push({ itemId: item.id, institution: item.institution_name, ...r });
+        try {
+          const r = await syncItemInternal(item.id, item.access_token, userId);
+          results.push({ itemId: item.id, institution: item.institution_name, ...r });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Sync failed";
+          const needsReauth = /ITEM_LOGIN_REQUIRED|PENDING_EXPIRATION|PENDING_DISCONNECT/i.test(msg);
+          results.push({
+            itemId: item.id,
+            institution: item.institution_name,
+            accountsUpdated: 0,
+            holdingsUpdated: 0,
+            liabilitiesUpdated: 0,
+            transactionsUpdated: 0,
+            error: msg,
+            requiresUpdate: needsReauth,
+          });
+        }
       }
       return { ok: true as const, results, error: null as string | null };
     } catch (err) {
