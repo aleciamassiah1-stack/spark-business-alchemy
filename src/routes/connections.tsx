@@ -309,7 +309,11 @@ function ConnectionsPage() {
             showToast("err", res.error ?? "Failed to link account");
           }
         },
-        onExit: (err) => err && console.warn("Plaid Link exit:", err),
+        onExit: (err, metadata) => {
+          reportPlaidLinkEvent("EXIT", (metadata ?? {}) as PlaidLinkEventMetadata);
+          if (err) console.warn("Plaid Link exit:", err);
+        },
+        onEvent: (eventName, metadata) => reportPlaidLinkEvent(eventName, metadata),
       });
       handler.open();
     } catch (err) {
