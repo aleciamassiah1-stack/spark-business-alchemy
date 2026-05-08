@@ -185,7 +185,7 @@ function ConnectionsPage() {
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
   const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
   const [hasLiveSubscription, setHasLiveSubscription] = useState(false);
-
+  const [consentDialog, setConsentDialog] = useState<null | { mode: "new" | "update"; itemId?: string }>(null);
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
     setTimeout(() => setToast(null), 4000);
