@@ -9,6 +9,7 @@ import {
   getAccounts,
   getHoldings,
   getInstitution,
+  getLiabilities,
   syncTransactions,
 } from "./plaid.server";
 
@@ -95,6 +96,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
         itemId: null,
         accountsUpdated: 0,
         holdingsUpdated: 0,
+        liabilitiesUpdated: 0,
         transactionsUpdated: 0,
         error: message,
       };
@@ -151,6 +153,7 @@ export const plaidDisconnectItem = createServerFn({ method: "POST" })
     const acctIds = (accts ?? []).map((a) => a.id);
     if (acctIds.length > 0) {
       await supabaseAdmin.from("aggregated_holdings").delete().in("account_id", acctIds);
+      await supabaseAdmin.from("aggregated_liabilities").delete().in("account_id", acctIds);
       await supabaseAdmin.from("aggregated_transactions").delete().in("account_id", acctIds);
     }
     await supabaseAdmin
@@ -176,12 +179,13 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         items: [],
         accounts: [],
         holdings: [],
+        liabilities: [],
         syncLog: [],
         transactions: [],
         error: null,
       };
     }
-    const [itemsRes, accountsRes, holdingsRes, syncRes, txRes] = await Promise.all([
+    const [itemsRes, accountsRes, holdingsRes, liabilitiesRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at")
@@ -197,6 +201,11 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         .select("*")
         .eq("user_id", userId)
         .order("institution_value", { ascending: false, nullsFirst: false }),
+      supabaseAdmin
+        .from("aggregated_liabilities")
+        .select("*")
+        .eq("user_id", userId)
+        .order("next_payment_due_date", { ascending: true, nullsFirst: false }),
       supabaseAdmin
         .from("sync_log")
         .select("*")
@@ -215,6 +224,7 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       items: itemsRes.data ?? [],
       accounts: accountsRes.data ?? [],
       holdings: holdingsRes.data ?? [],
+      liabilities: liabilitiesRes.data ?? [],
       syncLog: syncRes.data ?? [],
       transactions: txRes.data ?? [],
       error: itemsRes.error?.message ?? accountsRes.error?.message ?? null,
@@ -225,6 +235,7 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
       items: [],
       accounts: [],
       holdings: [],
+      liabilities: [],
       syncLog: [],
       transactions: [],
       error: message,
@@ -328,6 +339,104 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
       console.warn("holdings skipped:", holdErr instanceof Error ? holdErr.message : holdErr);
     }
 
+    // Liabilities (credit cards, student loans, mortgages)
+    let liabilitiesCount = 0;
+    try {
+      const libRes = await getLiabilities(access_token);
+      const libRows: Array<Record<string, unknown>> = [];
+
+      const pickPrimaryApr = (aprs: { apr_percentage: number | null; apr_type: string | null }[] | null) => {
+        if (!aprs || aprs.length === 0) return null;
+        const purchase = aprs.find((a) => (a.apr_type ?? "").toLowerCase().includes("purchase"));
+        return (purchase ?? aprs[0]).apr_percentage ?? null;
+      };
+
+      for (const c of libRes.liabilities.credit ?? []) {
+        const ourAcctId = acctIdMap.get(`${userId}_${c.account_id}`);
+        if (!ourAcctId) continue;
+        libRows.push({
+          user_id: userId,
+          account_id: ourAcctId,
+          liability_type: "credit",
+          last_payment_amount: c.last_payment_amount,
+          last_payment_date: c.last_payment_date,
+          next_payment_due_date: c.next_payment_due_date,
+          minimum_payment_amount: c.minimum_payment_amount,
+          apr: pickPrimaryApr(c.aprs),
+          last_statement_balance: c.last_statement_balance,
+          last_statement_issue_date: c.last_statement_issue_date,
+          details: c as unknown as Record<string, unknown>,
+          last_synced_at: new Date().toISOString(),
+        });
+      }
+
+      for (const s of libRes.liabilities.student ?? []) {
+        const ourAcctId = acctIdMap.get(`${userId}_${s.account_id}`);
+        if (!ourAcctId) continue;
+        libRows.push({
+          user_id: userId,
+          account_id: ourAcctId,
+          liability_type: "student",
+          last_payment_amount: s.last_payment_amount,
+          last_payment_date: s.last_payment_date,
+          next_payment_due_date: s.next_payment_due_date,
+          minimum_payment_amount: s.minimum_payment_amount,
+          interest_rate_percentage: s.interest_rate_percentage,
+          origination_date: s.origination_date,
+          expected_payoff_date: s.expected_payoff_date,
+          last_statement_balance: s.last_statement_balance,
+          last_statement_issue_date: s.last_statement_issue_date,
+          ytd_interest_paid: s.ytd_interest_paid,
+          ytd_principal_paid: s.ytd_principal_paid,
+          loan_name: s.loan_name,
+          loan_status: s.loan_status?.type ?? null,
+          details: s as unknown as Record<string, unknown>,
+          last_synced_at: new Date().toISOString(),
+        });
+      }
+
+      for (const m of libRes.liabilities.mortgage ?? []) {
+        const ourAcctId = acctIdMap.get(`${userId}_${m.account_id}`);
+        if (!ourAcctId) continue;
+        libRows.push({
+          user_id: userId,
+          account_id: ourAcctId,
+          liability_type: "mortgage",
+          last_payment_amount: m.last_payment_amount,
+          last_payment_date: m.last_payment_date,
+          next_payment_due_date: m.next_payment_due_date,
+          minimum_payment_amount: m.next_monthly_payment,
+          interest_rate_percentage: m.interest_rate?.percentage ?? null,
+          interest_rate_type: m.interest_rate?.type ?? null,
+          origination_date: m.origination_date,
+          expected_payoff_date: m.maturity_date,
+          escrow_balance: m.escrow_balance,
+          ytd_interest_paid: m.ytd_interest_paid,
+          ytd_principal_paid: m.ytd_principal_paid,
+          details: m as unknown as Record<string, unknown>,
+          last_synced_at: new Date().toISOString(),
+        });
+      }
+
+      const accountIdsForLib = Array.from(acctIdMap.values());
+      if (accountIdsForLib.length > 0) {
+        await supabaseAdmin
+          .from("aggregated_liabilities")
+          .delete()
+          .in("account_id", accountIdsForLib);
+      }
+      if (libRows.length > 0) {
+        const { error } = await supabaseAdmin
+          .from("aggregated_liabilities")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert(libRows as any);
+        if (error) throw new Error(`liabilities insert: ${error.message}`);
+      }
+      liabilitiesCount = libRows.length;
+    } catch (libErr) {
+      console.warn("liabilities skipped:", libErr instanceof Error ? libErr.message : libErr);
+    }
+
     // Transactions
     let transactionsCount = 0;
     try {
@@ -402,6 +511,7 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
     return {
       accountsUpdated: accountRows.length,
       holdingsUpdated: holdingsCount,
+      liabilitiesUpdated: liabilitiesCount,
       transactionsUpdated: transactionsCount,
     };
   } catch (err) {

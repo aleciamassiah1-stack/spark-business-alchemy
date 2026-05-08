@@ -138,6 +138,23 @@ const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
 type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string };
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
+type Liability = {
+  id: string;
+  account_id: string;
+  liability_type: "credit" | "student" | "mortgage" | string;
+  apr: number | null;
+  interest_rate_percentage: number | null;
+  interest_rate_type: string | null;
+  next_payment_due_date: string | null;
+  minimum_payment_amount: number | null;
+  last_payment_amount: number | null;
+  last_payment_date: string | null;
+  last_statement_balance: number | null;
+  expected_payoff_date: string | null;
+  escrow_balance: number | null;
+  loan_name: string | null;
+  loan_status: string | null;
+};
 type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
 type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number; image_url: string | null; beds: number | null; baths: number | null; sqft: number | null };
 type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
@@ -149,6 +166,7 @@ function ConnectionsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -182,6 +200,7 @@ function ConnectionsPage() {
     setItems(agg.items as Item[]);
     setAccounts(agg.accounts as Account[]);
     setHoldings(agg.holdings as Holding[]);
+    setLiabilities((agg.liabilities ?? []) as Liability[]);
     setTransactions(agg.transactions as Tx[]);
     setProperties(props.properties as Property[]);
     setPolicies(ins.policies as Policy[]);
@@ -360,6 +379,7 @@ function ConnectionsPage() {
             items={items}
             accounts={accounts}
             holdings={holdings}
+            liabilities={liabilities}
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
@@ -886,6 +906,7 @@ function AccountsTab({
   items,
   accounts,
   holdings,
+  liabilities,
   linking,
   plaidEnv,
   hasLiveSubscription,
@@ -897,6 +918,7 @@ function AccountsTab({
   items: Item[];
   accounts: Account[];
   holdings: Holding[];
+  liabilities: Liability[];
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
   hasLiveSubscription: boolean;
@@ -976,6 +998,7 @@ function AccountsTab({
             const accts = acctsByItem(item.id);
             const acctIds = accts.map((a) => a.id);
             const holds = holdings.filter((h) => acctIds.includes(h.account_id));
+            const libs = liabilities.filter((l) => acctIds.includes(l.account_id));
             const isDemo = item.institution_name?.includes("(Demo)");
             return (
               <LuxCard key={item.id} className="p-4">
@@ -1058,6 +1081,55 @@ function AccountsTab({
                             </div>
                             <p className="font-mono text-sm tabular-nums text-foreground">
                               <MoneyText value={fmtCurrency(value)} />
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {libs.length > 0 && (
+                  <div className="mt-3">
+                    <p className="label-mono mb-1.5">Debt details</p>
+                    <div className="divide-y divide-white/[0.04] rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                      {libs.map((l) => {
+                        const acct = accts.find((a) => a.id === l.account_id);
+                        const rate = l.apr ?? l.interest_rate_percentage;
+                        const typeLabel =
+                          l.liability_type === "credit"
+                            ? "Credit card"
+                            : l.liability_type === "student"
+                              ? "Student loan"
+                              : l.liability_type === "mortgage"
+                                ? "Mortgage"
+                                : l.liability_type;
+                        return (
+                          <div key={l.id} className="px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-sm text-foreground">
+                                {acct?.name ?? l.loan_name ?? typeLabel}
+                              </p>
+                              {rate != null && (
+                                <p className="font-mono text-xs tabular-nums text-foreground">
+                                  {Number(rate).toFixed(2)}%
+                                  {l.interest_rate_type ? ` ${l.interest_rate_type}` : ""}
+                                </p>
+                              )}
+                            </div>
+                            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                              {typeLabel}
+                              {l.next_payment_due_date
+                                ? ` · Due ${new Date(l.next_payment_due_date).toLocaleDateString()}`
+                                : ""}
+                              {l.minimum_payment_amount != null
+                                ? ` · Min ${fmtCurrency(Number(l.minimum_payment_amount))}`
+                                : ""}
+                              {l.expected_payoff_date
+                                ? ` · Payoff ${new Date(l.expected_payoff_date).toLocaleDateString()}`
+                                : ""}
+                              {l.escrow_balance != null
+                                ? ` · Escrow ${fmtCurrency(Number(l.escrow_balance))}`
+                                : ""}
                             </p>
                           </div>
                         );

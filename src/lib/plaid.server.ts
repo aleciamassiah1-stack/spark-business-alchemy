@@ -94,7 +94,7 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
-    products: ["auth", "transactions", "investments"],
+    products: ["auth", "transactions", "investments", "liabilities"],
     country_codes: ["US"],
     language: "en",
     redirect_uri,
@@ -193,4 +193,87 @@ export async function syncTransactions(
     cursor: cursor ?? "",
     count: 250,
   });
+}
+
+// ============= Liabilities =============
+
+export type PlaidAprRecord = {
+  apr_percentage: number | null;
+  apr_type: string | null;
+  balance_subject_to_apr: number | null;
+  interest_charge_amount: number | null;
+};
+
+export type PlaidCreditLiability = {
+  account_id: string;
+  aprs: PlaidAprRecord[] | null;
+  is_overdue: boolean | null;
+  last_payment_amount: number | null;
+  last_payment_date: string | null;
+  last_statement_balance: number | null;
+  last_statement_issue_date: string | null;
+  minimum_payment_amount: number | null;
+  next_payment_due_date: string | null;
+};
+
+export type PlaidStudentLiability = {
+  account_id: string;
+  account_number: string | null;
+  disbursement_dates: string[] | null;
+  expected_payoff_date: string | null;
+  guarantor: string | null;
+  interest_rate_percentage: number | null;
+  is_overdue: boolean | null;
+  last_payment_amount: number | null;
+  last_payment_date: string | null;
+  last_statement_balance: number | null;
+  last_statement_issue_date: string | null;
+  loan_name: string | null;
+  loan_status: { type: string | null; end_date: string | null } | null;
+  minimum_payment_amount: number | null;
+  next_payment_due_date: string | null;
+  origination_date: string | null;
+  origination_principal_amount: number | null;
+  outstanding_interest_amount: number | null;
+  payment_reference_number: string | null;
+  pslf_status: Record<string, unknown> | null;
+  repayment_plan: { type: string | null; description: string | null } | null;
+  sequence_number: string | null;
+  servicer_address: Record<string, unknown> | null;
+  ytd_interest_paid: number | null;
+  ytd_principal_paid: number | null;
+};
+
+export type PlaidMortgageLiability = {
+  account_id: string;
+  account_number: string | null;
+  current_late_fee: number | null;
+  escrow_balance: number | null;
+  has_pmi: boolean | null;
+  has_prepayment_penalty: boolean | null;
+  interest_rate: { percentage: number | null; type: string | null } | null;
+  last_payment_amount: number | null;
+  last_payment_date: string | null;
+  loan_term: string | null;
+  loan_type_description: string | null;
+  maturity_date: string | null;
+  next_monthly_payment: number | null;
+  next_payment_due_date: string | null;
+  origination_date: string | null;
+  origination_principal_amount: number | null;
+  past_due_amount: number | null;
+  property_address: Record<string, unknown> | null;
+  ytd_interest_paid: number | null;
+  ytd_principal_paid: number | null;
+};
+
+export async function getLiabilities(access_token: string): Promise<{
+  accounts: PlaidAccount[];
+  liabilities: {
+    credit: PlaidCreditLiability[] | null;
+    student: PlaidStudentLiability[] | null;
+    mortgage: PlaidMortgageLiability[] | null;
+  };
+}> {
+  return plaidPost("/liabilities/get", { access_token });
 }
