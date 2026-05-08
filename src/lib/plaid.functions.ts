@@ -9,6 +9,7 @@ import {
   getAccounts,
   getHoldings,
   getInstitution,
+  getLiabilities,
   syncTransactions,
 } from "./plaid.server";
 
