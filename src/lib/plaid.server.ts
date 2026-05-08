@@ -67,17 +67,31 @@ function getCreds() {
 
 async function plaidPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const { client_id, secret } = getCreds();
+  const started = Date.now();
   const res = await fetch(`${getPlaidBase()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ client_id, secret, ...body }),
   });
   const json = (await res.json()) as Record<string, unknown>;
+  const request_id = (json.request_id as string) ?? "n/a";
+  const item_id =
+    (json.item_id as string) ??
+    ((json.item as Record<string, unknown> | undefined)?.item_id as string | undefined) ??
+    null;
+  const duration_ms = Date.now() - started;
   if (!res.ok) {
     const code = (json.error_code as string) ?? "unknown";
     const msg = (json.error_message as string) ?? `Plaid request failed (${res.status})`;
-    throw new Error(`Plaid ${code}: ${msg}`);
+    // Plaid support requires request_id; always log it on errors.
+    console.error(
+      `[plaid] FAIL ${path} status=${res.status} code=${code} request_id=${request_id} item_id=${item_id ?? "n/a"} duration_ms=${duration_ms} msg=${msg}`,
+    );
+    throw new Error(`Plaid ${code}: ${msg} (request_id=${request_id})`);
   }
+  console.log(
+    `[plaid] OK ${path} request_id=${request_id} item_id=${item_id ?? "n/a"} duration_ms=${duration_ms}`,
+  );
   return json as T;
 }
 
