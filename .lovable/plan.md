@@ -1,74 +1,59 @@
-## Plan: Plaid Liabilities integration
+## Goal
 
-Adds Plaid's Liabilities product so credit card APRs/min payments, student loan rates/payoff dates, and mortgage rates/escrow/next-payment data flow into Æther Wealth alongside the existing accounts/holdings/transactions sync.
+Bring the app's end-user notices and consent flow up to what Plaid's MSA + production-launch checklist requires, and document it so the requirement is verifiably met.
 
-### 1. Database — new `aggregated_liabilities` table (migration)
+## Current state
 
-One row per liability account (matches by `account_id` → `aggregated_accounts.id`). Stores the common normalized fields plus a JSONB grab-bag for product-specific extras.
+- **`/connections`** shows pre-Link disclosure text naming Plaid, linking to Plaid's End User Privacy Policy, and pointing to our Privacy/Terms.
+- **`/privacy`** Section 11 already mentions Plaid as a data processor and links to plaid.com/legal.
+- **Onboarding "Connect" screen** only says "via Plaid · Read-only · 256-bit encrypted" before pushing the user to `/connections`.
+- **Signup form** has no explicit "I agree to Terms / Privacy" acknowledgment.
+- **No record** is kept of when/where a user accepted these terms.
 
-Columns:
-- `id uuid pk default gen_random_uuid()`
-- `user_id uuid not null` (RLS key)
-- `account_id uuid not null` — references our `aggregated_accounts.id`
-- `liability_type text not null check in ('credit','student','mortgage')`
-- `last_payment_amount numeric` / `last_payment_date date`
-- `next_payment_due_date date` / `minimum_payment_amount numeric`
-- `apr numeric` (effective/primary APR; credit cards) / `interest_rate_percentage numeric` (student/mortgage)
-- `interest_rate_type text` (mortgage: fixed/variable)
-- `origination_date date` / `expected_payoff_date date` (student/mortgage)
-- `last_statement_balance numeric` / `last_statement_issue_date date` (credit)
-- `escrow_balance numeric` / `ytd_interest_paid numeric` / `ytd_principal_paid numeric` (mortgage)
-- `loan_name text` / `loan_status text` (student)
-- `details jsonb not null default '{}'` — full Plaid sub-object for anything not normalized
-- `iso_currency_code text default 'USD'`
-- `last_synced_at timestamptz not null default now()`
-- `created_at timestamptz not null default now()`
-- Unique index on `(account_id, liability_type)` so resync upserts cleanly
+## Gaps Plaid expects us to close
 
-RLS: enable + 4 policies (`select/insert/update/delete` where `user_id = auth.uid()`), mirroring `aggregated_holdings`.
+1. Affirmative consent at signup to Terms + Privacy (and, by extension, the Plaid disclosure inside Privacy).
+2. Stronger pre-Link disclosure: name Plaid, list the data categories accessed (balances, transactions, identity, account/routing, investment holdings, liabilities), state the purpose, give the user a clear way to decline/revoke.
+3. First-time pre-Link consent confirmation so we can prove the user saw the disclosure before Link opened.
+4. Audit trail: persist `consent_accepted_at`, `consent_version`, and `plaid_disclosure_accepted_at` per user.
+5. Privacy policy tweaks: data categories Plaid receives, US processing, retention after disconnect.
 
-### 2. Server — `src/lib/plaid.server.ts`
+## Plan
 
-- Add `"liabilities"` to the products array in `createLinkToken`.
-- Add `getLiabilities(access_token)` calling `/liabilities/get`. Typed return:
-  ```ts
-  { accounts: PlaidAccount[]; liabilities: { credit: PlaidCreditLiability[]; student: PlaidStudentLiability[]; mortgage: PlaidMortgageLiability[] } }
-  ```
+### 1. Signup consent (frontend)
+- Add a required checkbox to the signup form in `src/components/Onboarding.tsx` (`AuthForm`): "I agree to the Terms of Service and Privacy Policy, and I understand that connecting a financial account uses Plaid as described in the Privacy Policy."
+- Block submit until checked. Surface inline error if missing.
 
-### 3. Sync — `src/lib/plaid.functions.ts`
+### 2. Pre-Link consent gate (frontend)
+- New `PlaidConsentDialog` component in `src/components/PlaidConsentDialog.tsx` shown on `/connections` the first time the user clicks "Connect bank" (and again from the Onboarding "Connect" screen if launched there).
+- Dialog content: Plaid name + role, exact data categories pulled, purpose, link to Plaid End User Privacy Policy, link to our Privacy. Two actions: "Continue to Plaid" / "Cancel".
+- Persist acceptance locally (`localStorage`) and server-side (see step 4) so it's not shown again.
 
-In `syncItemInternal`, after the holdings block and before transactions, add a `try`/`catch` "Liabilities" block that:
-1. Calls `getLiabilities(access_token)`. If the item doesn't support liabilities, Plaid returns `PRODUCTS_NOT_SUPPORTED` / `NO_LIABILITY_ACCOUNTS` — swallow these like we already do for holdings.
-2. Flattens the three arrays into rows mapped to our `account_id` via `acctIdMap` (same `${userId}_${plaidAccountId}` namespacing).
-3. Deletes existing liabilities rows for the synced `account_id` set, then inserts fresh rows.
-4. Adds `liabilitiesUpdated` count to the return value and `sync_log` row (new column not required — log keeps `accounts_updated`/`holdings_updated`; we just include count in the return for the connections page).
+### 3. Tighten existing /connections disclosure copy
+- Replace the current short paragraph in `src/routes/connections.tsx` (around line 1118) with the same canonical disclosure used in the dialog, so even returning users always see it next to the Connect button.
 
-Existing items in the DB won't have liabilities until the user reconnects (Plaid only adds new products to new link tokens). That's acceptable; OK to note in UI later.
+### 4. Consent audit trail (backend)
+- Add columns to `public.user_intake` (or a new `user_consents` table — leaning toward a new table): `terms_accepted_at`, `privacy_accepted_at`, `terms_version`, `plaid_disclosure_accepted_at`, `plaid_disclosure_version`.
+- New server fn `recordConsent({ kind, version })` in a `*.functions.ts` file, gated by `requireSupabaseAuth`.
+- Call it: on successful signup (terms/privacy) and on accepting the Plaid dialog.
 
-### 4. Aggregator — `src/lib/wealth.functions.ts`
+### 5. Privacy policy updates
+- In `src/routes/privacy.tsx` Section 11, add: explicit data categories Plaid accesses on our behalf, that Plaid processes data in the US, that disconnecting an institution triggers `/item/remove` and purges the related stored data within 30 days.
+- Bump "Last updated" date.
 
-Add `liabilities` to the user wealth aggregate so the existing dashboard/timeline/portfolio queries can read it. Initial pass: just expose the rows; deeper analytics (debt avalanche, amortization) are out of scope for this plan.
+### 6. QA
+- Verify signup is blocked without the checkbox.
+- Verify the consent dialog appears once, and that the Plaid Link handler only opens after acceptance.
+- Verify `recordConsent` rows land in the DB with the right `user_id`.
+- Verify retention sweep + `/item/remove` references in the privacy copy still match the code.
 
-### 5. UI — minimal surface
+## Out of scope
 
-Add a "Debt details" section to `src/routes/connections.tsx` (under each connected institution) listing each liability account with: type badge, APR/interest rate, next payment due, minimum payment, last statement balance (credit) or escrow + next payment (mortgage) or repayment plan + payoff date (student). No new route. We can build a dedicated `/debts` page in a later pass if you want.
+- Cookie banner (only essential cookies — not legally required in US; can revisit for EU rollout).
+- Reconsent prompts when versions bump (will add when we first bump a version).
 
-### 6. Types
+## Technical notes
 
-`src/integrations/supabase/types.ts` is auto-regenerated after the migration runs — no manual edit.
-
-### Out of scope (call out for later)
-
-- Webhooks for `LIABILITIES_UPDATE` (Plaid pushes when balances/APRs change). Defer until we wire the general Plaid webhook receiver.
-- Payoff projections, debt-payment scheduling, mortgage amortization charts.
-- Auto loans / personal loans (Plaid Liabilities doesn't cover them broadly).
-
-### Files touched
-
-- `supabase/migrations/<new>.sql` — create table + RLS
-- `src/lib/plaid.server.ts` — products array + `getLiabilities`
-- `src/lib/plaid.functions.ts` — sync block + return shape
-- `src/lib/wealth.functions.ts` — include liabilities in aggregate
-- `src/routes/connections.tsx` — render debt details panel
-
-After approval, switch to default mode and implement.
+- The new table option is preferred over expanding `user_intake` because intake is a one-time profile blob, while consent should be append-only and queryable per kind/version.
+- Server fn must use `requireSupabaseAuth` middleware (see tanstack-supabase-integration). RLS: users can `select`/`insert` their own rows; no update/delete from clients.
+- The Plaid disclosure dialog should NOT itself open Plaid Link — it just gates the existing `openPlaidLink` flow in `connections.tsx`, so `loadPlaidScript` / token exchange code is untouched.

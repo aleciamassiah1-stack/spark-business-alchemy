@@ -74,6 +74,8 @@ import {
   listCategorySuggestions,
   type TransactionRule,
 } from "@/lib/rules.functions";
+import { PlaidConsentDialog } from "@/components/PlaidConsentDialog";
+import { hasLocalConsent } from "@/lib/consent-versions";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
@@ -183,7 +185,7 @@ function ConnectionsPage() {
   const [quickRuleTx, setQuickRuleTx] = useState<Tx | null>(null);
   const [plaidEnv, setPlaidEnv] = useState<"sandbox" | "production" | null>(null);
   const [hasLiveSubscription, setHasLiveSubscription] = useState(false);
-
+  const [consentDialog, setConsentDialog] = useState<null | { mode: "new" | "update"; itemId?: string }>(null);
   const showToast = (kind: "ok" | "err", msg: string) => {
     setToast({ kind, msg });
     setTimeout(() => setToast(null), 4000);
@@ -218,7 +220,15 @@ function ConnectionsPage() {
       .catch(() => {});
   }, []);
 
-  const handleConnect = async () => {
+  const requestConnect = () => {
+    if (hasLocalConsent("plaid_disclosure")) {
+      void runConnect();
+    } else {
+      setConsentDialog({ mode: "new" });
+    }
+  };
+
+  const runConnect = async () => {
     setLinking(true);
     try {
       await loadPlaidScript();
@@ -429,7 +439,7 @@ function ConnectionsPage() {
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
-            onConnect={handleConnect}
+            onConnect={requestConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
             onDisconnect={handleDisconnect}
@@ -628,6 +638,16 @@ function ConnectionsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PlaidConsentDialog
+        open={consentDialog !== null}
+        onCancel={() => setConsentDialog(null)}
+        onAccept={() => {
+          const pending = consentDialog;
+          setConsentDialog(null);
+          if (pending?.mode === "new") void runConnect();
+        }}
+      />
     </MobileShell>
   );
 }

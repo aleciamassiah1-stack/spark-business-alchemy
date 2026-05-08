@@ -27,7 +27,7 @@ function PrivacyPage() {
           Legal
         </p>
         <h1 className="mt-2 font-serif text-4xl text-foreground">Privacy Policy</h1>
-        <p className="mt-2 text-xs text-muted-foreground">Last updated: April 23, 2026</p>
+        <p className="mt-2 text-xs text-muted-foreground">Last updated: May 8, 2026</p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed text-foreground/85">
           <section>
@@ -125,23 +125,26 @@ function PrivacyPage() {
             <h2 className="mb-3 font-serif text-xl text-foreground">11. Data Services — Plaid</h2>
             <p>
               Æther Wealth uses Plaid Technologies, Inc. ("Plaid") to connect your financial
-              accounts. By connecting your accounts through Plaid Link, you acknowledge and agree
-              that your data will be handled in accordance with Plaid's Privacy Policy, available
-              at{" "}
+              accounts. Before you launch Plaid Link for the first time we present an in-app
+              disclosure naming Plaid and listing the data categories accessed; clicking
+              "Agree & continue to Plaid" records your affirmative consent. The data
+              categories Plaid shares with us on your behalf include: account name, type,
+              balances, last-four mask; transactions (date, amount, merchant, category);
+              investment holdings and securities; loan and liability terms; and account/routing
+              numbers when needed for a feature you initiate. Plaid processes this data in the
+              United States. Plaid's own collection, use, and sharing of your data is governed
+              by Plaid's End User Privacy Policy at{" "}
               <a
-                href="https://plaid.com/legal"
+                href="https://plaid.com/legal/#end-user-privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
                 plaid.com/legal
               </a>
-              . Plaid collects, uses, and shares your personal and financial information as
-              described in their privacy policy to provide account connection services. You grant
-              Æther Wealth and Plaid the right to access, transmit and use your financial data
-              solely to provide the services described in this Privacy Policy. You may disconnect
-              your accounts and revoke Plaid's access to your data at any time through the Security
-              Center within the Æther Wealth application.
+              . You may disconnect any institution at any time from the Connections screen;
+              we will then call Plaid's <code>/item/remove</code> endpoint to revoke access
+              and purge the related stored data within 30 days.
             </p>
           </section>
 

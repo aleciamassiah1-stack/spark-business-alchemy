@@ -716,6 +716,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [agreed, setAgreed] = useState(false);
   const { update, markStep } = useOnboarding();
 
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
@@ -741,7 +742,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const phoneValid = phone.replace(/\D/g, "").length >= 7;
   const nameValid = fullName.trim().length >= 2;
 
-  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid;
+  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid && agreed;
   const signinValid = emailValid && password.length >= 8;
   const valid = mode === "signup" ? signupValid : signinValid;
 
@@ -770,6 +771,35 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         update({ fullName });
         markStep("account");
 
+        // Record Terms + Privacy acceptance for the audit trail. Best-effort:
+        // a transient failure should not block account creation. Only attempted
+        // when a session exists (auto-confirm). When email confirmation is
+        // required we'll record on first sign-in instead.
+        if (data.session) {
+          try {
+            const [{ recordConsent }, { CONSENT_VERSIONS, markLocalConsent }] = await Promise.all([
+              import("@/lib/consent.functions"),
+              import("@/lib/consent-versions"),
+            ]);
+            const ua =
+              typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
+            await Promise.allSettled([
+              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
+              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+            ]);
+            markLocalConsent("terms");
+            markLocalConsent("privacy");
+          } catch (consentErr) {
+            console.warn("Failed to record signup consent:", consentErr);
+          }
+        } else {
+          // Stash intent locally so we can record after first authenticated sign-in.
+          try {
+            sessionStorage.setItem("aether.consent.pending", "1");
+          } catch {
+            // ignore
+          }
+        }
         // Supabase returns a "fake" user object (identities: []) when the email
         // is already registered, to prevent account enumeration. In that case
         // no confirmation email is sent — we must explicitly resend it.
@@ -830,6 +860,28 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 : "This account is scheduled for deletion. Contact support@aetherwealth.co to restore access.",
             );
             return;
+          }
+        } catch {
+          // Non-fatal.
+        }
+
+        // Flush any pending signup consent that we couldn't record at signup
+        // time because email confirmation was required.
+        try {
+          if (sessionStorage.getItem("aether.consent.pending") === "1") {
+            const [{ recordConsent }, { CONSENT_VERSIONS, markLocalConsent }] = await Promise.all([
+              import("@/lib/consent.functions"),
+              import("@/lib/consent-versions"),
+            ]);
+            const ua =
+              typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
+            await Promise.allSettled([
+              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
+              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+            ]);
+            markLocalConsent("terms");
+            markLocalConsent("privacy");
+            sessionStorage.removeItem("aether.consent.pending");
           }
         } catch {
           // Non-fatal.
@@ -967,7 +1019,30 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           {!pwNum && <li>• Password must include a number</li>}
           {!pwSym && <li>• Password must include a symbol (!@#$…)</li>}
           {!phoneValid && <li>• Enter a valid phone number (7+ digits)</li>}
+          {!agreed && <li>• Agree to the Terms and Privacy Policy</li>}
         </ul>
+      )}
+
+      {mode === "signup" && (
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 cursor-pointer accent-primary"
+          />
+          <span>
+            I agree to the{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+              Privacy Policy
+            </a>
+            , and I understand that connecting a financial account uses Plaid as described in the Privacy Policy.
+          </span>
+        </label>
       )}
 
       <PrimaryCta type="submit" disabled={!valid || busy || isLocked}>
