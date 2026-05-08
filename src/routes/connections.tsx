@@ -1073,6 +1073,15 @@ function AccountsTab({
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
+                {item.status === "requires_update" && (
+                  <button
+                    onClick={() => onReconnect(item.id, item.institution_name)}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning hover:bg-warning/15"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Reconnect required — your bank needs you to sign in again
+                  </button>
+                )}
                 {accts.length > 0 && (
                   <div className="mt-3 divide-y divide-white/[0.04] rounded-xl border border-white/[0.04] bg-white/[0.02]">
                     {accts.map((a) => (
