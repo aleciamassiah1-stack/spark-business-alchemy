@@ -50,6 +50,32 @@ export const plaidCreateLinkToken = createServerFn({ method: "POST" }).handler(a
   }
 });
 
+// 1b. Create an UPDATE-mode link token for an existing item that needs reauth.
+// Triggered after detecting ITEM_LOGIN_REQUIRED, PENDING_EXPIRATION, or
+// PENDING_DISCONNECT for the item.
+export const plaidCreateUpdateLinkToken = createServerFn({ method: "POST" })
+  .inputValidator((input: { itemId: string }) =>
+    z.object({ itemId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await requireUserId();
+      const { data: item, error } = await supabaseAdmin
+        .from("plaid_items")
+        .select("access_token")
+        .eq("id", data.itemId)
+        .eq("user_id", userId)
+        .single();
+      if (error || !item) throw new Error(error?.message ?? "Item not found");
+      const { link_token, expiration } = await createUpdateLinkToken(userId, item.access_token);
+      return { link_token, expiration, error: null as string | null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create update link token";
+      console.error("plaidCreateUpdateLinkToken error:", message);
+      return { link_token: null, expiration: null, error: message };
+    }
+  });
+
 // 2. Exchange a public_token for access_token, persist the item, and pull initial data
 export const plaidExchangeToken = createServerFn({ method: "POST" })
   .inputValidator((input: { public_token: string; institution_id?: string; institution_name?: string }) =>
