@@ -200,6 +200,7 @@ function ConnectionsPage() {
     setItems(agg.items as Item[]);
     setAccounts(agg.accounts as Account[]);
     setHoldings(agg.holdings as Holding[]);
+    setLiabilities((agg.liabilities ?? []) as Liability[]);
     setTransactions(agg.transactions as Tx[]);
     setProperties(props.properties as Property[]);
     setPolicies(ins.policies as Policy[]);
