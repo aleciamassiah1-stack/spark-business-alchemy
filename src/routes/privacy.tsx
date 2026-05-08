@@ -27,7 +27,7 @@ function PrivacyPage() {
           Legal
         </p>
         <h1 className="mt-2 font-serif text-4xl text-foreground">Privacy Policy</h1>
-        <p className="mt-2 text-xs text-muted-foreground">Last updated: April 23, 2026</p>
+        <p className="mt-2 text-xs text-muted-foreground">Last updated: May 8, 2026</p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed text-foreground/85">
           <section>
