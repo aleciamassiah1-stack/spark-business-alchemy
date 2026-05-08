@@ -906,6 +906,7 @@ function AccountsTab({
   items,
   accounts,
   holdings,
+  liabilities,
   linking,
   plaidEnv,
   hasLiveSubscription,
@@ -917,6 +918,7 @@ function AccountsTab({
   items: Item[];
   accounts: Account[];
   holdings: Holding[];
+  liabilities: Liability[];
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
   hasLiveSubscription: boolean;
