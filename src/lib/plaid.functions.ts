@@ -96,6 +96,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
         itemId: null,
         accountsUpdated: 0,
         holdingsUpdated: 0,
+        liabilitiesUpdated: 0,
         transactionsUpdated: 0,
         error: message,
       };
