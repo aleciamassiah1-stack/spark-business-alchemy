@@ -155,11 +155,16 @@ export async function createUpdateLinkToken(
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
   const link_customization_name = getLinkCustomizationName();
+  const language = sanitize(process.env.PLAID_LANGUAGE) || "en";
+  const countryCodes = (sanitize(process.env.PLAID_COUNTRY_CODES) || "US")
+    .split(",")
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
-    country_codes: ["US"],
-    language: "en",
+    country_codes: countryCodes,
+    language,
     access_token,
     redirect_uri,
     webhook: getPlaidWebhookUrl(),
