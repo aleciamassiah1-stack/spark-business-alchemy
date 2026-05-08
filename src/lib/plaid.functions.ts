@@ -102,6 +102,71 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
       const userId = await requireUserId();
       const { access_token, item_id } = await exchangePublicToken(data.public_token);
 
+      // Duplicate-Item detection (Plaid best practice):
+      // Before persisting, fetch the new item's accounts and compare against
+      // existing items for this user at the same institution. If the same
+      // account masks already exist, the user is re-linking a bank they
+      // already connected. Deactivate the new Item to avoid double-billing
+      // and surface a friendly error so the UI can prompt the user.
+      let newAccounts: { account_id: string; mask: string | null }[] = [];
+      let resolvedInstitutionId: string | null = data.institution_id ?? null;
+      let resolvedInstitutionName: string | null = data.institution_name ?? null;
+      try {
+        const acctRes = await getAccounts(access_token);
+        newAccounts = acctRes.accounts.map((a) => ({ account_id: a.account_id, mask: a.mask }));
+        if (acctRes.item.institution_id) resolvedInstitutionId = acctRes.item.institution_id;
+      } catch (e) {
+        // If we can't fetch accounts we fall back to item_id uniqueness only.
+        console.warn(
+          "duplicate-detection: /accounts/get failed:",
+          e instanceof Error ? e.message : e,
+        );
+      }
+
+      if (resolvedInstitutionId && newAccounts.length > 0) {
+        const { data: siblings } = await supabaseAdmin
+          .from("plaid_items")
+          .select("id, item_id, institution_name")
+          .eq("user_id", userId)
+          .eq("institution_id", resolvedInstitutionId);
+        const siblingIds = (siblings ?? []).filter((s) => s.item_id !== item_id).map((s) => s.id);
+        if (siblingIds.length > 0) {
+          const { data: existingAccts } = await supabaseAdmin
+            .from("aggregated_accounts")
+            .select("mask, item_id")
+            .in("item_id", siblingIds);
+          const existingMasks = new Set(
+            (existingAccts ?? []).map((a) => a.mask).filter((m): m is string => !!m),
+          );
+          const newMasks = newAccounts
+            .map((a) => a.mask)
+            .filter((m): m is string => !!m);
+          const overlap = newMasks.some((m) => existingMasks.has(m));
+          if (overlap) {
+            // Tear down the new Plaid Item — we never persisted it locally.
+            try {
+              await removeItem(access_token);
+            } catch (e) {
+              console.warn(
+                "duplicate-detection: /item/remove cleanup failed:",
+                e instanceof Error ? e.message : e,
+              );
+            }
+            const instName = resolvedInstitutionName ?? siblings?.[0]?.institution_name ?? "this institution";
+            return {
+              ok: false as const,
+              itemId: null,
+              duplicate: true as const,
+              accountsUpdated: 0,
+              holdingsUpdated: 0,
+              liabilitiesUpdated: 0,
+              transactionsUpdated: 0,
+              error: `${instName} is already connected. Refresh or reconnect the existing link instead of adding it again.`,
+            };
+          }
+        }
+      }
+
       const { data: inserted, error: insertErr } = await supabaseAdmin
         .from("plaid_items")
         .upsert(
@@ -109,8 +174,8 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
             user_id: userId,
             item_id,
             access_token,
-            institution_id: data.institution_id ?? null,
-            institution_name: data.institution_name ?? null,
+            institution_id: resolvedInstitutionId,
+            institution_name: resolvedInstitutionName,
             status: "active",
           },
           { onConflict: "item_id" },
@@ -124,13 +189,20 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
 
       const sync = await syncItemInternal(inserted.id, access_token, userId);
 
-      return { ok: true as const, itemId: inserted.id, ...sync, error: null as string | null };
+      return {
+        ok: true as const,
+        itemId: inserted.id,
+        duplicate: false as const,
+        ...sync,
+        error: null as string | null,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to exchange token";
       console.error("plaidExchangeToken error:", message);
       return {
         ok: false as const,
         itemId: null,
+        duplicate: false as const,
         accountsUpdated: 0,
         holdingsUpdated: 0,
         liabilitiesUpdated: 0,

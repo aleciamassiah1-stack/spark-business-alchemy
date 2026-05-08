@@ -89,10 +89,12 @@ function OAuthCallbackPage() {
             });
             sessionStorage.removeItem(LINK_TOKEN_KEY);
             if (!cancelled) {
-              navigate({
-                to: "/connections",
-                search: res.ok ? { linked: "1" } : { linked: "0" },
-              } as never);
+              const search = res.ok
+                ? { linked: "1" }
+                : res.duplicate
+                  ? { linked: "duplicate" }
+                  : { linked: "0" };
+              navigate({ to: "/connections", search } as never);
             }
           },
           onExit: (err: unknown) => {
