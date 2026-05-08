@@ -105,16 +105,39 @@ function getLinkCustomizationName(): string | undefined {
   return perEnv || sanitize(process.env.PLAID_LINK_CUSTOMIZATION_NAME);
 }
 
+// Customized Link flow:
+// - `products`: only the strictly-required core (transactions) so users at
+//   institutions that don't support investments/liabilities can still link.
+// - `required_if_supported_products`: auth/investments/liabilities are enabled
+//   automatically when the chosen institution supports them — net-worth coverage
+//   without blocking partial-support banks.
+// - `account_filters`: only surface account types we actually use, so the
+//   account-select pane is short and on-topic.
+// - `language` / `country_codes`: env-overridable defaults (US / en).
+// - `link_customization_name`: lets the Dashboard control colors, copy, and
+//   single- vs multi-select account selection per environment.
 export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResp> {
   const redirect_uri =
     sanitize(process.env.PLAID_REDIRECT_URI) || "https://aetherwealth.co/oauth-callback";
   const link_customization_name = getLinkCustomizationName();
+  const language = sanitize(process.env.PLAID_LANGUAGE) || "en";
+  const countryCodes = (sanitize(process.env.PLAID_COUNTRY_CODES) || "US")
+    .split(",")
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
   return plaidPost<PlaidLinkTokenResp>("/link/token/create", {
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
-    products: ["auth", "transactions", "investments", "liabilities"],
-    country_codes: ["US"],
-    language: "en",
+    products: ["transactions"],
+    required_if_supported_products: ["auth", "investments", "liabilities"],
+    account_filters: {
+      depository: { account_subtypes: ["checking", "savings", "cd", "money market"] },
+      credit: { account_subtypes: ["credit card"] },
+      loan: { account_subtypes: ["student", "mortgage", "auto", "home equity"] },
+      investment: { account_subtypes: ["all"] },
+    },
+    country_codes: countryCodes,
+    language,
     redirect_uri,
     webhook: getPlaidWebhookUrl(),
     ...(link_customization_name ? { link_customization_name } : {}),
