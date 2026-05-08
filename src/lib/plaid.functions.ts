@@ -546,7 +546,11 @@ async function syncItemInternal(itemRowId: string, access_token: string, userId:
 
     await supabaseAdmin
       .from("plaid_items")
-      .update({ last_synced_at: new Date().toISOString(), status: "active" })
+      .update({
+        last_synced_at: new Date().toISOString(),
+        status: "active",
+        new_accounts_available: false,
+      })
       .eq("id", itemRowId);
 
     await supabaseAdmin.from("sync_log").insert({
