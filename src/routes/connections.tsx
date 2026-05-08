@@ -998,6 +998,7 @@ function AccountsTab({
             const accts = acctsByItem(item.id);
             const acctIds = accts.map((a) => a.id);
             const holds = holdings.filter((h) => acctIds.includes(h.account_id));
+            const libs = liabilities.filter((l) => acctIds.includes(l.account_id));
             const isDemo = item.institution_name?.includes("(Demo)");
             return (
               <LuxCard key={item.id} className="p-4">
