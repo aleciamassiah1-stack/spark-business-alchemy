@@ -1029,7 +1029,7 @@ function AccountsTab({
   onSeedDemo: () => void;
   onClearDemo: () => void;
   onDisconnect: (id: string, name: string | null) => void;
-  onReconnect: (id: string, name: string | null) => void;
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
 }) {
   const acctsByItem = (id: string) => accounts.filter((a) => a.item_id === id);
   const hasDemo = items.some((i) => i.institution_name?.includes("(Demo)"));
