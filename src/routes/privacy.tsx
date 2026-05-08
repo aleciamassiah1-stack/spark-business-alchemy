@@ -76,7 +76,7 @@ function PrivacyPage() {
             <h2 className="mb-3 font-serif text-xl text-foreground">5. Your Rights</h2>
             <p>
               You may request a copy, correction, or deletion of your data at any time from
-              Settings or by emailing privacy@aetherwealth.co. EU/UK residents have GDPR rights;
+              Settings or by emailing team@aetherwealth.co. EU/UK residents have GDPR rights;
               California residents have CCPA rights. Account deletions are honoured within 30
               days; you may cancel the deletion during the grace period.
             </p>
@@ -148,7 +148,7 @@ function PrivacyPage() {
           <section>
             <h2 className="mb-3 font-serif text-xl text-foreground">12. Contact</h2>
             <p>
-              Privacy requests: <a href="mailto:privacy@aetherwealth.co" className="text-primary hover:underline">privacy@aetherwealth.co</a>
+              Privacy requests: <a href="mailto:team@aetherwealth.co" className="text-primary hover:underline">team@aetherwealth.co</a>
             </p>
           </section>
         </div>
