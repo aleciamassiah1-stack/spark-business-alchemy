@@ -424,6 +424,7 @@ function ConnectionsPage() {
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
             onDisconnect={handleDisconnect}
+            onReconnect={handleReconnect}
           />
         )}
         {tab === "properties" && (
