@@ -638,6 +638,16 @@ function ConnectionsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PlaidConsentDialog
+        open={consentDialog !== null}
+        onCancel={() => setConsentDialog(null)}
+        onAccept={() => {
+          const pending = consentDialog;
+          setConsentDialog(null);
+          if (pending?.mode === "new") void runConnect();
+        }}
+      />
     </MobileShell>
   );
 }
