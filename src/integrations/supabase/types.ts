@@ -633,6 +633,60 @@ export type Database = {
         }
         Relationships: []
       }
+      plaid_link_events: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          error_type: string | null
+          event_name: string
+          exit_status: string | null
+          id: string
+          institution_id: string | null
+          institution_name: string | null
+          is_update_mode: boolean
+          link_session_id: string | null
+          metadata: Json | null
+          request_id: string | null
+          user_id: string | null
+          view_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          event_name: string
+          exit_status?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_update_mode?: boolean
+          link_session_id?: string | null
+          metadata?: Json | null
+          request_id?: string | null
+          user_id?: string | null
+          view_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          event_name?: string
+          exit_status?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_update_mode?: boolean
+          link_session_id?: string | null
+          metadata?: Json | null
+          request_id?: string | null
+          user_id?: string | null
+          view_name?: string | null
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string
