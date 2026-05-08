@@ -1,6 +1,37 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { plaidExchangeToken } from "@/lib/plaid.functions";
+import { plaidExchangeToken, plaidLogLinkEvent } from "@/lib/plaid.functions";
+
+type PlaidLinkEventMetadata = {
+  view_name?: string | null;
+  institution_id?: string | null;
+  institution_name?: string | null;
+  request_id?: string | null;
+  link_session_id?: string | null;
+  error_code?: string | null;
+  error_type?: string | null;
+  error_message?: string | null;
+  exit_status?: string | null;
+};
+
+function reportPlaidLinkEvent(eventName: string, metadata: PlaidLinkEventMetadata): void {
+  void plaidLogLinkEvent({
+    data: {
+      eventName,
+      viewName: metadata.view_name ?? null,
+      institutionId: metadata.institution_id ?? null,
+      institutionName: metadata.institution_name ?? null,
+      requestId: metadata.request_id ?? null,
+      linkSessionId: metadata.link_session_id ?? null,
+      errorCode: metadata.error_code ?? null,
+      errorType: metadata.error_type ?? null,
+      errorMessage: metadata.error_message ?? null,
+      exitStatus: metadata.exit_status ?? null,
+    },
+  }).catch(() => {
+    // best-effort
+  });
+}
 
 export const Route = createFileRoute("/oauth-callback")({
   head: () => ({
