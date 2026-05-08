@@ -136,7 +136,7 @@ const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "rules", label: "Rules", icon: Tag },
 ];
 
-type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string };
+type Item = { id: string; institution_name: string | null; status: string; last_synced_at: string | null; created_at: string; new_accounts_available?: boolean | null };
 type Account = { id: string; item_id: string; name: string; mask: string | null; type: string; subtype: string | null; current_balance: number | null };
 type Holding = { id: string; account_id: string; ticker: string | null; name: string | null; quantity: number | null; institution_value: number | null; cost_basis: number | null };
 type Liability = {
