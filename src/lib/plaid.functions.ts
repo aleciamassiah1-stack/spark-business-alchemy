@@ -91,7 +91,7 @@ export const plaidLogLinkEvent = createServerFn({ method: "POST" })
         error_message: data.errorMessage ?? null,
         exit_status: data.exitStatus ?? null,
         is_update_mode: data.isUpdateMode ?? false,
-        metadata: data.metadata ?? null,
+        metadata: (data.metadata ?? null) as never,
       });
       if (error) {
         console.warn("plaidLogLinkEvent insert failed:", error.message);
