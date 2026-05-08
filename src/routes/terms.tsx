@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -143,6 +143,15 @@ function TermsPage() {
         <div className="mt-12 flex items-center justify-between text-xs text-muted-foreground">
           <Link to="/privacy" className="hover:text-foreground">Privacy Policy →</Link>
           <Link to="/" className="hover:text-foreground">Home</Link>
+        </div>
+
+        {/* Trust strip — bank-grade security attribution */}
+        <div className="mt-8 flex items-center justify-center gap-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
+          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Bank-grade security · Powered by{" "}
+            <span className="text-foreground">Plaid</span>
+          </p>
         </div>
       </div>
     </div>
