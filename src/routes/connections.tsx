@@ -36,6 +36,7 @@ import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { useWealth } from "@/lib/wealth-context";
 import {
   plaidCreateLinkToken,
+  plaidCreateUpdateLinkToken,
   plaidExchangeToken,
   plaidSyncAll,
   plaidDisconnectItem,
