@@ -1021,6 +1021,12 @@ function AccountsTab({
       <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
       <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
 
+      <ReconnectBanner
+        items={items.filter((i) => i.status === "requires_update")}
+        onReconnect={onReconnect}
+        linking={linking}
+      />
+
 
       {items.length === 0 ? (
         <div className="mt-6">
