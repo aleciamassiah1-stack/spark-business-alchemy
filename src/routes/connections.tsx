@@ -1163,23 +1163,44 @@ function AccountsTab({
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onConnect}
-          disabled={linking}
-          className="flex items-center justify-center gap-2 rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground glow-violet disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          {linking ? "Opening…" : "Connect bank"}
-        </button>
-        <button
-          onClick={hasDemo ? onClearDemo : onSeedDemo}
-          className="flex items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] py-3 text-sm font-medium text-foreground hover:bg-white/[0.06]"
-        >
-          <Sparkles className="h-4 w-4 text-gold" />
-          {hasDemo ? "Clear demo" : "Demo mode"}
-        </button>
-      </div>
+      {/* Benefits panel — Plaid Link UI best practice: explain why before
+          asking the user to connect. Increases conversion vs. a bare button. */}
+      {items.length === 0 && (
+        <LuxCard className="mb-4 p-4">
+          <p className="font-serif text-sm text-foreground">
+            Why link with Plaid?
+          </p>
+          <ul className="mt-3 space-y-2">
+            <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+              <span><span className="text-foreground">Real-time net worth</span> — balances, holdings and transactions stay current automatically.</span>
+            </li>
+            <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+              <span><span className="text-foreground">Bank-grade security</span> — your credentials go straight to Plaid, never to us.</span>
+            </li>
+            <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+              <span><span className="text-foreground">Read-only access</span> — Æther can never move money, only view it.</span>
+            </li>
+            <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+              <span><span className="text-foreground">Disconnect anytime</span> — one tap removes the institution and purges its data.</span>
+            </li>
+          </ul>
+        </LuxCard>
+      )}
+
+      {/* Primary CTA: Plaid Link is presented as the default option, full
+          width and visually dominant. Demo mode is demoted to a text link. */}
+      <button
+        onClick={onConnect}
+        disabled={linking}
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-medium text-primary-foreground glow-violet disabled:opacity-50"
+      >
+        <Plus className="h-4 w-4" />
+        {linking ? "Opening Plaid…" : "Connect bank with Plaid"}
+      </button>
       <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
         {plaidEnv === "production"
           ? "Plaid Production · sign in with your real bank, brokerage, or Robinhood credentials"
@@ -1187,6 +1208,15 @@ function AccountsTab({
             ? "Plaid Sandbox · use credentials user_good / pass_good"
             : "Detecting environment…"}
       </p>
+      <div className="mt-2 flex items-center justify-center">
+        <button
+          onClick={hasDemo ? onClearDemo : onSeedDemo}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          <Sparkles className="h-3 w-3 text-gold" />
+          {hasDemo ? "Clear demo data" : "Or explore with demo data"}
+        </button>
+      </div>
       <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
         By continuing, you authorize Æther Wealth to use{" "}
         <a
@@ -1198,7 +1228,7 @@ function AccountsTab({
           Plaid
         </a>{" "}
         to retrieve account balances, transactions, and holdings from institutions you select.
-        You can disconnect any institution at any time. See our{" "}
+        We'll email you if a connection ever needs your attention. You can disconnect any institution at any time. See our{" "}
         <Link to="/privacy" className="text-foreground underline decoration-dotted underline-offset-2 hover:text-primary">
           Privacy Policy
         </Link>
