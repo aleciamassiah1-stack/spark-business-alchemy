@@ -289,11 +289,17 @@ function ConnectionsPage() {
     await loadAll();
   };
 
-  const handleReconnect = async (itemId: string, name: string | null) => {
+  const handleReconnect = async (
+    itemId: string,
+    name: string | null,
+    opts: { accountSelection?: boolean } = {},
+  ) => {
     setLinking(true);
     try {
       await loadPlaidScript();
-      const tokenRes = await plaidCreateUpdateLinkToken({ data: { itemId } });
+      const tokenRes = await plaidCreateUpdateLinkToken({
+        data: { itemId, accountSelection: opts.accountSelection ?? false },
+      });
       if (!tokenRes.link_token) throw new Error(tokenRes.error ?? "No link token");
       if (!window.Plaid) throw new Error("Plaid Link unavailable");
       try {
@@ -301,25 +307,28 @@ function ConnectionsPage() {
       } catch {
         // ignore
       }
+      const verb = opts.accountSelection ? "Adding accounts from" : "Reconnecting";
       const handler = window.Plaid.create({
         token: tokenRes.link_token,
         onSuccess: async () => {
-          setSyncing(true, `Reconnecting ${name ?? "institution"}…`);
-          // Update mode reuses the existing access_token, so just resync.
+          setSyncing(true, `${verb} ${name ?? "institution"}…`);
           const res = await plaidSyncAll({ data: { itemId } });
           setSyncing(false);
           if (res.ok) {
-            showToast("ok", "Reconnected · syncing");
+            showToast(
+              "ok",
+              opts.accountSelection ? "Accounts updated · syncing" : "Reconnected · syncing",
+            );
             await loadAll();
           } else {
-            showToast("err", res.error ?? "Sync failed after reconnect");
+            showToast("err", res.error ?? "Sync failed");
           }
         },
         onExit: (err) => err && console.warn("Plaid update-mode exit:", err),
       });
       handler.open();
     } catch (err) {
-      showToast("err", err instanceof Error ? err.message : "Failed to start reconnect");
+      showToast("err", err instanceof Error ? err.message : "Failed to start update mode");
     } finally {
       setLinking(false);
     }
