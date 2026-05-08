@@ -1004,6 +1004,61 @@ function ReconnectBanner({
   );
 }
 
+function NewAccountsBanner({
+  items,
+  onReconnect,
+  linking,
+}: {
+  items: Item[];
+  onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
+  linking: boolean;
+}) {
+  if (items.length === 0) return null;
+  const first = items[0];
+  return (
+    <div className="mt-4">
+      <LuxCard className="border border-primary/30 bg-primary/[0.06] p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <Plus className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm text-foreground">
+              {items.length === 1
+                ? `New accounts available at ${first.institution_name ?? "your bank"}`
+                : `New accounts available at ${items.length} institutions`}
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              You opened or unhid accounts that aren't yet linked here. Choose
+              which ones to add — your existing accounts and history stay intact.
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {items.slice(0, 3).map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() =>
+                    onReconnect(it.id, it.institution_name, { accountSelection: true })
+                  }
+                  disabled={linking}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add accounts from {it.institution_name ?? "bank"}
+                </button>
+              ))}
+              {items.length > 3 && (
+                <span className="inline-flex items-center px-2 text-[11px] text-muted-foreground">
+                  +{items.length - 3} more below
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </LuxCard>
+    </div>
+  );
+}
+
 function AccountsTab({
   items,
   accounts,
