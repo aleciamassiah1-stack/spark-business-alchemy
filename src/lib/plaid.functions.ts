@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 import {
   createLinkToken,
+  createUpdateLinkToken,
   exchangePublicToken,
   getAccounts,
   getHoldings,
