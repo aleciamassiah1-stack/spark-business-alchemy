@@ -1091,6 +1091,12 @@ function AccountsTab({
         linking={linking}
       />
 
+      <NewAccountsBanner
+        items={items.filter((i) => i.new_accounts_available && i.status !== "requires_update")}
+        onReconnect={onReconnect}
+        linking={linking}
+      />
+
 
       {items.length === 0 ? (
         <div className="mt-6">
