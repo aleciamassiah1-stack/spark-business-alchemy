@@ -96,9 +96,10 @@ const TIERS: Tier[] = [
     annual: 14990,
     monthlyEquivalent: 1500,
     savings: 3010,
-    cta: "Request a Demo",
-    ctaAction: "demo",
+    cta: "Get Started",
+    ctaAction: "checkout",
     variant: "family",
+    priceIds: { monthly: "family_monthly", annual: "family_annual" },
     features: [
       "Everything in Private, plus",
       "Unlimited family members and client profiles",
