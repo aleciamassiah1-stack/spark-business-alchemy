@@ -24,6 +24,7 @@ function CheckoutReturnPage() {
   const access = useAccess();
   const [attempts, setAttempts] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
+  const targetRoute = "/intake";
 
   // Poll access until the Stripe webhook has propagated the subscription.
   // Without this, /intake bounces the user back to /pricing because RequireOnboarding
@@ -37,14 +38,15 @@ function CheckoutReturnPage() {
       if (cancelled) return;
       tries += 1;
       setAttempts(tries);
+      let hasAccess = false;
       try {
-        await access.refresh();
+        hasAccess = await access.refresh();
       } catch {
         /* ignore — try again */
       }
       if (cancelled) return;
-      if (access.hasAccess) {
-        navigate({ to: "/intake" });
+      if (hasAccess) {
+        navigate({ to: targetRoute });
         return;
       }
       if (tries >= MAX_TRIES) {
@@ -63,7 +65,7 @@ function CheckoutReturnPage() {
 
   // If access flips true at any point (e.g. focus refresh), continue immediately.
   useEffect(() => {
-    if (access.hasAccess) navigate({ to: "/intake" });
+    if (access.hasAccess) navigate({ to: targetRoute });
   }, [access.hasAccess, navigate]);
 
   return (
@@ -76,7 +78,7 @@ function CheckoutReturnPage() {
           <h1 className="mt-4 font-serif text-2xl text-foreground">Payment received</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {timedOut
-              ? "Your payment was received but it's taking longer than usual to activate. You can continue manually below."
+              ? "Your payment was received but activation is taking longer than usual. Continue below — you will not be asked to pay again."
               : "Welcome aboard. Activating your subscription…"}
           </p>
 
@@ -97,10 +99,10 @@ function CheckoutReturnPage() {
 
           <div className="mt-6 flex flex-col gap-2">
             <Link
-              to="/intake"
+              to={targetRoute}
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
-              Continue to setup
+              Continue to dashboard setup
             </Link>
             <Link
               to="/profile"
