@@ -29,7 +29,7 @@ import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import aetherLogo from "@/assets/aether-logo.png";
 
-const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
+const STEPS = ["biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
 
 /**
@@ -44,7 +44,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
 
   // Resume on the first incomplete step.
   const initialStep: StepKey =
-    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "verify";
+    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "biometric";
   const [step, setStep] = useState<StepKey>(initialStep);
 
   if (!forceOpen && (!ready || onboarded)) return null;
@@ -96,7 +96,6 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
         </div>
 
         <AnimatePresence mode="wait">
-          {step === "verify" && <ScreenVerify key="verify" onNext={goNext} />}
           {step === "biometric" && <ScreenBiometric key="bio" onNext={goNext} />}
           {step === "personalize" && <ScreenPersonalize key="pers" onNext={goNext} />}
           {step === "connect" && <ScreenConnect key="conn" onNext={goNext} />}
