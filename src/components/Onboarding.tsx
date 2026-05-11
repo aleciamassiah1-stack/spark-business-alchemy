@@ -29,7 +29,7 @@ import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import aetherLogo from "@/assets/aether-logo.png";
 
-const STEPS = ["verify", "biometric", "personalize", "connect"] as const;
+const STEPS = ["biometric", "personalize", "connect"] as const;
 type StepKey = (typeof STEPS)[number];
 
 /**
