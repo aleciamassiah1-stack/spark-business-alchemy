@@ -165,8 +165,12 @@ serve(async (req) => {
       ui_mode: "embedded",
       return_url: validatedReturn,
       customer: customerId,
-      metadata: { userId: authedUserId },
-      ...(isRecurring && { subscription_data: { metadata: { userId: authedUserId } } }),
+      metadata: { userId: authedUserId, priceId, productId: String(stripePrice.product) },
+      ...(isRecurring && {
+        subscription_data: {
+          metadata: { userId: authedUserId, priceId, productId: String(stripePrice.product) },
+        },
+      }),
     });
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
