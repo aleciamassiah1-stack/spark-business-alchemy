@@ -44,7 +44,7 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
 
   // Resume on the first incomplete step.
   const initialStep: StepKey =
-    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "verify";
+    (STEPS.find((s) => !profile.completedSteps.includes(s)) as StepKey | undefined) ?? "biometric";
   const [step, setStep] = useState<StepKey>(initialStep);
 
   if (!forceOpen && (!ready || onboarded)) return null;
