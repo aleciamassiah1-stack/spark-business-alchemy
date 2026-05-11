@@ -60,6 +60,38 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+async function resolveOrCreateCustomer(
+  stripe: ReturnType<typeof createStripeClient>,
+  options: { email?: string | null; userId: string },
+): Promise<string> {
+  if (!/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
+
+  const found = await stripe.customers.search({
+    query: `metadata['userId']:'${options.userId}'`,
+    limit: 1,
+  });
+  if (found.data.length) return found.data[0].id;
+
+  if (options.email) {
+    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
+    if (existing.data.length) {
+      const customer = existing.data[0];
+      if (customer.metadata?.userId !== options.userId) {
+        await stripe.customers.update(customer.id, {
+          metadata: { ...customer.metadata, userId: options.userId },
+        });
+      }
+      return customer.id;
+    }
+  }
+
+  const created = await stripe.customers.create({
+    ...(options.email && { email: options.email }),
+    metadata: { userId: options.userId },
+  });
+  return created.id;
+}
+
 serve(async (req) => {
   const corsHeaders = buildCorsHeaders(req.headers.get("origin"));
   if (req.method === "OPTIONS") {
@@ -114,6 +146,10 @@ serve(async (req) => {
     }
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
+    const customerId = await resolveOrCreateCustomer(stripe, {
+      email: authedEmail,
+      userId: authedUserId,
+    });
 
     // === REDIRECT: validate returnUrl against allowlist; otherwise build from origin ===
     const origin = req.headers.get("origin");
@@ -128,7 +164,7 @@ serve(async (req) => {
       mode: isRecurring ? "subscription" : "payment",
       ui_mode: "embedded",
       return_url: validatedReturn,
-      ...(authedEmail && { customer_email: authedEmail }),
+      customer: customerId,
       metadata: { userId: authedUserId },
       ...(isRecurring && { subscription_data: { metadata: { userId: authedUserId } } }),
     });
