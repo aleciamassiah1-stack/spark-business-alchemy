@@ -25,6 +25,13 @@ export function LegalFooter({ withBottomNavSpacing = false, className = "" }: Pr
         <Link to="/privacy" className="transition-colors hover:text-foreground">
           Privacy
         </Link>
+        <span aria-hidden className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          Secured by
+          <span className="font-sans text-[11px] font-semibold normal-case tracking-normal text-foreground">
+            Plaid
+          </span>
+        </span>
       </div>
       <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground/70">
         © {new Date().getFullYear()} Æther Wealth
