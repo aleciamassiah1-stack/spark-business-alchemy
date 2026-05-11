@@ -62,8 +62,10 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     : session.subscription.id;
   const stripe = createStripeClient(env);
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  subscription.metadata = { ...subscription.metadata, userId };
-  await handleSubscriptionCreated(subscription, env);
+  await handleSubscriptionCreated(
+    { ...subscription, metadata: { ...subscription.metadata, userId } },
+    env,
+  );
 }
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
