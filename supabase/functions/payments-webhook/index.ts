@@ -28,6 +28,10 @@ serve(async (req) => {
       case "customer.subscription.deleted":
         await handleSubscriptionDeleted(event.data.object, env);
         break;
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded":
+        await handleCheckoutCompleted(event.data.object, env);
+        break;
       case "invoice.payment_failed":
         console.log("Payment failed:", event.data.object.id);
         break;
@@ -44,6 +48,34 @@ serve(async (req) => {
     return new Response("Webhook error", { status: 400 });
   }
 });
+
+async function handleCheckoutCompleted(session: any, env: StripeEnv) {
+  if (!session.subscription) return;
+  const userId = session.metadata?.userId;
+  if (!userId) {
+    console.error("No userId in checkout session metadata");
+    return;
+  }
+
+  const subscriptionId = typeof session.subscription === "string"
+    ? session.subscription
+    : session.subscription.id;
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+
+  await supabase.from("subscriptions").upsert(
+    {
+      user_id: userId,
+      stripe_subscription_id: subscriptionId,
+      stripe_customer_id: customerId,
+      product_id: session.metadata?.productId || "pending",
+      price_id: session.metadata?.priceId || "pending",
+      status: "active",
+      environment: env,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
+}
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
@@ -79,6 +111,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
+  const userId = subscription.metadata?.userId;
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.metadata?.lovable_external_id || item?.price?.id;
   const productId = item?.price?.product;
@@ -87,7 +120,10 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
 
   await supabase
     .from("subscriptions")
-    .update({
+    .upsert({
+      ...(userId && { user_id: userId }),
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer,
       status: subscription.status,
       product_id: productId,
       price_id: priceId,
@@ -98,10 +134,9 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
         ? new Date(periodEnd * 1000).toISOString()
         : null,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
+      environment: env,
       updated_at: new Date().toISOString(),
-    })
-    .eq("stripe_subscription_id", subscription.id)
-    .eq("environment", env);
+    }, { onConflict: "stripe_subscription_id" });
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
