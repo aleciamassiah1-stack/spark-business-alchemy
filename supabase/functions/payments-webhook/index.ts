@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
+import { type StripeEnv, createStripeClient, verifyWebhook } from "../_shared/stripe.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -60,21 +60,10 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
   const subscriptionId = typeof session.subscription === "string"
     ? session.subscription
     : session.subscription.id;
-  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
-
-  await supabase.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      stripe_subscription_id: subscriptionId,
-      stripe_customer_id: customerId,
-      product_id: session.metadata?.productId || "pending",
-      price_id: session.metadata?.priceId || "pending",
-      status: "active",
-      environment: env,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "stripe_subscription_id" }
-  );
+  const stripe = createStripeClient(env);
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  subscription.metadata = { ...subscription.metadata, userId };
+  await handleSubscriptionCreated(subscription, env);
 }
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
