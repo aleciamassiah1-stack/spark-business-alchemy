@@ -91,6 +91,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   useEffect(() => {
     installAuthFetch();
+    // Native iOS init (no-ops on web)
+    import("@/lib/native").then(({ hideSplash }) => hideSplash());
   }, []);
   return (
     <AuthProvider>
