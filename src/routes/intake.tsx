@@ -5,6 +5,7 @@ import { Loader2, Check, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,7 +17,11 @@ export const Route = createFileRoute("/intake")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: IntakePage,
+  component: () => (
+    <RequireOnboarding>
+      <IntakePage />
+    </RequireOnboarding>
+  ),
 });
 
 const FINANCIAL_PICTURE = [
