@@ -1329,7 +1329,7 @@ export function Welcome({
         </div>
 
         <div className="flex flex-col items-center gap-2 pt-5">
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             <Link to="/terms" className="transition-colors hover:text-foreground">
               Terms
             </Link>
@@ -1337,6 +1337,13 @@ export function Welcome({
             <Link to="/privacy" className="transition-colors hover:text-foreground">
               Privacy
             </Link>
+            <span aria-hidden className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+            <span className="inline-flex items-center gap-1.5">
+              Secured by
+              <span className="font-sans text-[11px] font-semibold normal-case tracking-normal text-foreground">
+                Plaid
+              </span>
+            </span>
           </div>
           <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground/70">
             © {new Date().getFullYear()} Æther Wealth
