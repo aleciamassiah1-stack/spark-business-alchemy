@@ -95,12 +95,22 @@ serve(async (req) => {
     const env = (environment || "sandbox") as StripeEnv;
     const stripe = createStripeClient(env);
 
-    const prices = await stripe.prices.list({ lookup_keys: [priceId] });
-    if (!prices.data.length) {
-      return new Response(JSON.stringify({ error: "Price not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let prices;
+    try {
+      prices = await stripe.prices.list({ lookup_keys: [priceId], active: true, limit: 1 });
+    } catch (e) {
+      console.error("stripe.prices.list failed", { env, priceId, error: String(e) });
+      return new Response(
+        JSON.stringify({ error: `Unable to load price '${priceId}' in ${env} mode. ${String(e?.message ?? e)}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!prices?.data?.length) {
+      console.error("Price not found", { env, priceId, response: prices });
+      return new Response(
+        JSON.stringify({ error: `Price '${priceId}' not found in ${env} mode. Make sure the price was created in ${env} Stripe.` }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
