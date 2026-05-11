@@ -11,19 +11,21 @@ import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 const UNPAID_ALLOWED = new Set([
   "/pricing",
   "/profile",
-  "/intake",
   "/checkout/return",
   "/signin",
   "/signup",
   "/verify-email",
 ]);
 
+/** Routes paid users can reach before finishing setup. */
+const SETUP_ALLOWED = new Set(["/intake", "/profile", "/checkout/return"]);
+
 /**
  * Gates protected routes:
  *  1. Redirects to /signup when unauthenticated.
  *  2. Redirects to /verify-email when authenticated but email is unconfirmed.
- *  3. Shows the onboarding flow when authenticated but not yet onboarded.
- *  4. Redirects to /pricing when onboarded but without an active subscription
+ *  3. Redirects unpaid users to /pricing before setup.
+ *  4. Allows paid users into setup, then shows the onboarding flow until complete
  *     (admins and comp'd users bypass).
  */
 export function RequireOnboarding({ children }: { children: ReactNode }) {
@@ -50,8 +52,6 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
       auth.ready &&
       auth.user &&
       auth.emailConfirmed &&
-      onb.ready &&
-      onb.onboarded &&
       access.ready &&
       !access.hasAccess &&
       !UNPAID_ALLOWED.has(location.pathname)
@@ -72,12 +72,16 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
-  if (!onb.onboarded) {
-    return <Onboarding forceOpen />;
-  }
-
   if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname)) {
     return <div className="min-h-screen bg-background" aria-hidden />;
+  }
+
+  if (!access.hasAccess) {
+    return <>{children}</>;
+  }
+
+  if (!onb.onboarded && !SETUP_ALLOWED.has(location.pathname)) {
+    return <Onboarding forceOpen />;
   }
 
   return <>{children}</>;

@@ -57,8 +57,8 @@ export function Onboarding({ forceOpen = false }: { forceOpen?: boolean } = {}) 
     if (next) {
       setStep(next);
     } else {
-      // Onboarding complete → take user to pricing to choose a plan.
-      navigate({ to: "/pricing" });
+      // Onboarding complete → paid users continue into the dashboard setup.
+      navigate({ to: "/intake" });
     }
   };
 
