@@ -6,7 +6,7 @@ type AccessState = {
   ready: boolean;
   hasAccess: boolean;
   isAdmin: boolean;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<boolean>;
 };
 
 const AccessContext = createContext<AccessState | undefined>(undefined);
@@ -15,7 +15,7 @@ const noop: AccessState = {
   ready: false,
   hasAccess: false,
   isAdmin: false,
-  refresh: async () => {},
+  refresh: async () => false,
 };
 
 export function AccessProvider({ children }: { children: ReactNode }) {
@@ -29,15 +29,17 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       setHasAccess(false);
       setIsAdmin(false);
       setReady(true);
-      return;
+      return false;
     }
     try {
       const res = await checkAccess();
       setHasAccess(res.hasAccess);
       setIsAdmin(res.isAdmin);
+      return res.hasAccess;
     } catch {
       setHasAccess(false);
       setIsAdmin(false);
+      return false;
     } finally {
       setReady(true);
     }
