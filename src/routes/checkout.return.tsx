@@ -4,6 +4,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { useAccess } from "@/lib/access-context";
+import { getStripeEnvironment } from "@/lib/stripe";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/checkout/return")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -40,6 +42,11 @@ function CheckoutReturnPage() {
       setAttempts(tries);
       let hasAccess = false;
       try {
+        if (session_id) {
+          await supabase.functions.invoke("sync-checkout-session", {
+            body: { sessionId: session_id, environment: getStripeEnvironment() },
+          });
+        }
         hasAccess = await access.refresh();
       } catch {
         /* ignore — try again */
