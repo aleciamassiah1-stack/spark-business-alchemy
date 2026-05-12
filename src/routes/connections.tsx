@@ -207,6 +207,7 @@ type EstateDoc = { id: string; document_type: string; title: string; status: str
 
 function ConnectionsPage() {
   const { setSyncing } = useWealth();
+  const { isAdmin } = useAccess();
   const [tab, setTab] = useState<Tab>("accounts");
   const [items, setItems] = useState<Item[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
