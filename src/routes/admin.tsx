@@ -185,6 +185,8 @@ function AdminPage() {
           />
         </section>
 
+        <StripeSyncCard onSynced={load} />
+
         {/* Members table */}
         <section className="mt-10">
           <div className="mb-4 flex items-center justify-between gap-3">
