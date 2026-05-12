@@ -725,6 +725,7 @@ function InviteLinkDialog({
 }) {
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
+  const [ssn4, setSsn4] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -732,6 +733,7 @@ function InviteLinkDialog({
     if (!open) {
       setEmail("");
       setDob("");
+      setSsn4("");
       setMessage("");
     }
   }, [open]);
@@ -741,8 +743,9 @@ function InviteLinkDialog({
       .object({
         email: z.string().trim().toLowerCase().email("Enter a valid email"),
         dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date of birth"),
+        ssn4: z.string().regex(/^\d{4}$/, "Last 4 of SSN must be 4 digits"),
       })
-      .safeParse({ email, dob });
+      .safeParse({ email, dob, ssn4 });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
       return;
@@ -753,6 +756,7 @@ function InviteLinkDialog({
         data: {
           recipient_email: parsed.data.email,
           recipient_dob: parsed.data.dob,
+          recipient_ssn4: parsed.data.ssn4,
           message: message.trim() ? message.trim() : undefined,
         },
       });
