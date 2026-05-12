@@ -41,6 +41,7 @@ function MorePage() {
   const { signOut } = useAuth();
   const access = useAccess();
   const navigate = useNavigate();
+  const hasAccess = access.hasAccess;
 
   async function handleSignOut() {
     try {
@@ -72,9 +73,28 @@ function MorePage() {
           <ArrowRight className="relative h-4 w-4 text-primary" />
         </Link>
 
+        {!hasAccess && (
+          <LuxCard>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <LogOut className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-destructive">Sign out</p>
+                <p className="text-[11px] text-muted-foreground">Use a different account</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </LuxCard>
+        )}
+
         
 
-        {access.isAdmin && (
+        {hasAccess && access.isAdmin && (
           <NavGroup title="Admin">
             <NavRow
               to="/launch"
@@ -91,35 +111,45 @@ function MorePage() {
           </NavGroup>
         )}
 
-        <NavGroup title="Wealth tools">
-          <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
-          <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
-          <NavRow to="/family" icon={Users} label="Family Vault" desc="Linked household accounts" />
-        </NavGroup>
+        {hasAccess && (
+          <>
+            <NavGroup title="Wealth tools">
+              <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
+              <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
+              <NavRow to="/family" icon={Users} label="Family Vault" desc="Linked household accounts" />
+            </NavGroup>
 
-        <NavGroup title="Connections">
-          <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
-          <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
-          <NavRow to="/connections" icon={Building2} label="Banking" desc="Manage cash & transfers" />
-        </NavGroup>
+            <NavGroup title="Connections">
+              <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
+              <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
+              <NavRow to="/connections" icon={Building2} label="Banking" desc="Manage cash & transfers" />
+            </NavGroup>
+          </>
+        )}
 
         <NavGroup title="Account">
-          <NavRow to="/notifications" icon={Bell} label="Notifications" desc="Push or encrypted email" />
-          <NavRow to="/preferences" icon={Settings} label="Preferences" desc="Currency, region, privacy" />
-          <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-              <LogOut className="h-4 w-4 text-destructive" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-destructive">Sign out</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          {hasAccess && (
+            <>
+              <NavRow to="/notifications" icon={Bell} label="Notifications" desc="Push or encrypted email" />
+              <NavRow to="/preferences" icon={Settings} label="Preferences" desc="Currency, region, privacy" />
+              <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
+            </>
+          )}
+          {hasAccess && (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <LogOut className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-destructive">Sign out</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </NavGroup>
 
         <p className="mt-2 text-center font-serif text-xs italic text-muted-foreground">
