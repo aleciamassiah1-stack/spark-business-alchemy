@@ -568,10 +568,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           ? "bg-success"
           : "bg-gradient-to-r from-primary to-violet-glow";
 
-  const phoneValid = phone.replace(/\D/g, "").length >= 7;
   const nameValid = fullName.trim().length >= 2;
 
-  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid && agreed;
+  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && agreed;
   const signinValid = emailValid && password.length >= 8;
   const valid = mode === "signup" ? signupValid : signinValid;
 
