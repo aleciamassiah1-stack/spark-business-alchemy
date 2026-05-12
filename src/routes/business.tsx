@@ -100,6 +100,10 @@ function BusinessPage() {
   const [setupOpen, setSetupOpen] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
 
+  const navigate = useNavigate();
+  const runClassify = useServerFn(classifyBusinessAccounts);
+  const [syncing, setSyncing] = useState(false);
+
   useEffect(() => {
     const off = subscribeBusiness(() => setState(loadBusiness()));
     return off;
@@ -115,6 +119,89 @@ function BusinessPage() {
       saveBusiness(next);
       return next;
     });
+  };
+
+  const syncFromBank = async () => {
+    setSyncing(true);
+    try {
+      const res = await runClassify();
+      if (!res.ok) {
+        if (res.scannedAccountCount === 0) {
+          toast.message("No connected bank accounts yet", {
+            description: "Connect a bank in Connections, then sync here.",
+            action: { label: "Open", onClick: () => navigate({ to: "/connections" }) },
+          });
+        } else {
+          toast.error(res.error ?? "Sync failed");
+        }
+        return;
+      }
+      if (res.scannedAccountCount === 0) {
+        toast.message("No connected bank accounts yet", {
+          description: "Connect a bank in Connections, then sync here.",
+          action: { label: "Open", onClick: () => navigate({ to: "/connections" }) },
+        });
+        return;
+      }
+      const business = res.classifications.filter((c) => c.isBusiness);
+      if (business.length === 0) {
+        update({ bankConnected: true, bankLastSync: new Date().toISOString() });
+        toast.message("No business accounts detected", {
+          description:
+            "AI scanned your linked banks but none looked business-related. You can still add assets manually.",
+        });
+        return;
+      }
+      update((prev) => {
+        // Drop any prior AI-sourced rows so re-syncing is idempotent.
+        const manualAssets = prev.assets.filter((a) => a.source !== "ai");
+        const manualLiabs = prev.liabilities.filter((l) => l.source !== "ai");
+        const newAssets: BusinessAsset[] = [];
+        const newLiabs: BusinessLiability[] = [];
+        for (const c of business) {
+          if (c.classification === "asset") {
+            newAssets.push({
+              id: `ai_${c.accountId}`,
+              name: c.suggestedName,
+              type: c.assetType ?? "Other",
+              value: Math.max(0, Math.round(c.value)),
+              source: "ai",
+              aiAccountId: c.accountId,
+              aiReasoning: c.reasoning,
+            });
+          } else if (c.classification === "liability") {
+            newLiabs.push({
+              id: `ai_${c.accountId}`,
+              name: c.suggestedName,
+              lender: c.liabilityType ?? "",
+              balance: Math.max(0, Math.round(c.value)),
+              monthlyPayment: 0,
+              interestRate: 0,
+              source: "ai",
+              aiAccountId: c.accountId,
+              aiReasoning: c.reasoning,
+            });
+          }
+        }
+        return {
+          ...prev,
+          assets: [...manualAssets, ...newAssets],
+          liabilities: [...manualLiabs, ...newLiabs],
+          bankConnected: true,
+          bankLastSync: new Date().toISOString(),
+        };
+      });
+      const aCount = business.filter((c) => c.classification === "asset").length;
+      const lCount = business.filter((c) => c.classification === "liability").length;
+      toast.success(
+        `AI classified ${business.length} business account${business.length === 1 ? "" : "s"}`,
+        { description: `${aCount} asset(s) · ${lCount} liability(ies)` },
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const valuationDeltaPct =
