@@ -50,6 +50,7 @@ import {
   upsertProperty,
   deleteProperty,
   estimatePropertyValue,
+  estimatePropertyValueRentCast,
   savePropertyValuation,
   listPropertyValuations,
   deletePropertyValuation,
@@ -92,6 +93,36 @@ export const Route = createFileRoute("/connections")({
     </RequireOnboarding>
   ),
 });
+
+// Try RentCast (live AVM) first, fall back to AI estimate. Returns the valuation
+// plus the source string used so callers can store provenance correctly.
+async function estimatePropertyLive(input: {
+  address: string;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+  property_type?: string;
+}): Promise<{
+  ok: boolean;
+  valuation: PropertyValuation | null;
+  source: "rentcast" | "ai";
+  error: string | null;
+}> {
+  const live = await estimatePropertyValueRentCast({ data: input });
+  if (live.ok && live.valuation) {
+    return { ok: true, valuation: live.valuation, source: "rentcast", error: null };
+  }
+  const ai = await estimatePropertyValue({ data: input });
+  if (ai.ok && ai.valuation) {
+    return { ok: true, valuation: ai.valuation, source: "ai", error: null };
+  }
+  return {
+    ok: false,
+    valuation: null,
+    source: "rentcast",
+    error: live.error ?? ai.error ?? "Could not estimate value",
+  };
+}
 
 type PlaidLinkEventMetadata = {
   view_name?: string | null;
@@ -511,16 +542,14 @@ function ConnectionsPage() {
             }}
             onShowHistory={(p) => setHistoryProperty(p)}
             onRunValuation={async (p) => {
-              setSyncing(true, "Running AI valuation…");
+              setSyncing(true, "Fetching live valuation…");
               try {
-                const est = await estimatePropertyValue({
-                  data: {
-                    address: p.address,
-                    beds: p.beds,
-                    baths: p.baths,
-                    sqft: p.sqft,
-                    property_type: "residential",
-                  },
+                const est = await estimatePropertyLive({
+                  address: p.address,
+                  beds: p.beds,
+                  baths: p.baths,
+                  sqft: p.sqft,
+                  property_type: "residential",
                 });
                 if (!est.ok || !est.valuation) {
                   showToast("err", est.error ?? "Could not estimate value");
@@ -534,14 +563,15 @@ function ConnectionsPage() {
                     input_beds: p.beds,
                     input_baths: p.baths,
                     input_sqft: p.sqft,
-                    source: "ai",
+                    source: est.source,
                   },
                 });
                 if (!saveRes.ok) {
                   showToast("err", saveRes.error ?? "Failed to save valuation");
                   return;
                 }
-                showToast("ok", `AI estimate: ${fmtCurrency(est.valuation.estimated_value, { compact: true })}`);
+                const label = est.source === "rentcast" ? "RentCast" : "AI";
+                showToast("ok", `${label} estimate: ${fmtCurrency(est.valuation.estimated_value, { compact: true })}`);
                 setHistoryProperty(p);
               } catch (err) {
                 showToast("err", err instanceof Error ? err.message : "Estimation failed");
@@ -1588,7 +1618,7 @@ function PropertiesTab({
                       onClick={() => onRunValuation(p)}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium text-primary-foreground glow-violet"
                     >
-                      <Sparkles className="h-3 w-3" /> Get AI valuation
+                      <Sparkles className="h-3 w-3" /> Live valuation
                     </button>
                     <button
                       onClick={() => onShowHistory(p)}
@@ -2035,6 +2065,7 @@ function PropertyFormModal({
   const [saving, setSaving] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [valuation, setValuation] = useState<PropertyValuation | null>(null);
+  const [valuationSource, setValuationSource] = useState<"rentcast" | "ai">("rentcast");
 
   const estimate = async () => {
     if (!address.trim() || address.trim().length < 5) {
@@ -2044,18 +2075,17 @@ function PropertyFormModal({
     setEstimating(true);
     setValuation(null);
     try {
-      const res = await estimatePropertyValue({
-        data: {
-          address: address.trim(),
-          beds: beds ? Number(beds) : null,
-          baths: baths ? Number(baths) : null,
-          sqft: sqft ? Number(sqft) : null,
-        },
+      const res = await estimatePropertyLive({
+        address: address.trim(),
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
       });
       if (!res.ok || !res.valuation) {
         onError(res.error ?? "Could not estimate value");
       } else {
         setValuation(res.valuation);
+        setValuationSource(res.source);
         setValue(String(Math.round(res.valuation.estimated_value)));
       }
     } catch (err) {
@@ -2121,7 +2151,7 @@ function PropertyFormModal({
             input_beds: beds ? Number(beds) : null,
             input_baths: baths ? Number(baths) : null,
             input_sqft: sqft ? Number(sqft) : null,
-            source: "ai",
+            source: valuationSource,
           },
         });
       } catch (err) {
@@ -2191,7 +2221,7 @@ function PropertyFormModal({
         ) : (
           <Sparkles className="h-3.5 w-3.5" />
         )}
-        {estimating ? "Estimating with AI…" : "Estimate value with AI"}
+        {estimating ? "Fetching live valuation…" : "Get live valuation (RentCast)"}
       </button>
 
       {valuation && (
@@ -2984,13 +3014,11 @@ function ValuationHistoryModal({
   const runEstimate = async () => {
     setEstimating(true);
     try {
-      const est = await estimatePropertyValue({
-        data: {
-          address: property.address,
-          beds: beds ? Number(beds) : null,
-          baths: baths ? Number(baths) : null,
-          sqft: sqft ? Number(sqft) : null,
-        },
+      const est = await estimatePropertyLive({
+        address: property.address,
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
       });
       if (!est.ok || !est.valuation) {
         onError(est.error ?? "Could not estimate value");
@@ -3004,7 +3032,7 @@ function ValuationHistoryModal({
           input_beds: beds ? Number(beds) : null,
           input_baths: baths ? Number(baths) : null,
           input_sqft: sqft ? Number(sqft) : null,
-          source: "ai",
+          source: est.source,
         },
       });
       if (!saveRes.ok) {
@@ -3056,7 +3084,7 @@ function ValuationHistoryModal({
         ) : (
           <Sparkles className="h-3.5 w-3.5" />
         )}
-        {estimating ? "Estimating with AI…" : "Run new AI estimate & save"}
+        {estimating ? "Fetching live valuation…" : "Run live valuation & save (RentCast)"}
       </button>
 
       <p className="label-mono mb-2">History</p>
