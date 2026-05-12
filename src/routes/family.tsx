@@ -243,7 +243,7 @@ function FamilyPage() {
             <p className="label-mono">Combined family net worth</p>
             <p className="mt-1 font-serif text-4xl text-foreground">{fmtCurrency(total, { compact: true })}</p>
             <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {members.length} manual · {partners.length} linked account{partners.length === 1 ? "" : "s"}
+              {partners.length > 0 ? "you + " : ""}{partners.length} linked · {members.length} manual
             </p>
           </div>
         </LuxCard>
