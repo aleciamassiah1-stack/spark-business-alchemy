@@ -189,19 +189,23 @@ export const respondFamilyLinkRequest = createServerFn({ method: "POST" })
       return { ok: true as const };
     }
 
-    // Accept: verify DOB matches user_intake.date_of_birth
+    // Accept: verify DOB and SSN last 4 hash both match user_intake
     const { data: intake } = await supabaseAdmin
       .from("user_intake")
-      .select("date_of_birth")
+      .select("date_of_birth, last_four_ssn_hash")
       .eq("user_id", userId)
       .maybeSingle();
     const dobOnFile = (intake as any)?.date_of_birth as string | null;
-    if (!dobOnFile) {
-      throw new Error("Add your date of birth in your profile before accepting link requests");
+    const ssnHashOnFile = (intake as any)?.last_four_ssn_hash as string | null;
+    if (!dobOnFile || !ssnHashOnFile) {
+      throw new Error(
+        "Add your date of birth and last 4 of SSN in your profile before accepting link requests",
+      );
     }
-    const matches = dobOnFile === req.recipient_dob;
-    if (!matches) {
-      // still record decline with mismatch
+    const requestSsnHash = (req as any).recipient_last_four_ssn_hash as string | null;
+    const dobMatches = dobOnFile === req.recipient_dob;
+    const ssnMatches = !!requestSsnHash && requestSsnHash === ssnHashOnFile;
+    if (!dobMatches || !ssnMatches) {
       await supabaseAdmin
         .from("family_link_requests")
         .update({
@@ -211,7 +215,11 @@ export const respondFamilyLinkRequest = createServerFn({ method: "POST" })
           recipient_user_id: userId,
         })
         .eq("id", data.id);
-      throw new Error("Date of birth doesn't match the one on file");
+      throw new Error(
+        !dobMatches
+          ? "Date of birth doesn't match the one on file"
+          : "Last 4 of SSN doesn't match the one on file",
+      );
     }
 
     await supabaseAdmin
