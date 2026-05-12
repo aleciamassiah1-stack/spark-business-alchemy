@@ -1,13 +1,16 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
 
 // Attach baseline security headers to every server response (SSR pages,
-// server functions, and server routes). Mitigates clickjacking, MIME
-// sniffing, mixed-content downgrades, and limits referrer leakage.
+// server functions, and server routes). Uses CSP frame-ancestors instead of
+// X-Frame-Options so Lovable's embedded preview can load the app safely.
 const securityHeaders = createMiddleware().server(async ({ next }) => {
   const result = await next();
   const res = (result as { response?: Response }).response;
   if (res && res.headers) {
-    res.headers.set("X-Frame-Options", "DENY");
+    res.headers.set(
+      "Content-Security-Policy",
+      "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com https://gptengineer.app",
+    );
     res.headers.set("X-Content-Type-Options", "nosniff");
     res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     res.headers.set(
