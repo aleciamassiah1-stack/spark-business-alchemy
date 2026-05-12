@@ -31,15 +31,6 @@ function sortPair(a: string, b: string): [string, string] {
 
 /** Send a new link request. */
 export const createFamilyLinkRequest = createServerFn({ method: "POST" })
-  .inputValidator((input: { recipient_email: string; recipient_dob: string; message?: string }) =>
-    z
-      .object({
-        recipient_email: emailSchema,
-        recipient_dob: dobSchema,
-        message: z.string().trim().max(500).optional(),
-      })
-/** Send a new link request. */
-export const createFamilyLinkRequest = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
       recipient_email: string;
