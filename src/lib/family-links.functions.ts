@@ -38,7 +38,23 @@ export const createFamilyLinkRequest = createServerFn({ method: "POST" })
         recipient_dob: dobSchema,
         message: z.string().trim().max(500).optional(),
       })
-      .parse(input),
+/** Send a new link request. */
+export const createFamilyLinkRequest = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      recipient_email: string;
+      recipient_dob: string;
+      recipient_ssn4: string;
+      message?: string;
+    }) =>
+      z
+        .object({
+          recipient_email: emailSchema,
+          recipient_dob: dobSchema,
+          recipient_ssn4: ssn4Schema,
+          message: z.string().trim().max(500).optional(),
+        })
+        .parse(input),
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
@@ -82,16 +98,18 @@ export const createFamilyLinkRequest = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("You already have a pending request to this person");
 
+    const ssn4Hash = await hashSsn4(data.recipient_ssn4);
     const { data: row, error } = await supabaseAdmin
       .from("family_link_requests")
       .insert({
         requester_user_id: userId,
         recipient_email: data.recipient_email,
         recipient_dob: data.recipient_dob,
+        recipient_last_four_ssn_hash: ssn4Hash,
         recipient_user_id: recipientUserId,
         message: data.message ?? null,
         status: "pending_recipient",
-      })
+      } as any)
       .select()
       .single();
     if (error || !row) {
