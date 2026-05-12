@@ -15,8 +15,8 @@ import {
   cancelFamilyLinkRequest,
   listLinkedPartnersWealth,
   removeFamilyLink,
-  getMyDateOfBirth,
-  setMyDateOfBirth,
+  getMyIdentity,
+  setMyIdentity,
 } from "@/lib/family-links.functions";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -98,6 +98,7 @@ function FamilyPage() {
   const [linksLoading, setLinksLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [dobOnFile, setDobOnFile] = useState<string | null>(null);
+  const [hasSsn4OnFile, setHasSsn4OnFile] = useState(false);
   const [showDobEdit, setShowDobEdit] = useState(false);
 
   const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
@@ -135,16 +136,17 @@ function FamilyPage() {
     }
     setLinksLoading(true);
     try {
-      const [{ partners: ps }, reqs, dob] = await Promise.all([
+      const [{ partners: ps }, reqs, ident] = await Promise.all([
         listLinkedPartnersWealth(),
         listMyFamilyLinkRequests(),
-        getMyDateOfBirth(),
+        getMyIdentity(),
       ]);
       setPartners(ps as Partner[]);
       setOutgoing(reqs.outgoing as LinkRequest[]);
       setIncoming(reqs.incoming as LinkRequest[]);
       setRequesterNames(reqs.requesterNames as Record<string, { name: string; email: string }>);
-      setDobOnFile(dob.date_of_birth);
+      setDobOnFile(ident.date_of_birth);
+      setHasSsn4OnFile(!!ident.has_ssn4);
     } catch (e) {
       console.error(e);
     } finally {
@@ -246,9 +248,13 @@ function FamilyPage() {
         >
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="h-3 w-3" />
-            Date of birth on file
+            Identity on file (DOB · SSN last 4)
           </span>
-          <span className="font-mono text-foreground">{dobOnFile ?? "Not set — tap to add"}</span>
+          <span className="font-mono text-foreground">
+            {dobOnFile && hasSsn4OnFile
+              ? `${dobOnFile} · ••••`
+              : "Not set — tap to add"}
+          </span>
         </button>
 
         {linksLoading ? (
@@ -508,9 +514,10 @@ function FamilyPage() {
       <DobEditDialog
         open={showDobEdit}
         onOpenChange={setShowDobEdit}
-        current={dobOnFile}
+        currentDob={dobOnFile}
         onSaved={async (v) => {
           setDobOnFile(v);
+          setHasSsn4OnFile(true);
           setShowDobEdit(false);
         }}
       />
@@ -718,6 +725,7 @@ function InviteLinkDialog({
 }) {
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
+  const [ssn4, setSsn4] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -725,6 +733,7 @@ function InviteLinkDialog({
     if (!open) {
       setEmail("");
       setDob("");
+      setSsn4("");
       setMessage("");
     }
   }, [open]);
@@ -734,8 +743,9 @@ function InviteLinkDialog({
       .object({
         email: z.string().trim().toLowerCase().email("Enter a valid email"),
         dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date of birth"),
+        ssn4: z.string().regex(/^\d{4}$/, "Last 4 of SSN must be 4 digits"),
       })
-      .safeParse({ email, dob });
+      .safeParse({ email, dob, ssn4 });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
       return;
@@ -746,6 +756,7 @@ function InviteLinkDialog({
         data: {
           recipient_email: parsed.data.email,
           recipient_dob: parsed.data.dob,
+          recipient_ssn4: parsed.data.ssn4,
           message: message.trim() ? message.trim() : undefined,
         },
       });
@@ -787,8 +798,19 @@ function InviteLinkDialog({
           <div className="grid gap-1.5">
             <Label htmlFor="link-dob">Their date of birth</Label>
             <Input id="link-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-ssn">Their SSN (last 4)</Label>
+            <Input
+              id="link-ssn"
+              inputMode="numeric"
+              maxLength={4}
+              value={ssn4}
+              onChange={(e) => setSsn4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+            />
             <p className="text-[11px] text-muted-foreground">
-              Used to confirm identity. Must match what they have on file.
+              DOB and last 4 of SSN must both match what they have on file.
             </p>
           </div>
           <div className="grid gap-1.5">
@@ -819,29 +841,37 @@ function InviteLinkDialog({
 function DobEditDialog({
   open,
   onOpenChange,
-  current,
+  currentDob,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  current: string | null;
+  currentDob: string | null;
   onSaved: (v: string) => void | Promise<void>;
 }) {
   const [dob, setDob] = useState("");
+  const [ssn4, setSsn4] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) setDob(current ?? "");
-  }, [open, current]);
+    if (open) {
+      setDob(currentDob ?? "");
+      setSsn4("");
+    }
+  }, [open, currentDob]);
 
   const handleSave = async () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
       toast.error("Pick a valid date");
       return;
     }
+    if (!/^\d{4}$/.test(ssn4)) {
+      toast.error("Enter the last 4 digits of your SSN");
+      return;
+    }
     setSaving(true);
     try {
-      await setMyDateOfBirth({ data: { date_of_birth: dob } });
+      await setMyIdentity({ data: { date_of_birth: dob, ssn4 } });
       toast.success("Saved");
       await onSaved(dob);
     } catch (e) {
@@ -855,14 +885,28 @@ function DobEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Date of birth</DialogTitle>
+          <DialogTitle>Identity verification</DialogTitle>
           <DialogDescription>
-            Required to verify identity when someone sends you a family link request.
+            Required so we can confirm it's really you when someone sends a family link request.
+            Your SSN last 4 is hashed before storage — we never keep the raw digits.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-1.5 py-2">
-          <Label htmlFor="dob-edit">Date of birth</Label>
-          <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="dob-edit">Date of birth</Label>
+            <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="ssn-edit">SSN (last 4)</Label>
+            <Input
+              id="ssn-edit"
+              inputMode="numeric"
+              maxLength={4}
+              value={ssn4}
+              onChange={(e) => setSsn4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

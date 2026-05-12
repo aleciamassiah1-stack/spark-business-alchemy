@@ -437,6 +437,7 @@ export type Database = {
           message: string | null
           recipient_dob: string
           recipient_email: string
+          recipient_last_four_ssn_hash: string | null
           recipient_responded_at: string | null
           recipient_user_id: string | null
           requester_user_id: string
@@ -453,6 +454,7 @@ export type Database = {
           message?: string | null
           recipient_dob: string
           recipient_email: string
+          recipient_last_four_ssn_hash?: string | null
           recipient_responded_at?: string | null
           recipient_user_id?: string | null
           requester_user_id: string
@@ -469,6 +471,7 @@ export type Database = {
           message?: string | null
           recipient_dob?: string
           recipient_email?: string
+          recipient_last_four_ssn_hash?: string | null
           recipient_responded_at?: string | null
           recipient_user_id?: string | null
           requester_user_id?: string
@@ -1104,6 +1107,7 @@ export type Database = {
           full_name: string | null
           has_advisor: boolean | null
           id: string
+          last_four_ssn_hash: string | null
           net_worth_band: string | null
           plan: string
           primary_goal: string | null
@@ -1121,6 +1125,7 @@ export type Database = {
           full_name?: string | null
           has_advisor?: boolean | null
           id?: string
+          last_four_ssn_hash?: string | null
           net_worth_band?: string | null
           plan: string
           primary_goal?: string | null
@@ -1138,6 +1143,7 @@ export type Database = {
           full_name?: string | null
           has_advisor?: boolean | null
           id?: string
+          last_four_ssn_hash?: string | null
           net_worth_band?: string | null
           plan?: string
           primary_goal?: string | null
