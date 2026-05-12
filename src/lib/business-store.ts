@@ -13,6 +13,9 @@ export type BusinessAsset = {
   name: string;
   type: "Equipment" | "Real Estate" | "Receivables" | "Inventory" | "Other";
   value: number;
+  source?: "manual" | "ai";
+  aiAccountId?: string; // aggregated_accounts.id when source = "ai"
+  aiReasoning?: string;
 };
 
 export type BusinessLiability = {
@@ -22,6 +25,9 @@ export type BusinessLiability = {
   balance: number;
   monthlyPayment: number;
   interestRate: number;
+  source?: "manual" | "ai";
+  aiAccountId?: string;
+  aiReasoning?: string;
 };
 
 export type Partner = {
