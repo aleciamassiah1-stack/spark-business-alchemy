@@ -27,6 +27,7 @@ import {
   Circle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { DocumentLink } from "@/components/DocumentLink";
 import { InsuranceReviewModal, type InsuranceReviewDraft } from "@/components/InsuranceReviewModal";
 import { setLastSyncAt } from "@/lib/auto-refresh";
 import { LuxCard } from "@/components/LuxCard";
