@@ -1213,15 +1213,17 @@ function AccountsTab({
             ? "Plaid Sandbox · use credentials user_good / pass_good"
             : "Detecting environment…"}
       </p>
-      <div className="mt-2 flex items-center justify-center">
-        <button
-          onClick={hasDemo ? onClearDemo : onSeedDemo}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
-        >
-          <Sparkles className="h-3 w-3 text-gold" />
-          {hasDemo ? "Clear demo data" : "Or explore with demo data"}
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="mt-2 flex items-center justify-center">
+          <button
+            onClick={hasDemo ? onClearDemo : onSeedDemo}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            <Sparkles className="h-3 w-3 text-gold" />
+            {hasDemo ? "Clear demo data" : "Or explore with demo data"}
+          </button>
+        </div>
+      )}
       <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
         By continuing, you authorize Æther Wealth to use{" "}
         <a
@@ -1244,8 +1246,12 @@ function AccountsTab({
         .
       </p>
 
-      <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
-      <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
+      {isAdmin && (
+        <>
+          <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
+          <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
+        </>
+      )}
 
       <ReconnectBanner
         items={items.filter((i) => i.status === "requires_update")}
