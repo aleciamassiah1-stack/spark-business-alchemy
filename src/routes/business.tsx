@@ -38,7 +38,7 @@ import {
   Wand2,
   RefreshCw,
 } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
