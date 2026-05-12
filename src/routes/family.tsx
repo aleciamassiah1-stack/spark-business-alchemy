@@ -495,6 +495,25 @@ function FamilyPage() {
           setShowForm(false);
         }}
       />
+
+      <InviteLinkDialog
+        open={showInvite}
+        onOpenChange={setShowInvite}
+        onSent={async () => {
+          setShowInvite(false);
+          await loadLinks();
+        }}
+      />
+
+      <DobEditDialog
+        open={showDobEdit}
+        onOpenChange={setShowDobEdit}
+        current={dobOnFile}
+        onSaved={async (v) => {
+          setDobOnFile(v);
+          setShowDobEdit(false);
+        }}
+      />
     </MobileShell>
   );
 }
