@@ -19,7 +19,6 @@ import {
   ScrollText,
   Sparkles,
   Loader2,
-  MessageSquare,
   PiggyBank,
   Bitcoin,
   CreditCard,
@@ -156,173 +155,6 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick: (
     </button>
   );
 }
-
-/* ───────────────────────── Screen: Verify (Simulated SMS OTP) ───────────────────────── */
-
-const SIM_OTP = "123456";
-
-function maskPhone(raw?: string): string {
-  if (!raw) return "your phone";
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length < 4) return raw;
-  const last4 = digits.slice(-4);
-  return `••• ••• ${last4}`;
-}
-
-function ScreenVerify({ onNext }: { onNext: () => void }) {
-  const { user } = useAuth();
-  const { update } = useOnboarding();
-  const phone = (user?.user_metadata as { phone?: string } | undefined)?.phone;
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [verifying, setVerifying] = useState(false);
-  const [resendIn, setResendIn] = useState(30);
-
-  // Countdown for resend
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const id = window.setTimeout(() => setResendIn((n) => n - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [resendIn]);
-
-  const handleChange = (val: string) => {
-    const next = val.replace(/\D/g, "").slice(0, 6);
-    setCode(next);
-    setError(null);
-  };
-
-  const handleVerify = () => {
-    if (code.length !== 6) return;
-    setVerifying(true);
-    setError(null);
-    // Simulate network delay
-    setTimeout(() => {
-      if (code === SIM_OTP) {
-        update({ phoneVerified: true });
-        onNext();
-      } else {
-        setError("Incorrect code. Try 123456 (preview build).");
-        setVerifying(false);
-        setCode("");
-      }
-    }, 700);
-  };
-
-  const handleResend = () => {
-    if (resendIn > 0) return;
-    setResendIn(30);
-  };
-
-  return (
-    <ScreenWrap>
-      <div className="flex flex-1 flex-col items-center text-center">
-        <div className="pt-4">
-          <p className="label-mono mb-3">Verify Identity</p>
-          <h2 className="font-serif text-[32px] leading-tight text-foreground">
-            We sent a code to
-            <br />
-            <span className="text-gradient-violet">{maskPhone(phone)}</span>
-          </h2>
-          <p className="mt-3 max-w-[320px] text-sm text-muted-foreground">
-            Enter the 6-digit code to confirm this number is yours.
-          </p>
-        </div>
-
-        <div className="relative my-9">
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: "radial-gradient(circle, oklch(0.78 0.16 295 / 0.28) 0%, transparent 65%)",
-            }}
-            animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0.75, 0.4] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10">
-            <Shield className="h-10 w-10 text-primary" strokeWidth={1.4} />
-          </div>
-        </div>
-
-        <div className="relative w-full">
-          <div className="flex justify-center gap-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className={`flex h-14 w-11 items-center justify-center rounded-2xl border text-2xl font-mono transition-all ${
-                  code.length === i
-                    ? "border-primary bg-primary/10 glow-violet"
-                    : code.length > i
-                      ? "border-primary/40 bg-primary/5 text-foreground"
-                      : "border-white/[0.08] bg-white/[0.02]"
-                }`}
-              >
-                {code[i] ?? ""}
-              </div>
-            ))}
-          </div>
-          <input
-            autoFocus
-            type="tel"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            value={code}
-            onChange={(e) => handleChange(e.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            aria-label="One-time code"
-          />
-        </div>
-
-        {error && (
-          <p className="mt-4 text-xs text-destructive" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
-          <MessageSquare className="h-3.5 w-3.5" />
-          {resendIn > 0 ? (
-            <span>Resend code in {resendIn}s</span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleResend}
-              className="text-primary transition-colors hover:text-foreground"
-            >
-              Resend code
-            </button>
-          )}
-        </div>
-
-        <p className="mt-3 text-[11px] text-muted-foreground/80">
-          Preview build — live SMS verification is not yet wired up. Use code{" "}
-          <span className="font-mono text-foreground">123456</span> to continue.
-        </p>
-      </div>
-
-      <div className="mt-6 space-y-3 pb-2">
-        <PrimaryCta disabled={code.length !== 6 || verifying} onClick={handleVerify}>
-          {verifying ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Verifying…
-            </span>
-          ) : (
-            "Verify code"
-          )}
-        </PrimaryCta>
-        <div className="flex items-center justify-center">
-          <GhostBtn
-            onClick={() => {
-              update({ phoneVerified: false });
-              onNext();
-            }}
-          >
-            Skip for now
-          </GhostBtn>
-        </div>
-      </div>
-    </ScreenWrap>
-  );
-}
-
 
 /* ───────────────────────── Screen: Biometric ───────────────────────── */
 
@@ -708,8 +540,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("+1");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -738,10 +568,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           ? "bg-success"
           : "bg-gradient-to-r from-primary to-violet-glow";
 
-  const phoneValid = phone.replace(/\D/g, "").length >= 7;
   const nameValid = fullName.trim().length >= 2;
 
-  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && phoneValid && agreed;
+  const signupValid = nameValid && emailValid && pwLen && pwNum && pwSym && agreed;
   const signinValid = emailValid && password.length >= 8;
   const valid = mode === "signup" ? signupValid : signinValid;
 
@@ -762,7 +591,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             emailRedirectTo: `${window.location.origin}/signin`,
             data: {
               full_name: fullName,
-              phone: `${country}${phone.replace(/\D/g, "")}`,
             },
           },
         });
@@ -970,54 +798,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         )}
       </div>
 
-      {mode === "signup" && (
-        <div>
-          <label className="label-mono">Phone</label>
-          <div className="mt-1.5 flex gap-2">
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-            >
-              <option value="+1">🇺🇸 +1</option>
-              <option value="+44">🇬🇧 +44</option>
-              <option value="+33">🇫🇷 +33</option>
-              <option value="+49">🇩🇪 +49</option>
-              <option value="+41">🇨🇭 +41</option>
-              <option value="+61">🇦🇺 +61</option>
-              <option value="+971">🇦🇪 +971</option>
-              <option value="+852">🇭🇰 +852</option>
-              <option value="+65">🇸🇬 +65</option>
-            </select>
-            <input
-              type="tel"
-              inputMode="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="(415) 555-0199"
-              autoComplete="tel"
-              className={`flex-1 rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50 ${
-                phone && !phoneValid ? "border-destructive/50" : "border-white/[0.08]"
-              }`}
-            />
-          </div>
-        </div>
-      )}
-
       {error && (
         <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
           {error}
         </p>
       )}
 
-      {mode === "signup" && !valid && (fullName || email || password || phone) && (
+      {mode === "signup" && !valid && (fullName || email || password) && (
         <ul className="space-y-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-muted-foreground">
           {!nameValid && <li>• Enter your full name (2+ characters)</li>}
           {!emailValid && <li>• Enter a valid email address</li>}
           {!pwLen && <li>• Password must be at least 12 characters</li>}
           {!pwNum && <li>• Password must include a number</li>}
           {!pwSym && <li>• Password must include a symbol (!@#$…)</li>}
-          {!phoneValid && <li>• Enter a valid phone number (7+ digits)</li>}
           {!agreed && <li>• Agree to the Terms and Privacy Policy</li>}
         </ul>
       )}
