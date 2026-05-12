@@ -1,18 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronDown, Pencil, Trash2, X } from "lucide-react";
+import { Plus, ChevronDown, Pencil, Trash2, X, UserPlus, Check, Clock, ShieldCheck, Unlink } from "lucide-react";
 import { z } from "zod";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
 import { listFamilyMembers, upsertFamilyMember, deleteFamilyMember } from "@/lib/family.functions";
+import {
+  createFamilyLinkRequest,
+  listMyFamilyLinkRequests,
+  respondFamilyLinkRequest,
+  cancelFamilyLinkRequest,
+  listLinkedPartnersWealth,
+  removeFamilyLink,
+  getMyDateOfBirth,
+  setMyDateOfBirth,
+} from "@/lib/family-links.functions";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/family")({
