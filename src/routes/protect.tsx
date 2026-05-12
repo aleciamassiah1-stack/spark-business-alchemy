@@ -29,6 +29,7 @@ type Policy = {
   renewal_date: string | null;
   status: string | null;
   document_url: string | null;
+  document_path: string | null;
 };
 
 function ProtectRoute() {
