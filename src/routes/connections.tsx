@@ -1908,29 +1908,28 @@ function EstateTab({
                   </div>
                   <p className="text-[11px] capitalize text-muted-foreground">{d.document_type.replace(/_/g, " ")}</p>
                   <div className="mt-2 flex gap-2">
-                    {d.document_url && (
-                      <a
-                        href={d.document_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-foreground hover:bg-white/[0.06]"
+                    {(d.document_path || d.document_url) && (
+                      <DocumentLink
+                        documentPath={d.document_path}
+                        fallbackUrl={d.document_url}
+                        ariaLabel="View PDF"
+                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-foreground hover:bg-white/[0.06] disabled:opacity-50"
                       >
                         View PDF
-                      </a>
+                      </DocumentLink>
                     )}
-                    <a
-                      href={d.document_url ?? undefined}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-disabled={!d.document_url}
+                    <DocumentLink
+                      documentPath={d.document_path}
+                      fallbackUrl={d.document_url}
+                      ariaLabel="Share with attorney"
                       className={`rounded-full px-3 py-1 text-[10px] font-medium ${
-                        d.document_url
+                        d.document_path || d.document_url
                           ? "bg-primary/15 text-primary"
-                          : "bg-white/[0.04] text-muted-foreground pointer-events-none"
+                          : "bg-white/[0.04] text-muted-foreground pointer-events-none opacity-50"
                       }`}
                     >
                       Share with attorney
-                    </a>
+                    </DocumentLink>
                   </div>
                 </div>
                 <button
