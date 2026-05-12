@@ -248,9 +248,13 @@ function FamilyPage() {
         >
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="h-3 w-3" />
-            Date of birth on file
+            Identity on file (DOB · SSN last 4)
           </span>
-          <span className="font-mono text-foreground">{dobOnFile ?? "Not set — tap to add"}</span>
+          <span className="font-mono text-foreground">
+            {dobOnFile && hasSsn4OnFile
+              ? `${dobOnFile} · ••••`
+              : "Not set — tap to add"}
+          </span>
         </button>
 
         {linksLoading ? (
