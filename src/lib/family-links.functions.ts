@@ -333,7 +333,36 @@ export const adminReviewFamilyLinkRequest = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Returns approved linked partners with their net worth + account balances. */
+async function computeUserWealth(pid: string) {
+  const { data: accts } = await supabaseAdmin
+    .from("aggregated_accounts")
+    .select("name, current_balance, type, subtype")
+    .eq("user_id", pid);
+  const { data: liabs } = await supabaseAdmin
+    .from("aggregated_liabilities")
+    .select("account_id, details")
+    .eq("user_id", pid);
+
+  const accounts = (accts ?? []).map((a) => ({
+    name: a.name,
+    balance: Number(a.current_balance ?? 0),
+    type: a.type ?? null,
+  }));
+  const assets = accounts
+    .filter((a) => a.type !== "loan" && a.type !== "credit")
+    .reduce((s, a) => s + a.balance, 0);
+  const debts = (liabs ?? []).reduce((s, l: any) => {
+    const bal = Number(l?.details?.last_statement_balance ?? l?.details?.balance ?? 0);
+    return s + bal;
+  }, 0);
+  const negFromAccts = accounts
+    .filter((a) => a.type === "loan" || a.type === "credit")
+    .reduce((s, a) => s + a.balance, 0);
+  const net_worth = assets - debts - negFromAccts;
+  return { net_worth, accounts };
+}
+
+/** Returns approved linked partners with their net worth + account balances, plus the current user's own snapshot. */
 export const listLinkedPartnersWealth = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await requireUserId();
   const { data: links } = await supabaseAdmin
@@ -360,35 +389,12 @@ export const listLinkedPartnersWealth = createServerFn({ method: "GET" }).handle
       email = data?.user?.email ?? "";
     } catch {}
 
-    const { data: accts } = await supabaseAdmin
-      .from("aggregated_accounts")
-      .select("name, current_balance, type, subtype")
-      .eq("user_id", pid);
-    const { data: liabs } = await supabaseAdmin
-      .from("aggregated_liabilities")
-      .select("account_id, details")
-      .eq("user_id", pid);
-
-    const accounts = (accts ?? []).map((a) => ({
-      name: a.name,
-      balance: Number(a.current_balance ?? 0),
-      type: a.type ?? null,
-    }));
-    const assets = accounts
-      .filter((a) => a.type !== "loan" && a.type !== "credit")
-      .reduce((s, a) => s + a.balance, 0);
-    const debts = (liabs ?? []).reduce((s, l: any) => {
-      const bal = Number(l?.details?.last_statement_balance ?? l?.details?.balance ?? 0);
-      return s + bal;
-    }, 0);
-    const negFromAccts = accounts
-      .filter((a) => a.type === "loan" || a.type === "credit")
-      .reduce((s, a) => s + a.balance, 0);
-    const net_worth = assets - debts - negFromAccts;
-
+    const { net_worth, accounts } = await computeUserWealth(pid);
     result.push({ user_id: pid, name, email, net_worth, accounts });
   }
-  return { partners: result };
+
+  const self = await computeUserWealth(userId);
+  return { partners: result, self: { user_id: userId, net_worth: self.net_worth } };
 });
 
 /** Admin or user removes an approved link. */
