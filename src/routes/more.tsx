@@ -73,6 +73,25 @@ function MorePage() {
           <ArrowRight className="relative h-4 w-4 text-primary" />
         </Link>
 
+        {!hasAccess && (
+          <LuxCard>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <LogOut className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-destructive">Sign out</p>
+                <p className="text-[11px] text-muted-foreground">Use a different account</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </LuxCard>
+        )}
+
         
 
         {hasAccess && access.isAdmin && (
@@ -116,19 +135,21 @@ function MorePage() {
               <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
             </>
           )}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-              <LogOut className="h-4 w-4 text-destructive" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-destructive">Sign out</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          {hasAccess && (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <LogOut className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-destructive">Sign out</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </NavGroup>
 
         <p className="mt-2 text-center font-serif text-xs italic text-muted-foreground">
