@@ -591,7 +591,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             emailRedirectTo: `${window.location.origin}/signin`,
             data: {
               full_name: fullName,
-              phone: `${country}${phone.replace(/\D/g, "")}`,
             },
           },
         });
