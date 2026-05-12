@@ -1618,7 +1618,7 @@ function PropertiesTab({
                       onClick={() => onRunValuation(p)}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium text-primary-foreground glow-violet"
                     >
-                      <Sparkles className="h-3 w-3" /> Get AI valuation
+                      <Sparkles className="h-3 w-3" /> Live valuation
                     </button>
                     <button
                       onClick={() => onShowHistory(p)}
