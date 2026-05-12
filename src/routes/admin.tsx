@@ -830,3 +830,48 @@ function StripeSyncCard({ onSynced }: { onSynced: () => void }) {
     </section>
   );
 }
+
+function SyncStripeButton({
+  userId,
+  email,
+  onSynced,
+}: {
+  userId: string;
+  email: string | null;
+  onSynced: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const res = await syncStripeForUser({ userId, email: email ?? undefined });
+      if (res.totalSubscriptionsSynced === 0) {
+        toast.message("No Stripe subscription found", {
+          description: email ?? userId,
+        });
+      } else {
+        toast.success(`Synced ${res.totalSubscriptionsSynced} subscription(s)`);
+        onSynced();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      onClick={run}
+      disabled={busy}
+      title="Pull latest subscription state from Stripe"
+      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:bg-primary/20 disabled:opacity-50"
+    >
+      {busy ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <RefreshCw className="h-3 w-3" />
+      )}
+      Sync
+    </button>
+  );
+}
