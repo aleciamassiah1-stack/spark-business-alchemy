@@ -408,24 +408,31 @@ export const removeFamilyLink = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Get current user's DOB on file. */
-export const getMyDateOfBirth = createServerFn({ method: "GET" }).handler(async () => {
+/** Get current user's identity status (DOB on file + whether SSN last 4 is set). */
+export const getMyIdentity = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await requireUserId();
   const { data } = await supabaseAdmin
     .from("user_intake")
-    .select("date_of_birth")
+    .select("date_of_birth, last_four_ssn_hash")
     .eq("user_id", userId)
     .maybeSingle();
-  return { date_of_birth: ((data as any)?.date_of_birth as string | null) ?? null };
+  return {
+    date_of_birth: ((data as any)?.date_of_birth as string | null) ?? null,
+    has_ssn4: !!((data as any)?.last_four_ssn_hash),
+  };
 });
 
-/** Set current user's DOB on file. */
-export const setMyDateOfBirth = createServerFn({ method: "POST" })
-  .inputValidator((input: { date_of_birth: string }) =>
-    z.object({ date_of_birth: dobSchema }).parse(input),
+/** Back-compat alias used by older UI. */
+export const getMyDateOfBirth = getMyIdentity;
+
+/** Save current user's DOB and SSN last 4 on file. */
+export const setMyIdentity = createServerFn({ method: "POST" })
+  .inputValidator((input: { date_of_birth: string; ssn4: string }) =>
+    z.object({ date_of_birth: dobSchema, ssn4: ssn4Schema }).parse(input),
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const ssnHash = await hashSsn4(data.ssn4);
     const { data: existing } = await supabaseAdmin
       .from("user_intake")
       .select("id")
@@ -434,14 +441,24 @@ export const setMyDateOfBirth = createServerFn({ method: "POST" })
     if (existing) {
       const { error } = await supabaseAdmin
         .from("user_intake")
-        .update({ date_of_birth: data.date_of_birth } as any)
+        .update({
+          date_of_birth: data.date_of_birth,
+          last_four_ssn_hash: ssnHash,
+        } as any)
         .eq("user_id", userId);
-      if (error) throw new Error("Could not save date of birth");
+      if (error) throw new Error("Could not save identity");
     } else {
       const { error } = await supabaseAdmin
         .from("user_intake")
-        .insert({ user_id: userId, plan: "essential_monthly", date_of_birth: data.date_of_birth } as any);
-      if (error) throw new Error("Could not save date of birth");
+        .insert({
+          user_id: userId,
+          plan: "essential_monthly",
+          date_of_birth: data.date_of_birth,
+          last_four_ssn_hash: ssnHash,
+        } as any);
+      if (error) throw new Error("Could not save identity");
     }
     return { ok: true as const };
+  });
+
   });
