@@ -15,8 +15,8 @@ import {
   cancelFamilyLinkRequest,
   listLinkedPartnersWealth,
   removeFamilyLink,
-  getMyDateOfBirth,
-  setMyDateOfBirth,
+  getMyIdentity,
+  setMyIdentity,
 } from "@/lib/family-links.functions";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
