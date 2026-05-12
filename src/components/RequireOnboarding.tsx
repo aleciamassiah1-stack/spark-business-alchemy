@@ -10,6 +10,7 @@ import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
   "/pricing",
+  "/more",
   "/profile",
   "/checkout/return",
   "/signin",
