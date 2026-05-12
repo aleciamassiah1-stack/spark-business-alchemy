@@ -69,6 +69,7 @@ type EstateDoc = {
   signed_date: string | null;
   expiration_date: string | null;
   document_url: string | null;
+  document_path: string | null;
   updated_at: string;
 };
 
