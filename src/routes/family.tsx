@@ -841,29 +841,37 @@ function InviteLinkDialog({
 function DobEditDialog({
   open,
   onOpenChange,
-  current,
+  currentDob,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  current: string | null;
+  currentDob: string | null;
   onSaved: (v: string) => void | Promise<void>;
 }) {
   const [dob, setDob] = useState("");
+  const [ssn4, setSsn4] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) setDob(current ?? "");
-  }, [open, current]);
+    if (open) {
+      setDob(currentDob ?? "");
+      setSsn4("");
+    }
+  }, [open, currentDob]);
 
   const handleSave = async () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
       toast.error("Pick a valid date");
       return;
     }
+    if (!/^\d{4}$/.test(ssn4)) {
+      toast.error("Enter the last 4 digits of your SSN");
+      return;
+    }
     setSaving(true);
     try {
-      await setMyDateOfBirth({ data: { date_of_birth: dob } });
+      await setMyIdentity({ data: { date_of_birth: dob, ssn4 } });
       toast.success("Saved");
       await onSaved(dob);
     } catch (e) {
@@ -877,14 +885,28 @@ function DobEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Date of birth</DialogTitle>
+          <DialogTitle>Identity verification</DialogTitle>
           <DialogDescription>
-            Required to verify identity when someone sends you a family link request.
+            Required so we can confirm it's really you when someone sends a family link request.
+            Your SSN last 4 is hashed before storage — we never keep the raw digits.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-1.5 py-2">
-          <Label htmlFor="dob-edit">Date of birth</Label>
-          <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="dob-edit">Date of birth</Label>
+            <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="ssn-edit">SSN (last 4)</Label>
+            <Input
+              id="ssn-edit"
+              inputMode="numeric"
+              maxLength={4}
+              value={ssn4}
+              onChange={(e) => setSsn4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
