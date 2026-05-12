@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
+import { DocumentLink } from "@/components/DocumentLink";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts as demoTrustAccounts, attorney as demoAttorney } from "@/lib/mock-data";
@@ -69,6 +70,7 @@ type EstateDoc = {
   signed_date: string | null;
   expiration_date: string | null;
   document_url: string | null;
+  document_path: string | null;
   updated_at: string;
 };
 
@@ -334,16 +336,15 @@ function LegacyPage() {
                     </p>
                   </button>
                   <DocStatusBadge status={status} />
-                  {d.document_url ? (
-                    <a
-                      href={d.document_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
-                      aria-label="Open document"
+                  {(d.document_path || d.document_url) ? (
+                    <DocumentLink
+                      documentPath={d.document_path}
+                      fallbackUrl={d.document_url}
+                      ariaLabel="Open document"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground disabled:opacity-50"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                    </DocumentLink>
                   ) : null}
                   <button
                     type="button"

@@ -1410,6 +1410,31 @@ export const uploadWealthDocument = createServerFn({ method: "POST" })
     }
   });
 
+// Mint a fresh short-lived signed URL for a wealth document the caller owns
+export const getWealthDocumentSignedUrl = createServerFn({ method: "POST" })
+  .inputValidator((input: { path: string }) =>
+    z.object({ path: z.string().trim().min(1).max(500) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const userId = await requireUserId();
+      // Path must live under the caller's folder
+      if (!data.path.startsWith(`${userId}/`)) {
+        return { ok: false as const, url: null, error: "Forbidden" };
+      }
+      const { data: signed, error } = await supabaseAdmin.storage
+        .from("wealth-documents")
+        .createSignedUrl(data.path, 60 * 10);
+      if (error || !signed?.signedUrl) {
+        return { ok: false as const, url: null, error: error?.message ?? "Not found" };
+      }
+      return { ok: true as const, url: signed.signedUrl, error: null as string | null };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to load document";
+      return { ok: false as const, url: null, error: msg };
+    }
+  });
+
 // Upload a property hero image to the public property-images bucket and return its public URL
 export const uploadPropertyImage = createServerFn({ method: "POST" })
   .inputValidator(

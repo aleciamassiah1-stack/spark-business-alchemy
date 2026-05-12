@@ -27,6 +27,7 @@ import {
   Circle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { DocumentLink } from "@/components/DocumentLink";
 import { InsuranceReviewModal, type InsuranceReviewDraft } from "@/components/InsuranceReviewModal";
 import { setLastSyncAt } from "@/lib/auto-refresh";
 import { LuxCard } from "@/components/LuxCard";
@@ -233,8 +234,8 @@ type Liability = {
 };
 type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
 type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number; image_url: string | null; beds: number | null; baths: number | null; sqft: number | null };
-type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
-type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; signed_date: string | null };
+type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null; document_path: string | null };
+type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; document_path: string | null; signed_date: string | null };
 
 function ConnectionsPage() {
   const { setSyncing } = useWealth();
@@ -1908,29 +1909,28 @@ function EstateTab({
                   </div>
                   <p className="text-[11px] capitalize text-muted-foreground">{d.document_type.replace(/_/g, " ")}</p>
                   <div className="mt-2 flex gap-2">
-                    {d.document_url && (
-                      <a
-                        href={d.document_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-foreground hover:bg-white/[0.06]"
+                    {(d.document_path || d.document_url) && (
+                      <DocumentLink
+                        documentPath={d.document_path}
+                        fallbackUrl={d.document_url}
+                        ariaLabel="View PDF"
+                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-foreground hover:bg-white/[0.06] disabled:opacity-50"
                       >
                         View PDF
-                      </a>
+                      </DocumentLink>
                     )}
-                    <a
-                      href={d.document_url ?? undefined}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-disabled={!d.document_url}
+                    <DocumentLink
+                      documentPath={d.document_path}
+                      fallbackUrl={d.document_url}
+                      ariaLabel="Share with attorney"
                       className={`rounded-full px-3 py-1 text-[10px] font-medium ${
-                        d.document_url
+                        d.document_path || d.document_url
                           ? "bg-primary/15 text-primary"
-                          : "bg-white/[0.04] text-muted-foreground pointer-events-none"
+                          : "bg-white/[0.04] text-muted-foreground pointer-events-none opacity-50"
                       }`}
                     >
                       Share with attorney
-                    </a>
+                    </DocumentLink>
                   </div>
                 </div>
                 <button
