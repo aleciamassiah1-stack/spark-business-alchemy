@@ -19,7 +19,7 @@ const UNPAID_ALLOWED = new Set([
 ]);
 
 /** Routes paid users can reach before finishing setup. */
-const SETUP_ALLOWED = new Set(["/intake", "/profile", "/checkout/return"]);
+const SETUP_ALLOWED = new Set(["/intake", "/more", "/profile", "/checkout/return"]);
 
 /**
  * Gates protected routes:
