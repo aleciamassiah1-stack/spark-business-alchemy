@@ -2151,7 +2151,7 @@ function PropertyFormModal({
             input_beds: beds ? Number(beds) : null,
             input_baths: baths ? Number(baths) : null,
             input_sqft: sqft ? Number(sqft) : null,
-            source: "ai",
+            source: valuationSource,
           },
         });
       } catch (err) {
