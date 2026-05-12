@@ -706,3 +706,173 @@ function MemberFormDialog({
     </Dialog>
   );
 }
+
+function InviteLinkDialog({
+  open,
+  onOpenChange,
+  onSent,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSent: () => void | Promise<void>;
+}) {
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setEmail("");
+      setDob("");
+      setMessage("");
+    }
+  }, [open]);
+
+  const handleSend = async () => {
+    const parsed = z
+      .object({
+        email: z.string().trim().toLowerCase().email("Enter a valid email"),
+        dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date of birth"),
+      })
+      .safeParse({ email, dob });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await createFamilyLinkRequest({
+        data: {
+          recipient_email: parsed.data.email,
+          recipient_dob: parsed.data.dob,
+          message: message.trim() ? message.trim() : undefined,
+        },
+      });
+      toast.success(
+        res.recipient_has_account
+          ? "Request sent — they'll see it when they sign in"
+          : "Request saved — they'll need to create an account to accept",
+      );
+      await onSent();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Send link request</DialogTitle>
+          <DialogDescription>
+            Combine net worth with a spouse or family member. They'll need to accept and Æther
+            management will review before the link goes live.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-email">Their email</Label>
+            <Input
+              id="link-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              maxLength={255}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-dob">Their date of birth</Label>
+            <Input id="link-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">
+              Used to confirm identity. Must match what they have on file.
+            </p>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-msg">Message (optional)</Label>
+            <Textarea
+              id="link-msg"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Hey love, let's combine our vault."
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
+            Cancel
+          </Button>
+          <Button onClick={handleSend} disabled={sending}>
+            {sending ? "Sending…" : "Send request"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DobEditDialog({
+  open,
+  onOpenChange,
+  current,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  current: string | null;
+  onSaved: (v: string) => void | Promise<void>;
+}) {
+  const [dob, setDob] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setDob(current ?? "");
+  }, [open, current]);
+
+  const handleSave = async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+      toast.error("Pick a valid date");
+      return;
+    }
+    setSaving(true);
+    try {
+      await setMyDateOfBirth({ data: { date_of_birth: dob } });
+      toast.success("Saved");
+      await onSaved(dob);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Date of birth</DialogTitle>
+          <DialogDescription>
+            Required to verify identity when someone sends you a family link request.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5 py-2">
+          <Label htmlFor="dob-edit">Date of birth</Label>
+          <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
