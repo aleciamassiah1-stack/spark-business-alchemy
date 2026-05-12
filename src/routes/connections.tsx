@@ -77,6 +77,7 @@ import {
 } from "@/lib/rules.functions";
 import { PlaidConsentDialog } from "@/components/PlaidConsentDialog";
 import { hasLocalConsent } from "@/lib/consent-versions";
+import { useAccess } from "@/lib/access-context";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
