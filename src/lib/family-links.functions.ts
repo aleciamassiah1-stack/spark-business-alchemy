@@ -381,3 +381,41 @@ export const removeFamilyLink = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not remove link");
     return { ok: true as const };
   });
+
+/** Get current user's DOB on file. */
+export const getMyDateOfBirth = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await requireUserId();
+  const { data } = await supabaseAdmin
+    .from("user_intake")
+    .select("date_of_birth")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return { date_of_birth: ((data as any)?.date_of_birth as string | null) ?? null };
+});
+
+/** Set current user's DOB on file. */
+export const setMyDateOfBirth = createServerFn({ method: "POST" })
+  .inputValidator((input: { date_of_birth: string }) =>
+    z.object({ date_of_birth: dobSchema }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const userId = await requireUserId();
+    const { data: existing } = await supabaseAdmin
+      .from("user_intake")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (existing) {
+      const { error } = await supabaseAdmin
+        .from("user_intake")
+        .update({ date_of_birth: data.date_of_birth } as any)
+        .eq("user_id", userId);
+      if (error) throw new Error("Could not save date of birth");
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_intake")
+        .insert({ user_id: userId, plan: "essential_monthly", date_of_birth: data.date_of_birth } as any);
+      if (error) throw new Error("Could not save date of birth");
+    }
+    return { ok: true as const };
+  });
