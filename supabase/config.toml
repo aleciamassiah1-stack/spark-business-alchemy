@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.concierge-chat]
 verify_jwt = true
+
+[functions.admin-sync-stripe]
+verify_jwt = true
