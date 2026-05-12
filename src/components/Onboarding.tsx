@@ -19,7 +19,6 @@ import {
   ScrollText,
   Sparkles,
   Loader2,
-  MessageSquare,
   PiggyBank,
   Bitcoin,
   CreditCard,
