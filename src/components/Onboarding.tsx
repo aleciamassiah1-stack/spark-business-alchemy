@@ -798,40 +798,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         )}
       </div>
 
-      {mode === "signup" && (
-        <div>
-          <label className="label-mono">Phone</label>
-          <div className="mt-1.5 flex gap-2">
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-            >
-              <option value="+1">🇺🇸 +1</option>
-              <option value="+44">🇬🇧 +44</option>
-              <option value="+33">🇫🇷 +33</option>
-              <option value="+49">🇩🇪 +49</option>
-              <option value="+41">🇨🇭 +41</option>
-              <option value="+61">🇦🇺 +61</option>
-              <option value="+971">🇦🇪 +971</option>
-              <option value="+852">🇭🇰 +852</option>
-              <option value="+65">🇸🇬 +65</option>
-            </select>
-            <input
-              type="tel"
-              inputMode="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="(415) 555-0199"
-              autoComplete="tel"
-              className={`flex-1 rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50 ${
-                phone && !phoneValid ? "border-destructive/50" : "border-white/[0.08]"
-              }`}
-            />
-          </div>
-        </div>
-      )}
-
       {error && (
         <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
           {error}
