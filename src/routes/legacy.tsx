@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
+import { DocumentLink } from "@/components/DocumentLink";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { trustAccounts as demoTrustAccounts, attorney as demoAttorney } from "@/lib/mock-data";
