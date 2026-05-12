@@ -98,6 +98,7 @@ function FamilyPage() {
   const [linksLoading, setLinksLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [dobOnFile, setDobOnFile] = useState<string | null>(null);
+  const [hasSsn4OnFile, setHasSsn4OnFile] = useState(false);
   const [showDobEdit, setShowDobEdit] = useState(false);
 
   const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
