@@ -178,15 +178,15 @@ function ProtectPage() {
                           {p.renewal_date && <Field label="Renews" value={p.renewal_date} />}
                         </div>
                         <div className="mt-4 flex gap-2">
-                          {p.document_url ? (
-                            <a
-                              href={p.document_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-foreground"
+                          {(p.document_path || p.document_url) ? (
+                            <DocumentLink
+                              documentPath={p.document_path}
+                              fallbackUrl={p.document_url}
+                              ariaLabel="View Policy"
+                              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-foreground disabled:opacity-50"
                             >
                               <FileText className="h-3.5 w-3.5" /> View Policy
-                            </a>
+                            </DocumentLink>
                           ) : (
                             <Link
                               to="/connections"
