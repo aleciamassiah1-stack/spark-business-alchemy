@@ -50,6 +50,7 @@ import {
   upsertProperty,
   deleteProperty,
   estimatePropertyValue,
+  estimatePropertyValueRentCast,
   savePropertyValuation,
   listPropertyValuations,
   deletePropertyValuation,
