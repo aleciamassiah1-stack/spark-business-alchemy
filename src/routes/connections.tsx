@@ -2221,7 +2221,7 @@ function PropertyFormModal({
         ) : (
           <Sparkles className="h-3.5 w-3.5" />
         )}
-        {estimating ? "Estimating with AI…" : "Estimate value with AI"}
+        {estimating ? "Fetching live valuation…" : "Get live valuation (RentCast)"}
       </button>
 
       {valuation && (
