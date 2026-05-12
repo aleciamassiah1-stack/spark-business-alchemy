@@ -248,6 +248,8 @@ function AdminPage() {
           </div>
         </section>
 
+        <FamilyLinkReviewSection />
+
         {/* Recent subs */}
         {metrics && metrics.recentSubscriptions.length > 0 && (
           <section className="mt-10">
