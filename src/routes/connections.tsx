@@ -3084,7 +3084,7 @@ function ValuationHistoryModal({
         ) : (
           <Sparkles className="h-3.5 w-3.5" />
         )}
-        {estimating ? "Estimating with AI…" : "Run new AI estimate & save"}
+        {estimating ? "Fetching live valuation…" : "Run live valuation & save (RentCast)"}
       </button>
 
       <p className="label-mono mb-2">History</p>
