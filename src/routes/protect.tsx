@@ -5,6 +5,7 @@ import { Shield, ChevronDown, FileText, AlertCircle, Plus, Loader2 } from "lucid
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { DocumentLink } from "@/components/DocumentLink";
 import { listInsurancePolicies } from "@/lib/wealth.functions";
 import { fmtCurrency } from "@/lib/format";
 
