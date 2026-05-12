@@ -3014,13 +3014,11 @@ function ValuationHistoryModal({
   const runEstimate = async () => {
     setEstimating(true);
     try {
-      const est = await estimatePropertyValue({
-        data: {
-          address: property.address,
-          beds: beds ? Number(beds) : null,
-          baths: baths ? Number(baths) : null,
-          sqft: sqft ? Number(sqft) : null,
-        },
+      const est = await estimatePropertyLive({
+        address: property.address,
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
       });
       if (!est.ok || !est.valuation) {
         onError(est.error ?? "Could not estimate value");
@@ -3034,7 +3032,7 @@ function ValuationHistoryModal({
           input_beds: beds ? Number(beds) : null,
           input_baths: baths ? Number(baths) : null,
           input_sqft: sqft ? Number(sqft) : null,
-          source: "ai",
+          source: est.source,
         },
       });
       if (!saveRes.ok) {
