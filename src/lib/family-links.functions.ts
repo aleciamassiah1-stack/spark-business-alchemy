@@ -5,6 +5,15 @@ import { requireUserId } from "@/integrations/supabase/auth-helper";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const dobSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be YYYY-MM-DD");
+const ssn4Schema = z.string().regex(/^\d{4}$/, "Last 4 of SSN must be 4 digits");
+
+async function hashSsn4(ssn4: string): Promise<string> {
+  const data = new TextEncoder().encode(`aether:ssn4:${ssn4}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 async function isAdmin(userId: string): Promise<boolean> {
   const { data } = await supabaseAdmin
