@@ -41,6 +41,7 @@ function MorePage() {
   const { signOut } = useAuth();
   const access = useAccess();
   const navigate = useNavigate();
+  const hasAccess = access.hasAccess;
 
   async function handleSignOut() {
     try {
@@ -74,7 +75,7 @@ function MorePage() {
 
         
 
-        {access.isAdmin && (
+        {hasAccess && access.isAdmin && (
           <NavGroup title="Admin">
             <NavRow
               to="/launch"
@@ -91,22 +92,30 @@ function MorePage() {
           </NavGroup>
         )}
 
-        <NavGroup title="Wealth tools">
-          <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
-          <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
-          <NavRow to="/family" icon={Users} label="Family Vault" desc="Linked household accounts" />
-        </NavGroup>
+        {hasAccess && (
+          <>
+            <NavGroup title="Wealth tools">
+              <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
+              <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
+              <NavRow to="/family" icon={Users} label="Family Vault" desc="Linked household accounts" />
+            </NavGroup>
 
-        <NavGroup title="Connections">
-          <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
-          <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
-          <NavRow to="/connections" icon={Building2} label="Banking" desc="Manage cash & transfers" />
-        </NavGroup>
+            <NavGroup title="Connections">
+              <NavRow to="/eligibility" icon={Sparkles} label="Integration eligibility" desc="See what's available in your region" />
+              <NavRow to="/connections" icon={LinkIcon} label="Linked Institutions" desc="Plaid · banks, brokerage, investments" />
+              <NavRow to="/connections" icon={Building2} label="Banking" desc="Manage cash & transfers" />
+            </NavGroup>
+          </>
+        )}
 
         <NavGroup title="Account">
-          <NavRow to="/notifications" icon={Bell} label="Notifications" desc="Push or encrypted email" />
-          <NavRow to="/preferences" icon={Settings} label="Preferences" desc="Currency, region, privacy" />
-          <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
+          {hasAccess && (
+            <>
+              <NavRow to="/notifications" icon={Bell} label="Notifications" desc="Push or encrypted email" />
+              <NavRow to="/preferences" icon={Settings} label="Preferences" desc="Currency, region, privacy" />
+              <NavRow to="/support" icon={HelpCircle} label="Concierge support" desc="24/7 private line" />
+            </>
+          )}
           <button
             type="button"
             onClick={handleSignOut}
