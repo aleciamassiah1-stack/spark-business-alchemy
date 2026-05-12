@@ -514,9 +514,10 @@ function FamilyPage() {
       <DobEditDialog
         open={showDobEdit}
         onOpenChange={setShowDobEdit}
-        current={dobOnFile}
+        currentDob={dobOnFile}
         onSaved={async (v) => {
           setDobOnFile(v);
+          setHasSsn4OnFile(true);
           setShowDobEdit(false);
         }}
       />
