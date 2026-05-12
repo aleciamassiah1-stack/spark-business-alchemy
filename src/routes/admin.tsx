@@ -15,7 +15,9 @@ import {
   Trash2,
   Undo2,
   Flame,
+  RefreshCw,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import {
@@ -182,6 +184,8 @@ function AdminPage() {
             loading={loading}
           />
         </section>
+
+        <StripeSyncCard onSynced={load} />
 
         {/* Members table */}
         <section className="mt-10">
@@ -503,6 +507,7 @@ function MemberRow({
       </td>
       <td className="px-4 py-3 text-right">
         <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+          <SyncStripeButton userId={m.user_id} email={m.email ?? null} onSynced={onChanged} />
           {m.has_manual_access ? (
             <button
               onClick={revoke}
@@ -709,5 +714,164 @@ function FamilyLinkReviewSection() {
         </div>
       )}
     </section>
+  );
+}
+
+async function syncStripeForUser(input: { email?: string; userId?: string }) {
+  const { data, error } = await supabase.functions.invoke("admin-sync-stripe", {
+    body: input,
+  });
+  if (error) {
+    const msg =
+      (error as any)?.context?.body
+        ? await (error as any).context.text?.().catch(() => "")
+        : "";
+    throw new Error(msg || error.message || "Sync failed");
+  }
+  if (data?.error) throw new Error(data.error);
+  return data as {
+    ok: true;
+    userId: string;
+    email: string | null;
+    totalSubscriptionsSynced: number;
+    results: {
+      live: Array<{ env: "live"; customerId: string; subscriptionsSynced: number }>;
+      sandbox: Array<{ env: "sandbox"; customerId: string; subscriptionsSynced: number }>;
+    };
+  };
+}
+
+function StripeSyncCard({ onSynced }: { onSynced: () => void }) {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<string | null>(null);
+
+  const run = async () => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      toast.error("Enter an email to sync");
+      return;
+    }
+    setBusy(true);
+    setLast(null);
+    try {
+      const res = await syncStripeForUser({ email: trimmed });
+      const liveCustomers = res.results.live.length;
+      const sandboxCustomers = res.results.sandbox.length;
+      if (res.totalSubscriptionsSynced === 0 && liveCustomers + sandboxCustomers === 0) {
+        toast.message("No matching Stripe customer found", {
+          description: `Searched live and sandbox by metadata.userId and email for ${res.email ?? trimmed}.`,
+        });
+        setLast("No customer found in Stripe");
+      } else {
+        toast.success(
+          `Synced ${res.totalSubscriptionsSynced} subscription${res.totalSubscriptionsSynced === 1 ? "" : "s"}`,
+          {
+            description: `Live: ${liveCustomers} customer(s) · Sandbox: ${sandboxCustomers} customer(s)`,
+          },
+        );
+        setLast(
+          `Synced ${res.totalSubscriptionsSynced} sub(s) across ${liveCustomers + sandboxCustomers} customer(s)`,
+        );
+        onSynced();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="mt-10">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[240px]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Stripe sync
+            </p>
+            <h3 className="mt-1 font-serif text-base text-foreground">
+              Pull subscription state for an email
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Looks up the customer in live + sandbox and seeds the subscriptions
+              table. Use when a payment isn't reflected (missed webhook, etc.).
+            </p>
+          </div>
+          <div className="flex flex-1 items-center gap-2 min-w-[260px]">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") run();
+              }}
+            />
+            <button
+              onClick={run}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/25 disabled:opacity-50"
+            >
+              {busy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Sync from Stripe
+            </button>
+          </div>
+        </div>
+        {last && (
+          <p className="mt-3 font-mono text-[11px] text-muted-foreground">{last}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SyncStripeButton({
+  userId,
+  email,
+  onSynced,
+}: {
+  userId: string;
+  email: string | null;
+  onSynced: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const res = await syncStripeForUser({ userId, email: email ?? undefined });
+      if (res.totalSubscriptionsSynced === 0) {
+        toast.message("No Stripe subscription found", {
+          description: email ?? userId,
+        });
+      } else {
+        toast.success(`Synced ${res.totalSubscriptionsSynced} subscription(s)`);
+        onSynced();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      onClick={run}
+      disabled={busy}
+      title="Pull latest subscription state from Stripe"
+      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:bg-primary/20 disabled:opacity-50"
+    >
+      {busy ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <RefreshCw className="h-3 w-3" />
+      )}
+      Sync
+    </button>
   );
 }
