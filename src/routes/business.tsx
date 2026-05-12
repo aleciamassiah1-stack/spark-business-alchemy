@@ -465,25 +465,33 @@ function BusinessPage() {
                 <Link2 className="h-4 w-4 text-primary" />
                 <p className="label-mono">Business bank</p>
               </div>
-              {state.bankConnected ? (
+              {state.bankConnected && state.bankLastSync ? (
                 <>
-                  <p className="mt-2 font-serif text-sm text-foreground">Connected</p>
+                  <p className="mt-2 font-serif text-sm text-foreground">AI synced</p>
                   <p className="mt-1 font-mono text-[10px] text-success">
-                    Synced {state.bankLastSync ? new Date(state.bankLastSync).toLocaleDateString() : "today"}
+                    {new Date(state.bankLastSync).toLocaleDateString()}
                   </p>
                 </>
               ) : (
-                <button
-                  onClick={() =>
-                    update({ bankConnected: true, bankLastSync: new Date().toISOString() })
-                  }
-                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary"
-                >
-                  <Plus className="h-3 w-3" /> Connect
-                </button>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Auto-detect business assets &amp; debts
+                </p>
               )}
+              <button
+                onClick={syncFromBank}
+                disabled={syncing}
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary disabled:opacity-50"
+              >
+                {syncing ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                {state.bankConnected ? "Re-sync" : "Sync from bank"}
+              </button>
             </LuxCard>
           </div>
+
 
           <LuxCard className="p-4">
             <div className="flex items-start justify-between">
