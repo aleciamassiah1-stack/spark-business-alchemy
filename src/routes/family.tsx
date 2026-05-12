@@ -798,8 +798,19 @@ function InviteLinkDialog({
           <div className="grid gap-1.5">
             <Label htmlFor="link-dob">Their date of birth</Label>
             <Input id="link-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-ssn">Their SSN (last 4)</Label>
+            <Input
+              id="link-ssn"
+              inputMode="numeric"
+              maxLength={4}
+              value={ssn4}
+              onChange={(e) => setSsn4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+            />
             <p className="text-[11px] text-muted-foreground">
-              Used to confirm identity. Must match what they have on file.
+              DOB and last 4 of SSN must both match what they have on file.
             </p>
           </div>
           <div className="grid gap-1.5">
