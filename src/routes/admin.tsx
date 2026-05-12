@@ -248,6 +248,8 @@ function AdminPage() {
           </div>
         </section>
 
+        <FamilyLinkReviewSection />
+
         {/* Recent subs */}
         {metrics && metrics.recentSubscriptions.length > 0 && (
           <section className="mt-10">
@@ -580,5 +582,132 @@ function MemberRow({
         </div>
       </td>
     </tr>
+  );
+}
+
+function FamilyLinkReviewSection() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [users, setUsers] = useState<Record<string, { email: string; name: string }>>({});
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const mod = await import("@/lib/family-links.functions");
+      const res = await mod.adminListFamilyLinkRequests();
+      setRows(res.requests as any[]);
+      setUsers(res.users as Record<string, { email: string; name: string }>);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const review = async (id: string, action: "approve" | "decline") => {
+    setActing(id);
+    try {
+      const notes =
+        action === "decline"
+          ? window.prompt("Reason for decline (optional)") ?? undefined
+          : undefined;
+      const mod = await import("@/lib/family-links.functions");
+      await mod.adminReviewFamilyLinkRequest({ data: { id, action, notes } });
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const pending = rows.filter((r) => r.status === "pending_admin");
+  const recent = rows.filter((r) => r.status !== "pending_admin").slice(0, 8);
+
+  return (
+    <section className="mt-10">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        Family link requests
+      </p>
+      <h2 className="font-serif text-lg text-foreground">
+        {pending.length} awaiting review
+      </h2>
+      <div className="mt-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        {loading ? (
+          <div className="px-4 py-8 text-center text-muted-foreground">
+            <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+          </div>
+        ) : pending.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+            Nothing awaiting review.
+          </div>
+        ) : (
+          <div className="divide-y divide-white/[0.04]">
+            {pending.map((r) => {
+              const requester = users[r.requester_user_id];
+              const recipient = r.recipient_user_id ? users[r.recipient_user_id] : null;
+              return (
+                <div key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+                  <div className="flex-1 min-w-[200px]">
+                    <p className="text-foreground">
+                      {requester?.name || requester?.email || r.requester_user_id}
+                      <span className="text-muted-foreground"> → </span>
+                      {recipient?.name || recipient?.email || r.recipient_email}
+                    </p>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      DOB match: {r.dob_match ? "yes" : "no"} · {new Date(r.created_at).toLocaleString()}
+                    </p>
+                    {r.message && (
+                      <p className="mt-1 text-xs italic text-muted-foreground">"{r.message}"</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => review(r.id, "approve")}
+                      disabled={acting === r.id}
+                      className="rounded-full bg-success/15 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/25 disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => review(r.id, "decline")}
+                      disabled={acting === r.id}
+                      className="rounded-full bg-destructive/15 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/25 disabled:opacity-50"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {recent.length > 0 && (
+        <div className="mt-3 divide-y divide-white/[0.04] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+          {recent.map((r) => {
+            const requester = users[r.requester_user_id];
+            return (
+              <div
+                key={r.id}
+                className="flex items-center justify-between px-4 py-2.5 text-xs text-muted-foreground"
+              >
+                <span className="truncate">
+                  {(requester?.email || r.requester_user_id) + " → " + r.recipient_email}
+                </span>
+                <span className="font-mono uppercase tracking-wider">
+                  {r.status.replace("_", " ")}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

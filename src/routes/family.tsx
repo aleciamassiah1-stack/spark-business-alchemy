@@ -1,18 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronDown, Pencil, Trash2, X } from "lucide-react";
+import { Plus, ChevronDown, Pencil, Trash2, X, UserPlus, Check, Clock, ShieldCheck, Unlink } from "lucide-react";
 import { z } from "zod";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
 import { listFamilyMembers, upsertFamilyMember, deleteFamilyMember } from "@/lib/family.functions";
+import {
+  createFamilyLinkRequest,
+  listMyFamilyLinkRequests,
+  respondFamilyLinkRequest,
+  cancelFamilyLinkRequest,
+  listLinkedPartnersWealth,
+  removeFamilyLink,
+  getMyDateOfBirth,
+  setMyDateOfBirth,
+} from "@/lib/family-links.functions";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/family")({
@@ -61,7 +72,36 @@ function FamilyPage() {
   const [editing, setEditing] = useState<FamilyMember | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const total = members.reduce((s, m) => s + Number(m.net_worth || 0), 0);
+  type Partner = {
+    user_id: string;
+    name: string;
+    email: string;
+    net_worth: number;
+    accounts: Array<{ name: string; balance: number; type: string | null }>;
+  };
+  type LinkRequest = {
+    id: string;
+    requester_user_id: string;
+    recipient_email: string;
+    recipient_dob: string;
+    recipient_user_id: string | null;
+    status: string;
+    message: string | null;
+    admin_notes: string | null;
+    created_at: string;
+  };
+
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [outgoing, setOutgoing] = useState<LinkRequest[]>([]);
+  const [incoming, setIncoming] = useState<LinkRequest[]>([]);
+  const [requesterNames, setRequesterNames] = useState<Record<string, { name: string; email: string }>>({});
+  const [linksLoading, setLinksLoading] = useState(true);
+  const [showInvite, setShowInvite] = useState(false);
+  const [dobOnFile, setDobOnFile] = useState<string | null>(null);
+  const [showDobEdit, setShowDobEdit] = useState(false);
+
+  const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
+  const total = members.reduce((s, m) => s + Number(m.net_worth || 0), 0) + partnersTotal;
 
   const load = async () => {
     if (!user) {
@@ -85,8 +125,38 @@ function FamilyPage() {
     }
   };
 
+  const loadLinks = async () => {
+    if (!user) {
+      setPartners([]);
+      setOutgoing([]);
+      setIncoming([]);
+      setLinksLoading(false);
+      return;
+    }
+    setLinksLoading(true);
+    try {
+      const [{ partners: ps }, reqs, dob] = await Promise.all([
+        listLinkedPartnersWealth(),
+        listMyFamilyLinkRequests(),
+        getMyDateOfBirth(),
+      ]);
+      setPartners(ps as Partner[]);
+      setOutgoing(reqs.outgoing as LinkRequest[]);
+      setIncoming(reqs.incoming as LinkRequest[]);
+      setRequesterNames(reqs.requesterNames as Record<string, { name: string; email: string }>);
+      setDobOnFile(dob.date_of_birth);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLinksLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (ready) load();
+    if (ready) {
+      load();
+      loadLinks();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user?.id]);
 
@@ -98,6 +168,38 @@ function FamilyPage() {
       setMembers((prev) => prev.filter((m) => m.id !== id));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not delete");
+    }
+  };
+
+  const handleRespond = async (id: string, action: "accept" | "decline") => {
+    try {
+      await respondFamilyLinkRequest({ data: { id, action } });
+      toast.success(action === "accept" ? "Accepted — sent for review" : "Declined");
+      await loadLinks();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not respond");
+    }
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Cancel this request?")) return;
+    try {
+      await cancelFamilyLinkRequest({ data: { id } });
+      toast.success("Cancelled");
+      await loadLinks();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not cancel");
+    }
+  };
+
+  const handleUnlink = async (partnerId: string) => {
+    if (!confirm("Remove this linked account? Their data will no longer appear in your vault.")) return;
+    try {
+      await removeFamilyLink({ data: { partner_user_id: partnerId } });
+      toast.success("Unlinked");
+      await loadLinks();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not unlink");
     }
   };
 
@@ -119,13 +221,155 @@ function FamilyPage() {
           <div className="relative">
             <p className="label-mono">Combined family net worth</p>
             <p className="mt-1 font-serif text-4xl text-foreground">{fmtCurrency(total, { compact: true })}</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{members.length} linked members</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              {members.length} manual · {partners.length} linked account{partners.length === 1 ? "" : "s"}
+            </p>
           </div>
         </LuxCard>
       </div>
 
+      {/* Linked accounts (cross-account requests) */}
       <div className="mt-5 flex items-center justify-between px-5">
-        <p className="label-mono">Members</p>
+        <p className="label-mono">Linked accounts</p>
+        <button
+          onClick={() => setShowInvite(true)}
+          className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/25"
+        >
+          <UserPlus className="h-3 w-3" /> Send link request
+        </button>
+      </div>
+
+      <div className="mt-2 flex flex-col gap-2 px-5">
+        <button
+          onClick={() => setShowDobEdit(true)}
+          className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left text-[11px] text-muted-foreground hover:bg-white/[0.04]"
+        >
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="h-3 w-3" />
+            Date of birth on file
+          </span>
+          <span className="font-mono text-foreground">{dobOnFile ?? "Not set — tap to add"}</span>
+        </button>
+
+        {linksLoading ? (
+          <p className="px-2 py-4 text-center text-xs text-muted-foreground">Loading…</p>
+        ) : (
+          <>
+            {incoming
+              .filter((r) => r.status === "pending_recipient")
+              .map((r) => {
+                const who = requesterNames[r.requester_user_id];
+                return (
+                  <LuxCard key={r.id} className="p-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-primary">Incoming request</p>
+                      <p className="mt-0.5 font-serif text-base text-foreground">{who?.name ?? "Someone"}</p>
+                      <p className="text-[11px] text-muted-foreground">{who?.email}</p>
+                      {r.message && <p className="mt-2 text-xs italic text-muted-foreground">"{r.message}"</p>}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" onClick={() => handleRespond(r.id, "accept")} className="flex-1">
+                        <Check className="h-3 w-3 mr-1" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRespond(r.id, "decline")}
+                        className="flex-1"
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </LuxCard>
+                );
+              })}
+
+            {partners.map((p, i) => (
+              <LuxCard key={p.user_id} delay={i * 0.05} className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
+                    {(p.name || "?")
+                      .trim()
+                      .split(/\s+/)
+                      .slice(0, 2)
+                      .map((s) => s[0]?.toUpperCase())
+                      .join("")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-base text-foreground truncate">{p.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">Linked · {p.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-sm tabular-nums text-foreground">
+                      {fmtCurrency(Number(p.net_worth || 0), { compact: true })}
+                    </p>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      {p.accounts.length} account{p.accounts.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                </div>
+                {p.accounts.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-1.5">
+                    {p.accounts.map((a, idx) => (
+                      <div
+                        key={`${a.name}-${idx}`}
+                        className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2"
+                      >
+                        <p className="text-xs text-foreground truncate">{a.name}</p>
+                        <p className="font-mono text-xs tabular-nums text-foreground">
+                          {fmtCurrency(Number(a.balance || 0), { compact: true })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => handleUnlink(p.user_id)}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-[11px] font-medium text-destructive hover:bg-destructive/20"
+                >
+                  <Unlink className="h-3 w-3" /> Unlink
+                </button>
+              </LuxCard>
+            ))}
+
+            {outgoing
+              .filter((r) => r.status === "pending_recipient" || r.status === "pending_admin")
+              .map((r) => (
+                <LuxCard key={r.id} className="p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {r.status === "pending_recipient" ? "Awaiting recipient" : "Awaiting admin review"}
+                      </p>
+                      <p className="text-sm text-foreground truncate">{r.recipient_email}</p>
+                    </div>
+                    <button
+                      onClick={() => handleCancel(r.id)}
+                      className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </LuxCard>
+              ))}
+
+            {!incoming.some((r) => r.status === "pending_recipient") &&
+              partners.length === 0 &&
+              outgoing.length === 0 && (
+                <LuxCard className="p-5 text-center">
+                  <p className="font-serif text-sm text-foreground">No linked accounts yet</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Send a request to a spouse or family member with their own account to combine net worth.
+                  </p>
+                </LuxCard>
+              )}
+          </>
+        )}
+      </div>
+
+      <div className="mt-5 flex items-center justify-between px-5">
+        <p className="label-mono">Manual members</p>
         <button
           onClick={openAdd}
           className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/25"
@@ -249,6 +493,25 @@ function FamilyPage() {
           });
           setOpen(saved.id);
           setShowForm(false);
+        }}
+      />
+
+      <InviteLinkDialog
+        open={showInvite}
+        onOpenChange={setShowInvite}
+        onSent={async () => {
+          setShowInvite(false);
+          await loadLinks();
+        }}
+      />
+
+      <DobEditDialog
+        open={showDobEdit}
+        onOpenChange={setShowDobEdit}
+        current={dobOnFile}
+        onSaved={async (v) => {
+          setDobOnFile(v);
+          setShowDobEdit(false);
         }}
       />
     </MobileShell>
@@ -437,6 +700,176 @@ function MemberFormDialog({
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : editing ? "Save changes" : "Add member"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InviteLinkDialog({
+  open,
+  onOpenChange,
+  onSent,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSent: () => void | Promise<void>;
+}) {
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setEmail("");
+      setDob("");
+      setMessage("");
+    }
+  }, [open]);
+
+  const handleSend = async () => {
+    const parsed = z
+      .object({
+        email: z.string().trim().toLowerCase().email("Enter a valid email"),
+        dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date of birth"),
+      })
+      .safeParse({ email, dob });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await createFamilyLinkRequest({
+        data: {
+          recipient_email: parsed.data.email,
+          recipient_dob: parsed.data.dob,
+          message: message.trim() ? message.trim() : undefined,
+        },
+      });
+      toast.success(
+        res.recipient_has_account
+          ? "Request sent — they'll see it when they sign in"
+          : "Request saved — they'll need to create an account to accept",
+      );
+      await onSent();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Send link request</DialogTitle>
+          <DialogDescription>
+            Combine net worth with a spouse or family member. They'll need to accept and Æther
+            management will review before the link goes live.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-email">Their email</Label>
+            <Input
+              id="link-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              maxLength={255}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-dob">Their date of birth</Label>
+            <Input id="link-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">
+              Used to confirm identity. Must match what they have on file.
+            </p>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="link-msg">Message (optional)</Label>
+            <Textarea
+              id="link-msg"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Hey love, let's combine our vault."
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
+            Cancel
+          </Button>
+          <Button onClick={handleSend} disabled={sending}>
+            {sending ? "Sending…" : "Send request"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DobEditDialog({
+  open,
+  onOpenChange,
+  current,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  current: string | null;
+  onSaved: (v: string) => void | Promise<void>;
+}) {
+  const [dob, setDob] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setDob(current ?? "");
+  }, [open, current]);
+
+  const handleSave = async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+      toast.error("Pick a valid date");
+      return;
+    }
+    setSaving(true);
+    try {
+      await setMyDateOfBirth({ data: { date_of_birth: dob } });
+      toast.success("Saved");
+      await onSaved(dob);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Date of birth</DialogTitle>
+          <DialogDescription>
+            Required to verify identity when someone sends you a family link request.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5 py-2">
+          <Label htmlFor="dob-edit">Date of birth</Label>
+          <Input id="dob-edit" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
