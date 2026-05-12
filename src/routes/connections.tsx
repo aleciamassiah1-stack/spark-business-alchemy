@@ -493,6 +493,7 @@ function ConnectionsPage() {
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
+            isAdmin={isAdmin}
             onConnect={requestConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
