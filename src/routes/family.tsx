@@ -165,6 +165,22 @@ function FamilyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user?.id]);
 
+  // Refresh combined totals whenever the tab regains focus
+  useEffect(() => {
+    if (!ready) return;
+    const onFocus = () => {
+      load();
+      loadLinks();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, user?.id]);
+
   const handleDelete = async (id: string) => {
     if (!confirm("Remove this family member?")) return;
     try {
