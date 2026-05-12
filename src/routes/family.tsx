@@ -100,9 +100,11 @@ function FamilyPage() {
   const [dobOnFile, setDobOnFile] = useState<string | null>(null);
   const [hasSsn4OnFile, setHasSsn4OnFile] = useState(false);
   const [showDobEdit, setShowDobEdit] = useState(false);
+  const [selfNetWorth, setSelfNetWorth] = useState(0);
 
   const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
-  const total = members.reduce((s, m) => s + Number(m.net_worth || 0), 0) + partnersTotal;
+  const manualTotal = members.reduce((s, m) => s + Number(m.net_worth || 0), 0);
+  const total = manualTotal + partnersTotal + (partners.length > 0 ? selfNetWorth : 0);
 
   const load = async () => {
     if (!user) {
