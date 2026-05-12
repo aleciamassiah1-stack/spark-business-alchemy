@@ -100,9 +100,11 @@ function FamilyPage() {
   const [dobOnFile, setDobOnFile] = useState<string | null>(null);
   const [hasSsn4OnFile, setHasSsn4OnFile] = useState(false);
   const [showDobEdit, setShowDobEdit] = useState(false);
+  const [selfNetWorth, setSelfNetWorth] = useState(0);
 
   const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
-  const total = members.reduce((s, m) => s + Number(m.net_worth || 0), 0) + partnersTotal;
+  const manualTotal = members.reduce((s, m) => s + Number(m.net_worth || 0), 0);
+  const total = manualTotal + partnersTotal + (partners.length > 0 ? selfNetWorth : 0);
 
   const load = async () => {
     if (!user) {
@@ -136,12 +138,13 @@ function FamilyPage() {
     }
     setLinksLoading(true);
     try {
-      const [{ partners: ps }, reqs, ident] = await Promise.all([
+      const [linkedRes, reqs, ident] = await Promise.all([
         listLinkedPartnersWealth(),
         listMyFamilyLinkRequests(),
         getMyIdentity(),
       ]);
-      setPartners(ps as Partner[]);
+      setPartners(linkedRes.partners as Partner[]);
+      setSelfNetWorth(Number((linkedRes as any)?.self?.net_worth ?? 0));
       setOutgoing(reqs.outgoing as LinkRequest[]);
       setIncoming(reqs.incoming as LinkRequest[]);
       setRequesterNames(reqs.requesterNames as Record<string, { name: string; email: string }>);
@@ -159,6 +162,22 @@ function FamilyPage() {
       load();
       loadLinks();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, user?.id]);
+
+  // Refresh combined totals whenever the tab regains focus
+  useEffect(() => {
+    if (!ready) return;
+    const onFocus = () => {
+      load();
+      loadLinks();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user?.id]);
 
@@ -224,7 +243,7 @@ function FamilyPage() {
             <p className="label-mono">Combined family net worth</p>
             <p className="mt-1 font-serif text-4xl text-foreground">{fmtCurrency(total, { compact: true })}</p>
             <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {members.length} manual · {partners.length} linked account{partners.length === 1 ? "" : "s"}
+              {partners.length > 0 ? "you + " : ""}{partners.length} linked · {members.length} manual
             </p>
           </div>
         </LuxCard>
