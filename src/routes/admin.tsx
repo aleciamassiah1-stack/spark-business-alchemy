@@ -507,6 +507,7 @@ function MemberRow({
       </td>
       <td className="px-4 py-3 text-right">
         <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+          <SyncStripeButton userId={m.user_id} email={m.email ?? null} onSynced={onChanged} />
           {m.has_manual_access ? (
             <button
               onClick={revoke}
