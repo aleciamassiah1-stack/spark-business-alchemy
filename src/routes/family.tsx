@@ -138,12 +138,13 @@ function FamilyPage() {
     }
     setLinksLoading(true);
     try {
-      const [{ partners: ps }, reqs, ident] = await Promise.all([
+      const [linkedRes, reqs, ident] = await Promise.all([
         listLinkedPartnersWealth(),
         listMyFamilyLinkRequests(),
         getMyIdentity(),
       ]);
-      setPartners(ps as Partner[]);
+      setPartners(linkedRes.partners as Partner[]);
+      setSelfNetWorth(Number((linkedRes as any)?.self?.net_worth ?? 0));
       setOutgoing(reqs.outgoing as LinkRequest[]);
       setIncoming(reqs.incoming as LinkRequest[]);
       setRequesterNames(reqs.requesterNames as Record<string, { name: string; email: string }>);
