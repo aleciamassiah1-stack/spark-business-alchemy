@@ -2065,6 +2065,7 @@ function PropertyFormModal({
   const [saving, setSaving] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [valuation, setValuation] = useState<PropertyValuation | null>(null);
+  const [valuationSource, setValuationSource] = useState<"rentcast" | "ai">("rentcast");
 
   const estimate = async () => {
     if (!address.trim() || address.trim().length < 5) {
@@ -2074,18 +2075,17 @@ function PropertyFormModal({
     setEstimating(true);
     setValuation(null);
     try {
-      const res = await estimatePropertyValue({
-        data: {
-          address: address.trim(),
-          beds: beds ? Number(beds) : null,
-          baths: baths ? Number(baths) : null,
-          sqft: sqft ? Number(sqft) : null,
-        },
+      const res = await estimatePropertyLive({
+        address: address.trim(),
+        beds: beds ? Number(beds) : null,
+        baths: baths ? Number(baths) : null,
+        sqft: sqft ? Number(sqft) : null,
       });
       if (!res.ok || !res.valuation) {
         onError(res.error ?? "Could not estimate value");
       } else {
         setValuation(res.valuation);
+        setValuationSource(res.source);
         setValue(String(Math.round(res.valuation.estimated_value)));
       }
     } catch (err) {
