@@ -94,6 +94,36 @@ export const Route = createFileRoute("/connections")({
   ),
 });
 
+// Try RentCast (live AVM) first, fall back to AI estimate. Returns the valuation
+// plus the source string used so callers can store provenance correctly.
+async function estimatePropertyLive(input: {
+  address: string;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+  property_type?: string;
+}): Promise<{
+  ok: boolean;
+  valuation: PropertyValuation | null;
+  source: "rentcast" | "ai";
+  error: string | null;
+}> {
+  const live = await estimatePropertyValueRentCast({ data: input });
+  if (live.ok && live.valuation) {
+    return { ok: true, valuation: live.valuation, source: "rentcast", error: null };
+  }
+  const ai = await estimatePropertyValue({ data: input });
+  if (ai.ok && ai.valuation) {
+    return { ok: true, valuation: ai.valuation, source: "ai", error: null };
+  }
+  return {
+    ok: false,
+    valuation: null,
+    source: "rentcast",
+    error: live.error ?? ai.error ?? "Could not estimate value",
+  };
+}
+
 type PlaidLinkEventMetadata = {
   view_name?: string | null;
   institution_id?: string | null;
