@@ -426,6 +426,89 @@ export type Database = {
         }
         Relationships: []
       }
+      family_link_requests: {
+        Row: {
+          admin_notes: string | null
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          created_at: string
+          dob_match: boolean | null
+          id: string
+          message: string | null
+          recipient_dob: string
+          recipient_email: string
+          recipient_responded_at: string | null
+          recipient_user_id: string | null
+          requester_user_id: string
+          status: Database["public"]["Enums"]["family_link_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          created_at?: string
+          dob_match?: boolean | null
+          id?: string
+          message?: string | null
+          recipient_dob: string
+          recipient_email: string
+          recipient_responded_at?: string | null
+          recipient_user_id?: string | null
+          requester_user_id: string
+          status?: Database["public"]["Enums"]["family_link_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          created_at?: string
+          dob_match?: boolean | null
+          id?: string
+          message?: string | null
+          recipient_dob?: string
+          recipient_email?: string
+          recipient_responded_at?: string | null
+          recipient_user_id?: string | null
+          requester_user_id?: string
+          status?: Database["public"]["Enums"]["family_link_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_links: {
+        Row: {
+          created_at: string
+          id: string
+          request_id: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_links_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "family_link_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           accounts: Json
@@ -1017,6 +1100,7 @@ export type Database = {
           billing_interval: string
           completed_at: string | null
           created_at: string
+          date_of_birth: string | null
           full_name: string | null
           has_advisor: boolean | null
           id: string
@@ -1033,6 +1117,7 @@ export type Database = {
           billing_interval?: string
           completed_at?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
           has_advisor?: boolean | null
           id?: string
@@ -1049,6 +1134,7 @@ export type Database = {
           billing_interval?: string
           completed_at?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
           has_advisor?: boolean | null
           id?: string
@@ -1149,6 +1235,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      family_link_status:
+        | "pending_recipient"
+        | "declined_recipient"
+        | "pending_admin"
+        | "approved"
+        | "declined_admin"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1277,6 +1370,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      family_link_status: [
+        "pending_recipient",
+        "declined_recipient",
+        "pending_admin",
+        "approved",
+        "declined_admin",
+        "cancelled",
+      ],
     },
   },
 } as const
