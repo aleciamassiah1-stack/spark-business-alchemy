@@ -233,8 +233,8 @@ type Liability = {
 };
 type Tx = { id: string; account_id: string; amount: number; date: string; name: string; merchant_name: string | null; category: string | null; custom_category: string | null; applied_rule_id: string | null; logo_url: string | null };
 type Property = { id: string; name: string; address: string; estimated_value: number; mortgage_balance: number; image_url: string | null; beds: number | null; baths: number | null; sqft: number | null };
-type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null };
-type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; signed_date: string | null };
+type Policy = { id: string; policy_type: string; insurer_name: string; coverage_amount: number | null; premium_amount: number | null; renewal_date: string | null; parsed_by_ai: boolean; document_url: string | null; document_path: string | null };
+type EstateDoc = { id: string; document_type: string; title: string; status: string; document_url: string | null; document_path: string | null; signed_date: string | null };
 
 function ConnectionsPage() {
   const { setSyncing } = useWealth();
