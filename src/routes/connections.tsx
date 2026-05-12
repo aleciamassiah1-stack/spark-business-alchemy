@@ -1142,6 +1142,7 @@ function AccountsTab({
   linking,
   plaidEnv,
   hasLiveSubscription,
+  isAdmin,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -1155,6 +1156,7 @@ function AccountsTab({
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
   hasLiveSubscription: boolean;
+  isAdmin: boolean;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
