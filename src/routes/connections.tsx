@@ -542,16 +542,14 @@ function ConnectionsPage() {
             }}
             onShowHistory={(p) => setHistoryProperty(p)}
             onRunValuation={async (p) => {
-              setSyncing(true, "Running AI valuation…");
+              setSyncing(true, "Fetching live valuation…");
               try {
-                const est = await estimatePropertyValue({
-                  data: {
-                    address: p.address,
-                    beds: p.beds,
-                    baths: p.baths,
-                    sqft: p.sqft,
-                    property_type: "residential",
-                  },
+                const est = await estimatePropertyLive({
+                  address: p.address,
+                  beds: p.beds,
+                  baths: p.baths,
+                  sqft: p.sqft,
+                  property_type: "residential",
                 });
                 if (!est.ok || !est.valuation) {
                   showToast("err", est.error ?? "Could not estimate value");
@@ -565,14 +563,15 @@ function ConnectionsPage() {
                     input_beds: p.beds,
                     input_baths: p.baths,
                     input_sqft: p.sqft,
-                    source: "ai",
+                    source: est.source,
                   },
                 });
                 if (!saveRes.ok) {
                   showToast("err", saveRes.error ?? "Failed to save valuation");
                   return;
                 }
-                showToast("ok", `AI estimate: ${fmtCurrency(est.valuation.estimated_value, { compact: true })}`);
+                const label = est.source === "rentcast" ? "RentCast" : "AI";
+                showToast("ok", `${label} estimate: ${fmtCurrency(est.valuation.estimated_value, { compact: true })}`);
                 setHistoryProperty(p);
               } catch (err) {
                 showToast("err", err instanceof Error ? err.message : "Estimation failed");
