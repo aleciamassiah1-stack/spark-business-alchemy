@@ -15,7 +15,9 @@ import {
   Trash2,
   Undo2,
   Flame,
+  RefreshCw,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import {
