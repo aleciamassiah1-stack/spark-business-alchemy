@@ -136,16 +136,17 @@ function FamilyPage() {
     }
     setLinksLoading(true);
     try {
-      const [{ partners: ps }, reqs, dob] = await Promise.all([
+      const [{ partners: ps }, reqs, ident] = await Promise.all([
         listLinkedPartnersWealth(),
         listMyFamilyLinkRequests(),
-        getMyDateOfBirth(),
+        getMyIdentity(),
       ]);
       setPartners(ps as Partner[]);
       setOutgoing(reqs.outgoing as LinkRequest[]);
       setIncoming(reqs.incoming as LinkRequest[]);
       setRequesterNames(reqs.requesterNames as Record<string, { name: string; email: string }>);
-      setDobOnFile(dob.date_of_birth);
+      setDobOnFile(ident.date_of_birth);
+      setHasSsn4OnFile(!!ident.has_ssn4);
     } catch (e) {
       console.error(e);
     } finally {
