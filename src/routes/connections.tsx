@@ -77,6 +77,7 @@ import {
 } from "@/lib/rules.functions";
 import { PlaidConsentDialog } from "@/components/PlaidConsentDialog";
 import { hasLocalConsent } from "@/lib/consent-versions";
+import { useAccess } from "@/lib/access-context";
 
 export const Route = createFileRoute("/connections")({
   head: () => ({
@@ -206,6 +207,7 @@ type EstateDoc = { id: string; document_type: string; title: string; status: str
 
 function ConnectionsPage() {
   const { setSyncing } = useWealth();
+  const { isAdmin } = useAccess();
   const [tab, setTab] = useState<Tab>("accounts");
   const [items, setItems] = useState<Item[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -491,6 +493,7 @@ function ConnectionsPage() {
             linking={linking}
             plaidEnv={plaidEnv}
             hasLiveSubscription={hasLiveSubscription}
+            isAdmin={isAdmin}
             onConnect={requestConnect}
             onSeedDemo={handleSeedDemo}
             onClearDemo={handleClearDemo}
@@ -1139,6 +1142,7 @@ function AccountsTab({
   linking,
   plaidEnv,
   hasLiveSubscription,
+  isAdmin,
   onConnect,
   onSeedDemo,
   onClearDemo,
@@ -1152,6 +1156,7 @@ function AccountsTab({
   linking: boolean;
   plaidEnv: "sandbox" | "production" | null;
   hasLiveSubscription: boolean;
+  isAdmin: boolean;
   onConnect: () => void;
   onSeedDemo: () => void;
   onClearDemo: () => void;
@@ -1208,15 +1213,17 @@ function AccountsTab({
             ? "Plaid Sandbox · use credentials user_good / pass_good"
             : "Detecting environment…"}
       </p>
-      <div className="mt-2 flex items-center justify-center">
-        <button
-          onClick={hasDemo ? onClearDemo : onSeedDemo}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
-        >
-          <Sparkles className="h-3 w-3 text-gold" />
-          {hasDemo ? "Clear demo data" : "Or explore with demo data"}
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="mt-2 flex items-center justify-center">
+          <button
+            onClick={hasDemo ? onClearDemo : onSeedDemo}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            <Sparkles className="h-3 w-3 text-gold" />
+            {hasDemo ? "Clear demo data" : "Or explore with demo data"}
+          </button>
+        </div>
+      )}
       <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
         By continuing, you authorize Æther Wealth to use{" "}
         <a
@@ -1239,8 +1246,12 @@ function AccountsTab({
         .
       </p>
 
-      <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
-      <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
+      {isAdmin && (
+        <>
+          <PlaidLiveChecklist plaidEnv={plaidEnv} itemCount={items.length} />
+          <StripeLiveChecklist hasLiveSubscription={hasLiveSubscription} />
+        </>
+      )}
 
       <ReconnectBanner
         items={items.filter((i) => i.status === "requires_update")}
