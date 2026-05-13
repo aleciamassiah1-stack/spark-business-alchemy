@@ -12,9 +12,28 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Æther Wealth" },
-      { name: "description", content: "Three tiers built for serious wealth. Essential, Private and Family Office." },
+      { name: "description", content: "Three tiers built for serious wealth — Essential, Private and Family Office. Private banking-grade pricing for individuals, advisors and family offices." },
       { property: "og:title", content: "Pricing — Æther Wealth" },
       { property: "og:description", content: "Private banking-grade pricing for individuals, advisors and family offices." },
+      { property: "og:url", content: "https://aetherwealth.co/pricing" },
+    ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/pricing" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            { "@type": "Question", name: "Is there a free trial?", acceptedAnswer: { "@type": "Answer", text: "No. We are a premium platform built for serious wealth management. Every tier begins with your first payment and delivers full value from day one." } },
+            { "@type": "Question", name: "Can I switch tiers?", acceptedAnswer: { "@type": "Answer", text: "Yes. Upgrade or downgrade at any time. Annual plan differences are prorated automatically." } },
+            { "@type": "Question", name: "What payment methods do you accept?", acceptedAnswer: { "@type": "Answer", text: "All major credit cards, ACH bank transfer, and wire transfer for Family Office annual plans." } },
+            { "@type": "Question", name: "Is my financial data secure?", acceptedAnswer: { "@type": "Answer", text: "All data is encrypted with 256-bit AES at rest and TLS 1.3 in transit. We are SOC 2 Type II certified and FINRA compliant. We never sell your data." } },
+            { "@type": "Question", name: "What does white label mean for B2B?", acceptedAnswer: { "@type": "Answer", text: "Your firm's name, logo, colors and domain. Your clients never see our brand. Available on Private and Family Office tiers." } },
+            { "@type": "Question", name: "How does the Family Office demo work?", acceptedAnswer: { "@type": "Answer", text: "A member of our team will contact you within 24 hours to schedule a personalized walkthrough tailored to your firm's specific needs." } },
+          ],
+        }),
+      },
     ],
   }),
   component: PricingPage,

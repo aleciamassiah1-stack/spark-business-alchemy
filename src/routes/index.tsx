@@ -27,9 +27,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Æther Wealth — Overview" },
-      { name: "description", content: "Your private wealth, in one elegant view." },
+      { title: "Æther Wealth — Private Wealth Overview" },
+      { name: "description", content: "A private bank in your pocket. Track investments, insurance, trust and estate from one elegant, secure dashboard." },
+      { property: "og:title", content: "Æther Wealth — Private Wealth Overview" },
+      { property: "og:description", content: "A private bank in your pocket. Track investments, insurance, trust and estate from one elegant, secure dashboard." },
+      { property: "og:url", content: "https://aetherwealth.co/" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/" }],
   }),
   component: HomeRoute,
 });

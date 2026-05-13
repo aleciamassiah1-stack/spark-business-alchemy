@@ -13,8 +13,12 @@ export const Route = createFileRoute("/portfolio")({
   head: () => ({
     meta: [
       { title: "Investments — Æther Wealth" },
-      { name: "description", content: "Your investment portfolio at a glance." },
+      { name: "description", content: "Track every holding, allocation and return across your full investment portfolio in one private, beautifully designed dashboard." },
+      { property: "og:title", content: "Investments — Æther Wealth" },
+      { property: "og:description", content: "Holdings, allocation and performance across your portfolio — unified in a single private dashboard." },
+      { property: "og:url", content: "https://aetherwealth.co/portfolio" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/portfolio" }],
   }),
   component: () => (
     <RequireOnboarding>

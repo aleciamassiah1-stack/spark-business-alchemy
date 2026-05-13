@@ -10,8 +10,12 @@ export const Route = createFileRoute("/signin")({
   head: () => ({
     meta: [
       { title: "Sign In — Æther Wealth" },
-      { name: "description", content: "Sign in to your private wealth vault." },
+      { name: "description", content: "Sign in to your private Æther Wealth vault to manage investments, insurance, trust and estate from one secure dashboard." },
+      { property: "og:title", content: "Sign In — Æther Wealth" },
+      { property: "og:description", content: "Access your private wealth vault — investments, insurance, trust and estate in one place." },
+      { property: "og:url", content: "https://aetherwealth.co/signin" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/signin" }],
   }),
   component: SigninRoute,
 });
