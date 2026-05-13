@@ -1,0 +1,18 @@
+# Æther Wealth
+
+> A private bank in your pocket. Æther Wealth unifies investments, insurance, trust and estate planning in a single luxury mobile dashboard for individuals, advisors and family offices.
+
+## Pages
+
+- [Overview](/): Private wealth dashboard — net worth, accounts, activity.
+- [Investments](/portfolio): Holdings, allocation and performance across your portfolio.
+- [Insurance](/protect): Life, property and liability coverage in one private vault.
+- [Trust & Estate](/legacy): Wills, trusts, healthcare directives and beneficiaries.
+- [Pricing](/pricing): Essential, Private and Family Office tiers.
+- [Sign In](/signin): Access your private wealth vault.
+- [Sign Up](/signup): Create your private wealth vault.
+
+## Optional
+
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.

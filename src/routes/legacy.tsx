@@ -108,8 +108,12 @@ export const Route = createFileRoute("/legacy")({
   head: () => ({
     meta: [
       { title: "Trust & Estate — Æther Wealth" },
-      { name: "description", content: "Your legacy, structured and protected." },
+      { name: "description", content: "Wills, trusts, healthcare directives and beneficiaries — your full estate plan structured, signed and protected in one secure vault." },
+      { property: "og:title", content: "Trust & Estate — Æther Wealth" },
+      { property: "og:description", content: "Wills, trusts and beneficiaries — your full estate plan, structured and protected." },
+      { property: "og:url", content: "https://aetherwealth.co/legacy" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/legacy" }],
   }),
   component: () => (
     <RequireOnboarding>

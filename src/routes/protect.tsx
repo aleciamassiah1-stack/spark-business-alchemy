@@ -13,8 +13,12 @@ export const Route = createFileRoute("/protect")({
   head: () => ({
     meta: [
       { title: "Insurance — Æther Wealth" },
-      { name: "description", content: "All your coverage in one private vault." },
+      { name: "description", content: "Every life, property, liability and umbrella policy organized in one private vault — with renewals, coverage and documents at your fingertips." },
+      { property: "og:title", content: "Insurance — Æther Wealth" },
+      { property: "og:description", content: "All of your coverage — life, property, liability — in one private, secure vault." },
+      { property: "og:url", content: "https://aetherwealth.co/protect" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/protect" }],
   }),
   component: ProtectRoute,
 });

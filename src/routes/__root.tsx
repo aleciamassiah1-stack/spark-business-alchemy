@@ -68,6 +68,27 @@ export const Route = createRootRoute({
         href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Æther Wealth",
+              url: "https://aetherwealth.co",
+              logo: "https://aetherwealth.co/icon-512.png",
+            },
+            {
+              "@type": "WebSite",
+              name: "Æther Wealth",
+              url: "https://aetherwealth.co",
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
