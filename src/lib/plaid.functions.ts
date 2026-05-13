@@ -18,7 +18,7 @@ import {
 function resolvePlaidEnvironment(): "sandbox" | "production" {
   const configured = (process.env.PLAID_ENV ?? "").trim().toLowerCase();
   if (configured === "sandbox") return "sandbox";
-  if (configured === "production") return "production";
+  if (configured === "production" || configured === "prod" || configured === "live") return "production";
 
   let host = "";
   try {
