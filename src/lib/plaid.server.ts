@@ -6,7 +6,7 @@ function getPlaidEnvironment(): "sandbox" | "production" {
   // Env var ALWAYS wins so users can force sandbox in any environment.
   const configured = sanitize(process.env.PLAID_ENV)?.toLowerCase();
   if (configured === "sandbox") return "sandbox";
-  if (configured === "production") return "production";
+  if (configured === "production" || configured === "prod" || configured === "live") return "production";
 
   let host = "";
   try {
