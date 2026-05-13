@@ -143,7 +143,7 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
     user: { client_user_id: userId },
     client_name: "Æther Wealth",
     products: ["transactions"],
-    required_if_supported_products: ["auth", "investments", "liabilities"],
+    required_if_supported_products: ["investments", "liabilities"],
     account_filters: {
       depository: { account_subtypes: ["checking", "savings", "cd", "money market"] },
       credit: { account_subtypes: ["credit card"] },
