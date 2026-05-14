@@ -1054,82 +1054,86 @@ export function Welcome({
         </p>
       </div>
 
-      {/* Tier preview — front and center */}
-      <div className="relative mt-10 w-full max-w-[1100px]">
-        <div className="mb-3 flex items-center justify-end">
-          <Link
-            to="/pricing"
-            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-          >
-            Compare all
-            <ChevronRight className="h-3 w-3" />
-          </Link>
-        </div>
-
-        {/* Billing toggle */}
-        <div className="mb-4 flex justify-center">
-          <div className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
-            <button
-              type="button"
-              onClick={() => setBilling("monthly")}
-              className={`rounded-full px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] transition-all ${
-                billing === "monthly"
-                  ? "bg-primary/15 text-foreground glow-violet"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+      {/* Tier preview — front and center. Hidden on iOS native per
+          Apple Guideline 3.1.1: no pricing, no tier cards, no link to
+          /pricing inside the iOS binary. */}
+      {!isIosNative() && (
+        <div className="relative mt-10 w-full max-w-[1100px]">
+          <div className="mb-3 flex items-center justify-end">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
             >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setBilling("annual")}
-              className={`relative rounded-full px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] transition-all ${
-                billing === "annual"
-                  ? "bg-primary/15 text-foreground glow-violet"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Annual
-              <span className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-0.5 text-[8px] tracking-wider text-gold">
-                −2 mo
-              </span>
-            </button>
+              Compare all
+              <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-stretch sm:gap-4">
-          <WelcomeTier
-            name="Essential"
-            price={tiers.essential[billing]}
-            cadence={cadence}
-            description="For individuals and independent advisors"
-            highlights={["Up to 3 accounts", "Net worth dashboard", "Estate vault — 5 docs"]}
-            variant="essential"
-          />
-          <WelcomeTier
-            name="Private"
-            price={tiers.private[billing]}
-            cadence={cadence}
-            description="For high net worth individuals and advisors"
-            highlights={["Unlimited accounts", "Trust & estate suite", "AI insurance parser"]}
-            variant="private"
-            badge="Most Popular"
-          />
-          <WelcomeTier
-            name="Family Office"
-            price={tiers.family[billing]}
-            cadence={cadence}
-            description="For UHNW families and enterprise firms"
-            highlights={["Unlimited members", "Full white label", "Dedicated manager"]}
-            variant="family"
-          />
+          {/* Billing toggle */}
+          <div className="mb-4 flex justify-center">
+            <div className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.03] p-1">
+              <button
+                type="button"
+                onClick={() => setBilling("monthly")}
+                className={`rounded-full px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] transition-all ${
+                  billing === "monthly"
+                    ? "bg-primary/15 text-foreground glow-violet"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBilling("annual")}
+                className={`relative rounded-full px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] transition-all ${
+                  billing === "annual"
+                    ? "bg-primary/15 text-foreground glow-violet"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Annual
+                <span className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-0.5 text-[8px] tracking-wider text-gold">
+                  −2 mo
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-stretch sm:gap-4">
+            <WelcomeTier
+              name="Essential"
+              price={tiers.essential[billing]}
+              cadence={cadence}
+              description="For individuals and independent advisors"
+              highlights={["Up to 3 accounts", "Net worth dashboard", "Estate vault — 5 docs"]}
+              variant="essential"
+            />
+            <WelcomeTier
+              name="Private"
+              price={tiers.private[billing]}
+              cadence={cadence}
+              description="For high net worth individuals and advisors"
+              highlights={["Unlimited accounts", "Trust & estate suite", "AI insurance parser"]}
+              variant="private"
+              badge="Most Popular"
+            />
+            <WelcomeTier
+              name="Family Office"
+              price={tiers.family[billing]}
+              cadence={cadence}
+              description="For UHNW families and enterprise firms"
+              highlights={["Unlimited members", "Full white label", "Dedicated manager"]}
+              variant="family"
+            />
+          </div>
+          <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            {billing === "annual"
+              ? "Billed annually · Save up to 2 months"
+              : "Billed monthly · Cancel anytime"}
+          </p>
         </div>
-        <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {billing === "annual"
-            ? "Billed annually · Save up to 2 months"
-            : "Billed monthly · Cancel anytime"}
-        </p>
-      </div>
+      )}
 
       <div className="relative mt-8 w-full max-w-[400px] space-y-3 pb-4">
         <PrimaryCta onClick={handleCreate}>Create Account</PrimaryCta>
