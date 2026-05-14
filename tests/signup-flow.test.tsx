@@ -188,7 +188,8 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       "Aether-Vault-2026!",
     );
 
-    const submit = screen.getByRole("button", { name: /continue/i });
+    const buttons = screen.getAllByRole("button", { name: /continue/i });
+    const submit = buttons.find((b) => (b as HTMLButtonElement).type === "submit")!;
     await waitFor(() => expect(submit).not.toBeDisabled());
     await user.click(submit);
 
