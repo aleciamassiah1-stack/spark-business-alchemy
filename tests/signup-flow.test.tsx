@@ -129,6 +129,12 @@ vi.mock("@tanstack/react-router", async () => {
   };
 });
 
+// Stub access-context so RequireOnboarding doesn't block on subscription gate.
+vi.mock("@/lib/access-context", () => ({
+  useAccess: () => ({ ready: true, hasAccess: true, isAdmin: false, refresh: async () => true }),
+  AccessProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 // Imports MUST come after vi.mock above.
 import { AuthProvider } from "@/lib/auth-context";
 import { OnboardingProvider, useOnboarding } from "@/lib/onboarding-context";
