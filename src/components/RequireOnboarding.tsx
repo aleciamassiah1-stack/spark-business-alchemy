@@ -50,6 +50,9 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
   useEffect(() => {
+    // On iOS native we cannot show a paywall (Apple Guideline 3.1.1),
+    // so we never redirect unpaid users to /pricing from the app binary.
+    if (isIosNative()) return;
     if (
       auth.ready &&
       auth.user &&
