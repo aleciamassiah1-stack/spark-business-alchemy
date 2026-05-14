@@ -232,9 +232,9 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       </Providers>,
     );
 
-    // Onboarding renders (verify screen is the first remaining step).
+    // Onboarding renders (biometric is the first remaining step).
     await waitFor(() => {
-      expect(screen.getByText(/Verify Identity/i)).toBeInTheDocument();
+      expect(screen.getByText(/Biometric Lock/i)).toBeInTheDocument();
     });
     expect(screen.queryByTestId("dashboard")).toBeNull();
   });
