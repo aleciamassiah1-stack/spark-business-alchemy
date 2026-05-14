@@ -402,7 +402,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                   <div className="mt-1 flex flex-wrap gap-2">
                     {[
                       "What can you help with?",
-                      "How does pricing work?",
+                      ...(isIosNative() ? [] : ["How does pricing work?"]),
                       "How do I contact support?",
                     ].map((q) => (
                       <button
