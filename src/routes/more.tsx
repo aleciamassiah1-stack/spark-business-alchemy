@@ -57,23 +57,24 @@ function MorePage() {
   return (
     <MobileShell title="More" subtitle="Tools & settings">
       <div className="flex flex-col gap-3 px-5">
-        <Link
-          to="/pricing"
-          className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-primary/30 gradient-hero px-4 py-3.5 glow-violet"
-        >
-          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/30 blur-2xl" />
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-              <Crown className="h-4 w-4 text-primary" />
+        {!isIosNative() && (
+          <Link
+            to="/pricing"
+            className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-primary/30 gradient-hero px-4 py-3.5 glow-violet"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/30 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
+                <Crown className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="label-mono text-primary/80">Membership</p>
+                <p className="text-sm text-foreground">Compare tiers and upgrade</p>
+              </div>
             </div>
-            <div>
-              <p className="label-mono text-primary/80">Membership</p>
-              <p className="text-sm text-foreground">Compare tiers and upgrade</p>
-            </div>
-          </div>
-          <ArrowRight className="relative h-4 w-4 text-primary" />
-        </Link>
-
+            <ArrowRight className="relative h-4 w-4 text-primary" />
+          </Link>
+        )}
         {!hasAccess && (
           <LuxCard>
             <button
