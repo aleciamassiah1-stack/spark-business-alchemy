@@ -219,7 +219,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       expires_at: Math.floor(Date.now() / 1000) + 3600,
       token_type: "bearer",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: "u1", email: "j@x.com", user_metadata: {} } as any,
+      user: { id: "u1", email: "j@x.com", user_metadata: {}, email_confirmed_at: new Date().toISOString() } as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
@@ -252,7 +252,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       expires_at: Math.floor(Date.now() / 1000) + 3600,
       token_type: "bearer",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: "u1", email: "j@x.com", user_metadata: {} } as any,
+      user: { id: "u1", email: "j@x.com", user_metadata: {}, email_confirmed_at: new Date().toISOString() } as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
