@@ -9,6 +9,7 @@ import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { isIosNative } from "@/lib/native";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
