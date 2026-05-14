@@ -187,6 +187,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       screen.getByPlaceholderText("12+ characters"),
       "Aether-Vault-2026!",
     );
+    await user.click(screen.getByRole("checkbox"));
 
     const buttons = screen.getAllByRole("button", { name: /continue/i });
     const submit = buttons.find((b) => (b as HTMLButtonElement).type === "submit")!;
