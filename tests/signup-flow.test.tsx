@@ -181,7 +181,6 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       screen.getByPlaceholderText("12+ characters"),
       "Aether-Vault-2026!",
     );
-    await user.type(screen.getByPlaceholderText("(415) 555-0199"), "4155550199");
 
     const submit = screen.getByRole("button", { name: /continue/i });
     await waitFor(() => expect(submit).not.toBeDisabled());
