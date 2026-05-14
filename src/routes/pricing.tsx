@@ -7,6 +7,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { isStripeConfigured } from "@/lib/stripe";
 import { useAuth } from "@/lib/auth-context";
+import { isIosNative } from "@/lib/native";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
