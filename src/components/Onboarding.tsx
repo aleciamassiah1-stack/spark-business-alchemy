@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
+import { isIosNative } from "@/lib/native";
 import aetherLogo from "@/assets/aether-logo.png";
 
 const STEPS = ["biometric", "personalize", "connect"] as const;
