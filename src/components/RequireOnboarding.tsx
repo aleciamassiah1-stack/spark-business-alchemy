@@ -6,6 +6,7 @@ import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
+import { isIosNative } from "@/lib/native";
 
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
