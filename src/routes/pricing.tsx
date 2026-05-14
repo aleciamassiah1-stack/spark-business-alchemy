@@ -10,6 +10,15 @@ import { useAuth } from "@/lib/auth-context";
 import { isIosNative } from "@/lib/native";
 
 export const Route = createFileRoute("/pricing")({
+  // Apple Guideline 3.1.1 — the iOS binary contains no paywall, no
+  // pricing page, no subscription buttons, and no checkout UI. If the
+  // user lands here on iOS native (e.g. via a stale deep link), bounce
+  // them back to the home screen.
+  beforeLoad: () => {
+    if (isIosNative()) {
+      throw redirect({ to: "/" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Pricing — Æther Wealth" },
