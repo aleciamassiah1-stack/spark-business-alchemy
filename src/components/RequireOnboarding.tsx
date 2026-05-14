@@ -77,11 +77,11 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
-  if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname)) {
+  if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname) && !isIosNative()) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !isIosNative()) {
     return <>{children}</>;
   }
 
