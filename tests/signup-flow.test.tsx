@@ -122,11 +122,18 @@ vi.mock("@tanstack/react-router", async () => {
   return {
     ...actual,
     useNavigate: () => navigateSpy,
+    useLocation: () => ({ pathname: "/", search: "", hash: "", href: "/", searchStr: "" }),
     Link: ({ children, to }: { children: React.ReactNode; to?: string }) => (
       <a href={to}>{children}</a>
     ),
   };
 });
+
+// Stub access-context so RequireOnboarding doesn't block on subscription gate.
+vi.mock("@/lib/access-context", () => ({
+  useAccess: () => ({ ready: true, hasAccess: true, isAdmin: false, refresh: async () => true }),
+  AccessProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 // Imports MUST come after vi.mock above.
 import { AuthProvider } from "@/lib/auth-context";
@@ -180,9 +187,10 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       screen.getByPlaceholderText("12+ characters"),
       "Aether-Vault-2026!",
     );
-    await user.type(screen.getByPlaceholderText("(415) 555-0199"), "4155550199");
+    await user.click(screen.getByRole("checkbox"));
 
-    const submit = screen.getByRole("button", { name: /continue/i });
+    const buttons = screen.getAllByRole("button", { name: /continue/i });
+    const submit = buttons.find((b) => (b as HTMLButtonElement).type === "submit")!;
     await waitFor(() => expect(submit).not.toBeDisabled());
     await user.click(submit);
 
@@ -213,7 +221,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       expires_at: Math.floor(Date.now() / 1000) + 3600,
       token_type: "bearer",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: "u1", email: "j@x.com", user_metadata: {} } as any,
+      user: { id: "u1", email: "j@x.com", user_metadata: {}, email_confirmed_at: new Date().toISOString() } as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
@@ -225,9 +233,9 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       </Providers>,
     );
 
-    // Onboarding renders (verify screen is the first remaining step).
+    // Onboarding renders (biometric is the first remaining step).
     await waitFor(() => {
-      expect(screen.getByText(/Verify Identity/i)).toBeInTheDocument();
+      expect(screen.getByText(/Biometric Lock/i)).toBeInTheDocument();
     });
     expect(screen.queryByTestId("dashboard")).toBeNull();
   });
@@ -246,7 +254,7 @@ describe("Signup flow → onboarding gate → dashboard", () => {
       expires_at: Math.floor(Date.now() / 1000) + 3600,
       token_type: "bearer",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: "u1", email: "j@x.com", user_metadata: {} } as any,
+      user: { id: "u1", email: "j@x.com", user_metadata: {}, email_confirmed_at: new Date().toISOString() } as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
