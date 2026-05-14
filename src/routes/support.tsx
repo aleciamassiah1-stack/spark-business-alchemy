@@ -8,6 +8,7 @@ import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { isIosNative } from "@/lib/native";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/support")({
