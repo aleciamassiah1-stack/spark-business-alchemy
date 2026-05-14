@@ -247,19 +247,10 @@ function PricingPage() {
   const [demoOpen, setDemoOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const { user } = useAuth();
-  const iosNative = isIosNative();
 
   const handleCta = (tier: Tier) => {
     if (tier.ctaAction === "demo") {
       setDemoOpen(true);
-      return;
-    }
-    if (iosNative) {
-      // Apple Guideline 3.1.1: no external paywall UI in the iOS build.
-      // Subscriptions are managed exclusively on the web.
-      toast.message("Manage your subscription on aetherwealth.co", {
-        description: "Sign in on the web to start, change, or cancel a plan.",
-      });
       return;
     }
     if (!isStripeConfigured()) {
@@ -273,36 +264,6 @@ function PricingPage() {
     const priceId = billing === "annual" ? tier.priceIds.annual : tier.priceIds.monthly;
     setCheckoutPriceId(priceId);
   };
-
-  if (iosNative) {
-    return (
-      <MobileShell>
-        <div className="px-5 pt-12 pb-10 text-center">
-          <p className="label-mono">Membership</p>
-          <h1 className="mt-2 font-serif text-[32px] leading-[1.1] text-foreground">
-            Manage your plan on
-            <br />
-            <span className="text-gradient-violet">aetherwealth.co</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-sm text-sm text-muted-foreground">
-            Subscriptions, upgrades and billing live on the web. Sign in with the same
-            account at aetherwealth.co to start, change or cancel a plan. Your access
-            unlocks here automatically.
-          </p>
-          <button
-            onClick={() => setDemoOpen(true)}
-            className="mt-8 rounded-full gradient-gold px-6 py-3 text-sm font-medium text-background transition-all hover:opacity-90"
-          >
-            Talk to us about Family Office
-          </button>
-        </div>
-        <AnimatePresence>
-          {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} />}
-        </AnimatePresence>
-      </MobileShell>
-    );
-  }
-
 
 
   return (
