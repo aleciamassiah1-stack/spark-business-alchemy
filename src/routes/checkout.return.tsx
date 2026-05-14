@@ -1,13 +1,22 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { useAccess } from "@/lib/access-context";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { isIosNative } from "@/lib/native";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/checkout/return")({
+  // Apple Guideline 3.1.1 — no checkout flow exists on iOS, so this
+  // page should never render in the iOS binary. Redirect to home if
+  // somehow reached.
+  beforeLoad: () => {
+    if (isIosNative()) {
+      throw redirect({ to: "/" });
+    }
+  },
   validateSearch: (s: Record<string, unknown>) => ({
     session_id: typeof s.session_id === "string" ? s.session_id : "",
   }),
