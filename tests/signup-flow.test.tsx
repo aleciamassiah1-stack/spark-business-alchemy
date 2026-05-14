@@ -122,6 +122,7 @@ vi.mock("@tanstack/react-router", async () => {
   return {
     ...actual,
     useNavigate: () => navigateSpy,
+    useLocation: () => ({ pathname: "/", search: "", hash: "", href: "/", searchStr: "" }),
     Link: ({ children, to }: { children: React.ReactNode; to?: string }) => (
       <a href={to}>{children}</a>
     ),
