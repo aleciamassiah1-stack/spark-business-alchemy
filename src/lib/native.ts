@@ -46,3 +46,25 @@ export async function hideSplash() {
   const { SplashScreen } = await import("@capacitor/splash-screen");
   await SplashScreen.hide();
 }
+
+// App Tracking Transparency (iOS) -------------------------------------
+// Apple requires the ATT prompt before any data is used to track the user
+// across apps and websites owned by other companies. We currently do not
+// engage in cross-app tracking, but we still surface the prompt on iOS so
+// reviewers can verify the system dialog appears.
+export async function requestTrackingPermission() {
+  if (!isNative() || platform() !== "ios") return { status: "unavailable" as const };
+  try {
+    const { AppTrackingTransparency } = await import(
+      "capacitor-plugin-app-tracking-transparency"
+    );
+    const current = await AppTrackingTransparency.getStatus();
+    if (current.status === "notDetermined") {
+      const res = await AppTrackingTransparency.requestPermission();
+      return { status: res.status };
+    }
+    return { status: current.status };
+  } catch {
+    return { status: "error" as const };
+  }
+}

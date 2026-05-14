@@ -113,7 +113,12 @@ function RootComponent() {
   useEffect(() => {
     installAuthFetch();
     // Native iOS init (no-ops on web)
-    import("@/lib/native").then(({ hideSplash }) => hideSplash());
+    import("@/lib/native").then(async ({ hideSplash, requestTrackingPermission }) => {
+      await hideSplash();
+      // Apple requires the ATT prompt to appear before any tracking-related
+      // data collection. Trigger it once on first launch.
+      await requestTrackingPermission();
+    });
   }, []);
   return (
     <AuthProvider>
