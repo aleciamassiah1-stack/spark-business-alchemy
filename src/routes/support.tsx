@@ -8,6 +8,7 @@ import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { isIosNative } from "@/lib/native";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/support")({
@@ -401,7 +402,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
                   <div className="mt-1 flex flex-wrap gap-2">
                     {[
                       "What can you help with?",
-                      "How does pricing work?",
+                      ...(isIosNative() ? [] : ["How does pricing work?"]),
                       "How do I contact support?",
                     ].map((q) => (
                       <button

@@ -129,76 +129,70 @@ function ProfilePage() {
           </div>
         </LuxCard>
 
-        {/* Subscription card */}
-        <div>
-          <p className="label-mono mb-2 px-1">Subscription</p>
-          <LuxCard className="p-5">
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading plan…
-              </div>
-            ) : sub ? (
-              <>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-4 w-4 text-gold" />
-                      <p className="font-serif text-lg text-foreground">{planLabel}</p>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground capitalize">
-                      Status: <span className="text-foreground">{sub.status}</span>
-                    </p>
-                    {renewsAt && (
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {sub.cancel_at_period_end ? "Ends" : "Renews"} {renewsAt}
-                      </p>
-                    )}
-                  </div>
-                  <span className="rounded-full bg-success/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-success">
-                    Active
-                  </span>
+        {/* Subscription card — hidden on iOS native (Apple Guideline 3.1.1).
+            iOS users see no plan info, no billing link, no upgrade CTA. */}
+        {!isIosNative() && (
+          <div>
+            <p className="label-mono mb-2 px-1">Subscription</p>
+            <LuxCard className="p-5">
+              {loading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading plan…
                 </div>
-                <button
-                  onClick={openBillingPortal}
-                  disabled={portalLoading}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-white/[0.06] disabled:opacity-60"
-                >
-                  {portalLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard className="h-4 w-4" /> Manage billing
-                      <ExternalLink className="h-3 w-3 opacity-60" />
-                    </>
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="font-serif text-lg text-foreground">No active plan</p>
-                {isIosNative() ? (
+              ) : sub ? (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-4 w-4 text-gold" />
+                        <p className="font-serif text-lg text-foreground">{planLabel}</p>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground capitalize">
+                        Status: <span className="text-foreground">{sub.status}</span>
+                      </p>
+                      {renewsAt && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {sub.cancel_at_period_end ? "Ends" : "Renews"} {renewsAt}
+                        </p>
+                      )}
+                    </div>
+                    <span className="rounded-full bg-success/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-success">
+                      Active
+                    </span>
+                  </div>
+                  <button
+                    onClick={openBillingPortal}
+                    disabled={portalLoading}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-white/[0.06] disabled:opacity-60"
+                  >
+                    {portalLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4" /> Manage billing
+                        <ExternalLink className="h-3 w-3 opacity-60" />
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="font-serif text-lg text-foreground">No active plan</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Visit aetherwealth.co on the web to start, change or cancel a plan.
-                    Your access will unlock here automatically.
+                    Choose a tier to unlock the full private office.
                   </p>
-                ) : (
-                  <>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Choose a tier to unlock the full private office.
-                    </p>
-                    <button
-                      onClick={() => navigate({ to: "/pricing" })}
-                      className="mt-4 w-full rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 glow-violet"
-                    >
-                      View plans
-                    </button>
-                  </>
-                )}
-              </>
-            )}
-          </LuxCard>
-        </div>
+                  <button
+                    onClick={() => navigate({ to: "/pricing" })}
+                    className="mt-4 w-full rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 glow-violet"
+                  >
+                    View plans
+                  </button>
+                </>
+              )}
+            </LuxCard>
+          </div>
+        )}
 
         {/* Two-factor auth */}
         <MfaPanel />
