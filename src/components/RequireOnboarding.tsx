@@ -6,6 +6,7 @@ import { useOnboarding } from "@/lib/onboarding-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
+import { isIosNative } from "@/lib/native";
 
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
@@ -49,6 +50,9 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
   useEffect(() => {
+    // On iOS native we cannot show a paywall (Apple Guideline 3.1.1),
+    // so we never redirect unpaid users to /pricing from the app binary.
+    if (isIosNative()) return;
     if (
       auth.ready &&
       auth.user &&
@@ -73,11 +77,11 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
-  if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname)) {
+  if (!access.hasAccess && !UNPAID_ALLOWED.has(location.pathname) && !isIosNative()) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !isIosNative()) {
     return <>{children}</>;
   }
 

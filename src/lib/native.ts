@@ -5,6 +5,13 @@ import { Capacitor } from "@capacitor/core";
 export const isNative = () => Capacitor.isNativePlatform();
 export const platform = () => Capacitor.getPlatform(); // "ios" | "android" | "web"
 
+/**
+ * True only inside the native iOS Capacitor build.
+ * Used to gate web-only purchase flows (Apple's IAP requirement —
+ * no external paywall UI is allowed inside the iOS app binary).
+ */
+export const isIosNative = () => Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+
 // Haptics --------------------------------------------------------------
 export async function tapHaptic() {
   if (!isNative()) return;

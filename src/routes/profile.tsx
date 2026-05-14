@@ -9,6 +9,7 @@ import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { isIosNative } from "@/lib/native";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -176,15 +177,24 @@ function ProfilePage() {
             ) : (
               <>
                 <p className="font-serif text-lg text-foreground">No active plan</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Choose a tier to unlock the full private office.
-                </p>
-                <button
-                  onClick={() => navigate({ to: "/pricing" })}
-                  className="mt-4 w-full rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 glow-violet"
-                >
-                  View plans
-                </button>
+                {isIosNative() ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Visit aetherwealth.co on the web to start, change or cancel a plan.
+                    Your access will unlock here automatically.
+                  </p>
+                ) : (
+                  <>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Choose a tier to unlock the full private office.
+                    </p>
+                    <button
+                      onClick={() => navigate({ to: "/pricing" })}
+                      className="mt-4 w-full rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 glow-violet"
+                    >
+                      View plans
+                    </button>
+                  </>
+                )}
               </>
             )}
           </LuxCard>
