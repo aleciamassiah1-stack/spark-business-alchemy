@@ -21,6 +21,7 @@ import { RequireOnboarding } from "@/components/RequireOnboarding";
 
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
+import { isIosNative } from "@/lib/native";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/more")({
