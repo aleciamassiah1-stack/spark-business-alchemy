@@ -61,19 +61,27 @@ export async function initRevenueCat(supabaseUserId: string | null): Promise<voi
     const { Purchases, LOG_LEVEL } = await import("@revenuecat/purchases-capacitor");
 
     if (!initialised) {
-      await Purchases.setLogLevel({ level: LOG_LEVEL.WARN });
+      await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
       await Purchases.configure({
         apiKey: IOS_API_KEY,
         appUserID: supabaseUserId,
       });
       initialised = true;
-    } else {
+      currentAppUserId = supabaseUserId;
+      console.info("[revenuecat] configured for", supabaseUserId);
+    } else if (currentAppUserId !== supabaseUserId) {
       await Purchases.logIn({ appUserID: supabaseUserId });
+      currentAppUserId = supabaseUserId;
+      console.info("[revenuecat] switched user to", supabaseUserId);
     }
   })();
 
   try {
     await initPromise;
+  } catch (err) {
+    console.error("[revenuecat] init failed", err);
+    initialised = false;
+    currentAppUserId = null;
   } finally {
     initPromise = null;
   }
