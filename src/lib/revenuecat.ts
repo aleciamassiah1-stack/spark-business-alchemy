@@ -116,9 +116,22 @@ export type IapPackage = {
  */
 export async function getIapPackages(): Promise<IapPackage[]> {
   if (!isIosNative()) return [];
+  const ready = await ensureReady();
+  if (!ready) return [];
+
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
-  const { current } = await Purchases.getOfferings();
-  if (!current) return [];
+  let offerings;
+  try {
+    offerings = await Purchases.getOfferings();
+  } catch (err) {
+    console.error("[revenuecat] getOfferings failed", err);
+    return [];
+  }
+  const current = offerings.current;
+  if (!current) {
+    console.warn("[revenuecat] no current offering configured in dashboard");
+    return [];
+  }
 
   const out: IapPackage[] = [];
   for (const pkg of current.availablePackages ?? []) {
@@ -130,7 +143,10 @@ export async function getIapPackages(): Promise<IapPackage[]> {
         : productId.startsWith("family")
           ? "family"
           : null;
-    if (!tierKey) continue;
+    if (!tierKey) {
+      console.warn("[revenuecat] skipping unrecognised product id", productId);
+      continue;
+    }
     const cadence = productId.endsWith("_annual") ? "annual" : "monthly";
     out.push({
       identifier: pkg.identifier,
@@ -147,24 +163,33 @@ export async function getIapPackages(): Promise<IapPackage[]> {
 /** Buy a package. Throws if the user cancels or the purchase fails. */
 export async function purchaseIapPackage(pkg: IapPackage): Promise<{ activeEntitlements: string[] }> {
   if (!isIosNative()) throw new Error("In-app purchases are only available in the iOS app");
+  const ready = await ensureReady();
+  if (!ready) throw new Error("In-app purchases aren't available right now. Please sign in and try again.");
+
   const { Purchases, PURCHASES_ERROR_CODE } = await import("@revenuecat/purchases-capacitor");
+  console.info("[revenuecat] starting purchase", pkg.productIdentifier);
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await Purchases.purchasePackage({ aPackage: pkg.rawPackage as any });
     const active = Object.keys(result.customerInfo.entitlements.active ?? {});
+    console.info("[revenuecat] purchase complete", pkg.productIdentifier, active);
     return { activeEntitlements: active };
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code;
+    const message = (err as { message?: string })?.message ?? "Purchase failed";
+    console.error("[revenuecat] purchase failed", { code, message, err });
     if (code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       throw new Error("CANCELLED");
     }
-    throw err;
+    throw new Error(message);
   }
 }
 
 /** Apple-required Restore Purchases. */
 export async function restoreIapPurchases(): Promise<{ activeEntitlements: string[] }> {
   if (!isIosNative()) throw new Error("Restore is only available in the iOS app");
+  const ready = await ensureReady();
+  if (!ready) throw new Error("Restore is not available right now. Please sign in and try again.");
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
   const result = await Purchases.restorePurchases();
   const active = Object.keys(result.customerInfo.entitlements.active ?? {});
