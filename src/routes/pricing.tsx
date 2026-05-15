@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Minus, ChevronDown, X, Lock, Star } from "lucide-react";
@@ -8,17 +8,9 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { isStripeConfigured } from "@/lib/stripe";
 import { useAuth } from "@/lib/auth-context";
 import { isIosNative } from "@/lib/native";
+import { IosPaywall } from "@/components/IosPaywall";
 
 export const Route = createFileRoute("/pricing")({
-  // Apple Guideline 3.1.1 — the iOS binary contains no paywall, no
-  // pricing page, no subscription buttons, and no checkout UI. If the
-  // user lands here on iOS native (e.g. via a stale deep link), bounce
-  // them back to the home screen.
-  beforeLoad: () => {
-    if (isIosNative()) {
-      throw redirect({ to: "/" });
-    }
-  },
   head: () => ({
     meta: [
       { title: "Pricing — Æther Wealth" },
@@ -243,6 +235,15 @@ const FAQS = [
 ];
 
 function PricingPage() {
+  // iOS native: replace the entire Stripe paywall with the In-App Purchase
+  // flow. Apple Guideline 3.1.1 requires IAP for digital subscriptions.
+  if (isIosNative()) {
+    return (
+      <MobileShell>
+        <IosPaywall />
+      </MobileShell>
+    );
+  }
   const [billing, setBilling] = useState<Billing>("annual");
   const [demoOpen, setDemoOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);

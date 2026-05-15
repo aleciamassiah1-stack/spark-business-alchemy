@@ -50,9 +50,10 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
   useEffect(() => {
-    // On iOS native we cannot show a paywall (Apple Guideline 3.1.1),
-    // so we never redirect unpaid users to /pricing from the app binary.
-    if (isIosNative()) return;
+    // iOS users now have access to In-App Purchase on /pricing via
+    // RevenueCat, so we treat iOS the same as web for the unpaid -> /pricing
+    // redirect. Apple Guideline 3.1.1 is satisfied because /pricing on iOS
+    // renders the IAP-only paywall (see src/components/IosPaywall.tsx).
     if (
       auth.ready &&
       auth.user &&
