@@ -83,6 +83,8 @@ function HomePage() {
   const { setSyncing } = useWealth();
   const { user } = useAuth();
   const isTestAccount = useIsTestAccount();
+  const access = useAccess();
+  const showIosTiers = isIosNative() && access.ready && !access.hasAccess;
   const displayName = displayNameFromUser(user) || "Welcome";
   const userInitials = initialsFromName(displayName);
 
