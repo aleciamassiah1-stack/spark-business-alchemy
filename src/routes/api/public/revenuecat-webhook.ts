@@ -16,18 +16,12 @@
 // does not block the request. Security comes from the bearer check below.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-let _supabase: ReturnType<typeof createClient> | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _supabase;
-}
+// New columns from the migration aren't in the generated types yet, so we
+// cast inserts/updates through this helper instead of fighting the types.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SubscriptionRow = any;
 
 type RcEvent = {
   type: string;
@@ -129,25 +123,24 @@ async function handleEvent(event: RcEvent): Promise<void> {
     return;
   }
 
-  const supabase = getSupabase();
-
   // We key Apple rows on (user_id, apple_original_transaction_id).
   // The partial unique index from the migration makes this safe.
-  const { data: existing } = await supabase
-    .from("subscriptions")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const subs = supabaseAdmin.from("subscriptions") as any;
+  const { data: existing } = await subs
     .select("id")
     .eq("user_id", userId)
     .eq("provider", "apple")
     .eq("apple_original_transaction_id", originalTxnId)
     .maybeSingle();
 
-  const row = {
+  const row: SubscriptionRow = {
     user_id: userId,
-    provider: "apple" as const,
+    provider: "apple",
     apple_original_transaction_id: originalTxnId,
     revenuecat_app_user_id: userId,
     product_id: productId,
-    price_id: productId, // mirror the Apple product id into price_id for parity with Stripe rows
+    price_id: productId,
     status,
     current_period_start: periodStart,
     current_period_end: periodEnd,
@@ -157,13 +150,10 @@ async function handleEvent(event: RcEvent): Promise<void> {
   };
 
   if (existing) {
-    const { error } = await supabase
-      .from("subscriptions")
-      .update(row)
-      .eq("id", existing.id as string);
+    const { error } = await subs.update(row).eq("id", (existing as { id: string }).id);
     if (error) throw error;
   } else {
-    const { error } = await supabase.from("subscriptions").insert(row);
+    const { error } = await subs.insert(row);
     if (error) throw error;
   }
 }
