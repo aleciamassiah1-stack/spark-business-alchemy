@@ -10,6 +10,7 @@
 // browser bundle entirely.
 
 import { isIosNative } from "@/lib/native";
+import { supabase } from "@/integrations/supabase/client";
 
 // RevenueCat iOS public SDK key. Safe to ship in the client bundle —
 // RevenueCat keys are scoped to a single app and a single platform.
@@ -17,6 +18,29 @@ const IOS_API_KEY = import.meta.env.VITE_REVENUECAT_IOS_PUBLIC_KEY as string | u
 
 let initialised = false;
 let initPromise: Promise<void> | null = null;
+let currentAppUserId: string | null = null;
+
+/**
+ * Make sure the SDK is configured before any offerings/purchase call.
+ * Pulls the current Supabase user id so callers don't have to thread it
+ * through. Safe to call repeatedly — subsequent calls are no-ops.
+ */
+async function ensureReady(): Promise<boolean> {
+  if (!isIosNative()) return false;
+  if (!IOS_API_KEY) {
+    console.warn("[revenuecat] VITE_REVENUECAT_IOS_PUBLIC_KEY not set — purchases disabled");
+    return false;
+  }
+  if (initialised && currentAppUserId) return true;
+  const { data } = await supabase.auth.getUser();
+  const uid = data.user?.id ?? null;
+  if (!uid) {
+    console.warn("[revenuecat] no Supabase user — cannot start purchase");
+    return false;
+  }
+  await initRevenueCat(uid);
+  return initialised;
+}
 
 /**
  * Initialise the Purchases SDK with the current Supabase user id.
