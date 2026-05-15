@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { IosPaywall } from "@/components/IosPaywall";
+import { isIosNative } from "@/lib/native";
+import { useAccess } from "@/lib/access-context";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { CompletionBanner } from "@/components/CompletionBanner";
@@ -80,6 +83,8 @@ function HomePage() {
   const { setSyncing } = useWealth();
   const { user } = useAuth();
   const isTestAccount = useIsTestAccount();
+  const access = useAccess();
+  const showIosTiers = isIosNative() && access.ready && !access.hasAccess;
   const displayName = displayNameFromUser(user) || "Welcome";
   const userInitials = initialsFromName(displayName);
 
@@ -431,6 +436,12 @@ function HomePage() {
           <ArrowRight className="h-4 w-4 text-primary" />
         </Link>
       </div>
+
+      {showIosTiers && (
+        <div className="pt-2">
+          <IosPaywall />
+        </div>
+      )}
 
       {/* Trust strip — bank-grade security attribution */}
       <div className="px-5 pt-6">
