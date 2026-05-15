@@ -158,7 +158,7 @@ async function handleEvent(event: RcEvent): Promise<void> {
   }
 }
 
-export const Route = createFileRoute("/api/public/revenuecat-webhook")({
+export const Route = createFileRoute("/api/public/webhooks/revenuecat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
