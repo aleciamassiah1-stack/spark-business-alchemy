@@ -437,6 +437,12 @@ function HomePage() {
         </Link>
       </div>
 
+      {showIosTiers && (
+        <div className="pt-2">
+          <IosPaywall />
+        </div>
+      )}
+
       {/* Trust strip — bank-grade security attribution */}
       <div className="px-5 pt-6">
         <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
