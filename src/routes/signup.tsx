@@ -5,7 +5,7 @@ import { AuthForm, Welcome } from "@/components/Onboarding";
 import { useAuth } from "@/lib/auth-context";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
-import { isIosNative } from "@/lib/native";
+
 
 type SignupSearch = { view?: "form" };
 
@@ -38,30 +38,6 @@ function SignupRoute() {
     markStep("account");
     guardedNavigate({ to: "/" });
   }, [auth.user, auth.emailConfirmed, markStep, guardedNavigate]);
-
-  if (isIosNative()) {
-    return (
-      <div className="relative min-h-[100dvh] bg-background px-6 py-10">
-        <div className="relative mx-auto flex w-full max-w-[430px] flex-col items-center text-center">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Create Account
-          </p>
-          <h1 className="mb-6 font-serif text-[28px] leading-tight text-foreground">
-            Accounts are created on the web.
-          </h1>
-          <p className="mb-8 text-sm leading-relaxed text-muted-foreground">
-            To create an account visit aetherwealth.co
-          </p>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/signin" className="text-primary hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (search.view !== "form") {
     return (
