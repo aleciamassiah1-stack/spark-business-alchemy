@@ -903,6 +903,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          apple_original_transaction_id: string | null
           cancel_at_period_end: boolean | null
           created_at: string | null
           current_period_end: string | null
@@ -910,14 +911,17 @@ export type Database = {
           environment: string
           id: string
           price_id: string
-          product_id: string
+          product_id: string | null
+          provider: string
+          revenuecat_app_user_id: string | null
           status: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          apple_original_transaction_id?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
@@ -925,14 +929,17 @@ export type Database = {
           environment?: string
           id?: string
           price_id: string
-          product_id: string
+          product_id?: string | null
+          provider?: string
+          revenuecat_app_user_id?: string | null
           status?: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          apple_original_transaction_id?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
@@ -940,10 +947,12 @@ export type Database = {
           environment?: string
           id?: string
           price_id?: string
-          product_id?: string
+          product_id?: string | null
+          provider?: string
+          revenuecat_app_user_id?: string | null
           status?: string
-          stripe_customer_id?: string
-          stripe_subscription_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
