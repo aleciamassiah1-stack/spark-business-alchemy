@@ -12,6 +12,31 @@ export const platform = () => Capacitor.getPlatform(); // "ios" | "android" | "w
  */
 export const isIosNative = () => Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 
+export async function signInWithNativeApple() {
+  if (!isIosNative()) throw new Error("Native Apple sign-in is only available in the iOS app.");
+
+  const [{ SignInWithApple }, { supabase }] = await Promise.all([
+    import("@capacitor-community/apple-sign-in"),
+    import("@/integrations/supabase/client"),
+  ]);
+
+  const result = await SignInWithApple.authorize({
+    clientId: "co.aetherwealth.app",
+    redirectURI: "https://aetherwealth.co/signin",
+    scopes: "email name",
+    state:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
+  });
+
+  const token = result.response.identityToken;
+  if (!token) throw new Error("Apple did not return a sign-in token.");
+
+  const { error } = await supabase.auth.signInWithIdToken({ provider: "apple", token });
+  if (error) throw error;
+}
+
 // Haptics --------------------------------------------------------------
 export async function tapHaptic() {
   if (!isNative()) return;
