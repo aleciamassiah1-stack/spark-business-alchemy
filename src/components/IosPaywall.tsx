@@ -98,6 +98,7 @@ export function IosPaywall() {
         if (!cancelled) setPackages(pkgs);
       } catch (err) {
         console.error("[IosPaywall] failed to load offerings", err);
+        if (!cancelled) toast.error("Couldn't load membership tiers. Please try again.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -112,6 +113,14 @@ export function IosPaywall() {
 
   const handleBuy = async (pkg: IapPackage) => {
     setBusy(pkg.identifier);
+    // Safety net: StoreKit can occasionally hang (e.g. no sandbox account
+    // signed in on the device). Make sure the button can't spin forever.
+    const timeout = setTimeout(() => {
+      setBusy((cur) => (cur === pkg.identifier ? null : cur));
+      toast.error(
+        "Apple is taking longer than expected. Make sure you're signed into a sandbox Apple ID in Settings → App Store, then try again.",
+      );
+    }, 60_000);
     try {
       await purchaseIapPackage(pkg);
       toast.success("Welcome — your subscription is active.");
@@ -120,6 +129,7 @@ export function IosPaywall() {
       const msg = (err as Error)?.message ?? "Purchase failed";
       if (msg !== "CANCELLED") toast.error(msg);
     } finally {
+      clearTimeout(timeout);
       setBusy(null);
     }
   };
