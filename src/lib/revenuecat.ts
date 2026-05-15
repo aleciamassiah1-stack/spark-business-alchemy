@@ -93,6 +93,7 @@ export async function logoutRevenueCat(): Promise<void> {
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
   try {
     await Purchases.logOut();
+    currentAppUserId = null;
   } catch {
     // logOut throws if already anonymous — safe to swallow
   }
