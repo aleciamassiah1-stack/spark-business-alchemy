@@ -5,7 +5,7 @@ import { AuthForm, Welcome } from "@/components/Onboarding";
 import { useAuth } from "@/lib/auth-context";
 import { useOnboarding } from "@/lib/onboarding-context";
 import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
-import { isIosNative } from "@/lib/native";
+
 
 type SignupSearch = { view?: "form" };
 
