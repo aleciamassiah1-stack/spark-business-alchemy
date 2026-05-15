@@ -9,7 +9,7 @@
 //
 // Auth: RevenueCat sends a static value in the `Authorization` header that
 // we configure on their dashboard. We compare it constant-time against the
-// `REVENUECAT_WEBHOOK_AUTH` secret. There is no HMAC signature scheme in
+// `REVENUECAT_WEBHOOK_SECRET` secret. There is no HMAC signature scheme in
 // RevenueCat's webhook protocol — the shared bearer is the contract.
 //
 // IMPORTANT: lives under /api/public/* so the published-site auth proxy
@@ -158,13 +158,13 @@ async function handleEvent(event: RcEvent): Promise<void> {
   }
 }
 
-export const Route = createFileRoute("/api/public/revenuecat-webhook")({
+export const Route = createFileRoute("/api/public/webhooks/revenuecat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.REVENUECAT_WEBHOOK_AUTH;
+        const expected = process.env.REVENUECAT_WEBHOOK_SECRET;
         if (!expected) {
-          console.error("[revenuecat] REVENUECAT_WEBHOOK_AUTH not configured");
+          console.error("[revenuecat] REVENUECAT_WEBHOOK_SECRET not configured");
           return new Response("Server not configured", { status: 500 });
         }
         const provided = request.headers.get("authorization") ?? "";
