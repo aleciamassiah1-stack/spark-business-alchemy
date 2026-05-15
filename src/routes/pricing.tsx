@@ -235,6 +235,15 @@ const FAQS = [
 ];
 
 function PricingPage() {
+  // iOS native: replace the entire Stripe paywall with the In-App Purchase
+  // flow. Apple Guideline 3.1.1 requires IAP for digital subscriptions.
+  if (isIosNative()) {
+    return (
+      <MobileShell>
+        <IosPaywall />
+      </MobileShell>
+    );
+  }
   const [billing, setBilling] = useState<Billing>("annual");
   const [demoOpen, setDemoOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);

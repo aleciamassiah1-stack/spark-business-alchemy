@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { checkAccess } from "@/lib/access.functions";
 import { useAuth } from "@/lib/auth-context";
+import { initRevenueCat, logoutRevenueCat } from "@/lib/revenuecat";
 
 type AccessState = {
   ready: boolean;
@@ -52,6 +53,12 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     setHasAccess(false);
     setIsAdmin(false);
     void load();
+    // Sync RevenueCat identity on iOS native (no-op on web).
+    if (auth.user?.id) {
+      void initRevenueCat(auth.user.id);
+    } else {
+      void logoutRevenueCat();
+    }
   }, [auth.ready, auth.user?.id, load]);
 
   useEffect(() => {
