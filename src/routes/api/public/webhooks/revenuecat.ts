@@ -9,7 +9,7 @@
 //
 // Auth: RevenueCat sends a static value in the `Authorization` header that
 // we configure on their dashboard. We compare it constant-time against the
-// `REVENUECAT_WEBHOOK_AUTH` secret. There is no HMAC signature scheme in
+// `REVENUECAT_WEBHOOK_SECRET` secret. There is no HMAC signature scheme in
 // RevenueCat's webhook protocol — the shared bearer is the contract.
 //
 // IMPORTANT: lives under /api/public/* so the published-site auth proxy

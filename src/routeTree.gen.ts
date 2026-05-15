@@ -44,7 +44,6 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
 import { Route as AdminEmailPreviewRouteImport } from './routes/admin.email-preview'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as ApiPublicRevenuecatWebhookRouteImport } from './routes/api/public/revenuecat-webhook'
 import { Route as ApiPublicPlaidWebhookRouteImport } from './routes/api/public/plaid-webhook'
 import { Route as ApiPublicPlaidRetentionSweepRouteImport } from './routes/api/public/plaid-retention-sweep'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -52,6 +51,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicWebhooksRevenuecatRouteImport } from './routes/api/public/webhooks/revenuecat'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -228,12 +228,6 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicRevenuecatWebhookRoute =
-  ApiPublicRevenuecatWebhookRouteImport.update({
-    id: '/api/public/revenuecat-webhook',
-    path: '/api/public/revenuecat-webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicPlaidWebhookRoute = ApiPublicPlaidWebhookRouteImport.update({
   id: '/api/public/plaid-webhook',
   path: '/api/public/plaid-webhook',
@@ -273,6 +267,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWebhooksRevenuecatRoute =
+  ApiPublicWebhooksRevenuecatRouteImport.update({
+    id: '/api/public/webhooks/revenuecat',
+    path: '/api/public/webhooks/revenuecat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -311,8 +311,8 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
-  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/webhooks/revenuecat': typeof ApiPublicWebhooksRevenuecatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -356,8 +356,8 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
-  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/webhooks/revenuecat': typeof ApiPublicWebhooksRevenuecatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -402,8 +402,8 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
-  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/webhooks/revenuecat': typeof ApiPublicWebhooksRevenuecatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -449,8 +449,8 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
-    | '/api/public/revenuecat-webhook'
     | '/lovable/email/suppression'
+    | '/api/public/webhooks/revenuecat'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -494,8 +494,8 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
-    | '/api/public/revenuecat-webhook'
     | '/lovable/email/suppression'
+    | '/api/public/webhooks/revenuecat'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -539,8 +539,8 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
-    | '/api/public/revenuecat-webhook'
     | '/lovable/email/suppression'
+    | '/api/public/webhooks/revenuecat'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -583,8 +583,8 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicPlaidRetentionSweepRoute: typeof ApiPublicPlaidRetentionSweepRoute
   ApiPublicPlaidWebhookRoute: typeof ApiPublicPlaidWebhookRoute
-  ApiPublicRevenuecatWebhookRoute: typeof ApiPublicRevenuecatWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicWebhooksRevenuecatRoute: typeof ApiPublicWebhooksRevenuecatRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -839,13 +839,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/revenuecat-webhook': {
-      id: '/api/public/revenuecat-webhook'
-      path: '/api/public/revenuecat-webhook'
-      fullPath: '/api/public/revenuecat-webhook'
-      preLoaderRoute: typeof ApiPublicRevenuecatWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/plaid-webhook': {
       id: '/api/public/plaid-webhook'
       path: '/api/public/plaid-webhook'
@@ -893,6 +886,13 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/auth/preview'
       fullPath: '/lovable/email/auth/preview'
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/revenuecat': {
+      id: '/api/public/webhooks/revenuecat'
+      path: '/api/public/webhooks/revenuecat'
+      fullPath: '/api/public/webhooks/revenuecat'
+      preLoaderRoute: typeof ApiPublicWebhooksRevenuecatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -945,8 +945,8 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicPlaidRetentionSweepRoute: ApiPublicPlaidRetentionSweepRoute,
   ApiPublicPlaidWebhookRoute: ApiPublicPlaidWebhookRoute,
-  ApiPublicRevenuecatWebhookRoute: ApiPublicRevenuecatWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicWebhooksRevenuecatRoute: ApiPublicWebhooksRevenuecatRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
