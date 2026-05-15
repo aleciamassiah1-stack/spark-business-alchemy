@@ -162,9 +162,9 @@ export const Route = createFileRoute("/api/public/webhooks/revenuecat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.REVENUECAT_WEBHOOK_AUTH;
+        const expected = process.env.REVENUECAT_WEBHOOK_SECRET;
         if (!expected) {
-          console.error("[revenuecat] REVENUECAT_WEBHOOK_AUTH not configured");
+          console.error("[revenuecat] REVENUECAT_WEBHOOK_SECRET not configured");
           return new Response("Server not configured", { status: 500 });
         }
         const provided = request.headers.get("authorization") ?? "";
