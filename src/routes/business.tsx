@@ -111,9 +111,20 @@ function BusinessPage() {
     return off;
   }, []);
 
+  const isTestAccount = useIsTestAccount();
+
   useEffect(() => {
-    if (!state.setupComplete) setSetupOpen(true);
-  }, [state.setupComplete]);
+    if (state.setupComplete) return;
+    if (isTestAccount) {
+      // Auto-seed the rich demo dataset for App Review / demo accounts so
+      // every section of the business workspace is populated on first visit.
+      const seeded = seedDemoBusiness();
+      saveBusiness(seeded);
+      setState(seeded);
+      return;
+    }
+    setSetupOpen(true);
+  }, [state.setupComplete, isTestAccount]);
 
   const update = (patch: Partial<BusinessState> | ((s: BusinessState) => BusinessState)) => {
     setState((prev) => {
