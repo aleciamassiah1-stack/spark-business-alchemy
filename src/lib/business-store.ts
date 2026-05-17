@@ -210,6 +210,88 @@ export function seedFromQuickSetup(input: {
   };
 }
 
+// Rich demo dataset for the test/reviewer account. Populates every section
+// of the business workspace so screens look fully lived-in.
+export function seedDemoBusiness(): BusinessState {
+  const base = seedFromQuickSetup({
+    name: "Whitfield Ventures LLC",
+    entityType: "LLC",
+    annualRevenue: 2_400_000,
+    valuation: 6_200_000,
+  });
+
+  const assets: BusinessAsset[] = [
+    { id: makeId(), name: "Headquarters Building", type: "Real Estate", value: 1_850_000, source: "manual" },
+    { id: makeId(), name: "Production Equipment", type: "Equipment", value: 420_000, source: "manual" },
+    { id: makeId(), name: "Accounts Receivable", type: "Receivables", value: 285_000, source: "manual" },
+    { id: makeId(), name: "Inventory on Hand", type: "Inventory", value: 162_000, source: "manual" },
+  ];
+
+  const liabilities: BusinessLiability[] = [
+    { id: makeId(), name: "Commercial Mortgage", lender: "First Republic Bank", balance: 1_180_000, monthlyPayment: 8_420, interestRate: 5.25, source: "manual" },
+    { id: makeId(), name: "Equipment Loan", lender: "Wells Fargo", balance: 142_000, monthlyPayment: 3_180, interestRate: 6.4, source: "manual" },
+    { id: makeId(), name: "Revolving Line of Credit", lender: "JPMorgan Chase", balance: 86_000, monthlyPayment: 1_950, interestRate: 8.1, source: "manual" },
+  ];
+
+  const partners: Partner[] = [
+    { id: makeId(), name: "Catherine Whitfield", pct: 25 },
+    { id: makeId(), name: "Marcus Holloway", pct: 10 },
+  ];
+
+  const funding: FundingRound[] = [
+    { id: makeId(), label: "Founders", date: "2018-03-15", amount: 250_000, valuation: 1_000_000 },
+    { id: makeId(), label: "Seed", date: "2020-09-01", amount: 800_000, valuation: 3_200_000 },
+    { id: makeId(), label: "Series A", date: "2023-06-12", amount: 2_500_000, valuation: 12_000_000 },
+  ];
+
+  const insurance: BusinessInsurance[] = [
+    { id: makeId(), type: "Key Person", insurer: "Northwestern Mutual", coverage: 3_000_000, premium: 4_800, premiumFreq: "annual", status: "active", renewalDate: "2026-09-12", parsedByAI: false },
+    { id: makeId(), type: "Liability", insurer: "Chubb", coverage: 5_000_000, premium: 612, premiumFreq: "monthly", status: "active", renewalDate: "2026-11-30", parsedByAI: false },
+    { id: makeId(), type: "D&O", insurer: "AIG", coverage: 2_000_000, premium: 3_400, premiumFreq: "annual", status: "renewal due", renewalDate: "2026-06-01", parsedByAI: false },
+    { id: makeId(), type: "Business Interruption", insurer: "Travelers", coverage: 1_500_000, premium: 285, premiumFreq: "monthly", status: "active", renewalDate: "2027-01-15", parsedByAI: false },
+  ];
+
+  const documents: BusinessDocument[] = [
+    { id: makeId(), name: "Articles of Incorporation.pdf", category: "Articles of Incorporation", uploadedAt: "2018-03-20T10:00:00Z", status: "current" },
+    { id: makeId(), name: "Operating Agreement (2023).pdf", category: "Operating Agreement", uploadedAt: "2023-07-01T10:00:00Z", status: "current" },
+    { id: makeId(), name: "2024 Federal Tax Return.pdf", category: "Tax Return", uploadedAt: "2025-04-10T10:00:00Z", status: "current" },
+    { id: makeId(), name: "Buy-Sell Agreement.pdf", category: "Buy-Sell Agreement", uploadedAt: "2023-08-15T10:00:00Z", status: "review" },
+    { id: makeId(), name: "Succession Plan Draft.pdf", category: "Succession Plan", uploadedAt: "2025-01-22T10:00:00Z", status: "review" },
+  ];
+
+  return {
+    ...base,
+    cpa: { name: "David Chen, CPA", firm: "Chen & Associates", contact: "david@chencpa.com" },
+    bankConnected: true,
+    bankLastSync: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    assets,
+    liabilities,
+    ownership: {
+      yourPct: 65,
+      partners,
+      vesting: {
+        cliffDate: "2019-03-15",
+        fullVestDate: "2026-03-15",
+        progressPct: 88,
+      },
+      funding,
+    },
+    insurance,
+    succession: {
+      status: "In Progress",
+      successorName: "Catherine Whitfield",
+      successorRole: "COO → CEO",
+      buySellSigned: true,
+      attorney: "Holloway & Sterne LLP",
+    },
+    exit: {
+      ...base.exit,
+      readinessScore: 64,
+    },
+    documents,
+  };
+}
+
 function nextQuarterEnd(): string {
   const d = new Date();
   const m = d.getMonth();
