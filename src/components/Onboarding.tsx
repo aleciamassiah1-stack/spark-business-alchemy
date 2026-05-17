@@ -878,9 +878,20 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           setError(null);
           try {
             if (isIosNative()) {
-              const { signInWithNativeApple } = await import("@/lib/native");
-              await signInWithNativeApple();
-              navigate({ to: "/" });
+              const { signInWithNativeApple, AppleSignInCancelledError } = await import(
+                "@/lib/native"
+              );
+              try {
+                await signInWithNativeApple();
+                navigate({ to: "/" });
+              } catch (err) {
+                if (err instanceof AppleSignInCancelledError) {
+                  // User tapped Cancel on the Apple sheet — stay silent.
+                  setBusy(false);
+                  return;
+                }
+                throw err;
+              }
             } else {
               const { lovable } = await import("@/integrations/lovable");
               const result = await lovable.auth.signInWithOAuth("apple", {
@@ -889,7 +900,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               if (result.error) throw result.error;
             }
           } catch (err) {
-            setError(err instanceof Error ? err.message : "Apple sign-in failed");
+            const message =
+              err instanceof Error && err.message
+                ? err.message
+                : "Apple sign-in failed. Please try again, or use email sign-in.";
+            setError(message);
+            try {
+              const { toast } = await import("sonner");
+              toast.error(message);
+            } catch {
+              // toast is optional; the inline error already shows the message.
+            }
             setBusy(false);
           }
         }}
