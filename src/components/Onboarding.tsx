@@ -908,11 +908,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           setBusy(true);
           setError(null);
           try {
-            const { lovable } = await import("@/integrations/lovable");
-            const result = await lovable.auth.signInWithOAuth("google", {
-              redirect_uri: `${window.location.origin}/`,
-            });
-            if (result.error) throw result.error;
+            if (isIosNative()) {
+              const { signInWithNativeOAuth } = await import("@/lib/native");
+              await signInWithNativeOAuth("google");
+              navigate({ to: "/" });
+            } else {
+              const { lovable } = await import("@/integrations/lovable");
+              const result = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: `${window.location.origin}/`,
+              });
+              if (result.error) throw result.error;
+            }
           } catch (err) {
             setError(err instanceof Error ? err.message : "Google sign-in failed");
             setBusy(false);
