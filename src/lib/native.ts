@@ -28,6 +28,32 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Thrown by signInWithNativeApple when the user cancels the system Apple
+ * sheet. Callers can use this to suppress the error toast for cancellations.
+ */
+export class AppleSignInCancelledError extends Error {
+  constructor() {
+    super("Apple sign-in was cancelled.");
+    this.name = "AppleSignInCancelledError";
+  }
+}
+
+function isAppleCancellation(err: unknown): boolean {
+  if (!err) return false;
+  const e = err as { code?: string | number; message?: string };
+  const code = String(e.code ?? "");
+  const msg = (e.message ?? "").toLowerCase();
+  // ASAuthorizationErrorCanceled = 1001; plugin sometimes returns "1000".
+  return (
+    code === "1001" ||
+    code === "1000" ||
+    msg.includes("canceled") ||
+    msg.includes("cancelled") ||
+    msg.includes("the user canceled")
+  );
+}
+
 export async function signInWithNativeApple() {
   if (!isIosNative()) throw new Error("Native Apple sign-in is only available in the iOS app.");
 
@@ -40,23 +66,44 @@ export async function signInWithNativeApple() {
   const rawNonce = randomString(32);
   const hashedNonce = await sha256Hex(rawNonce);
 
-  const result = await SignInWithApple.authorize({
-    clientId: "co.aetherwealth.app",
-    redirectURI: "https://aetherwealth.co/signin",
-    scopes: "email name",
-    state: randomString(16),
-    nonce: hashedNonce,
-  });
+  let result: Awaited<ReturnType<typeof SignInWithApple.authorize>>;
+  try {
+    result = await SignInWithApple.authorize({
+      clientId: "co.aetherwealth.app",
+      redirectURI: "https://aetherwealth.co/signin",
+      scopes: "email name",
+      state: randomString(16),
+      nonce: hashedNonce,
+    });
+  } catch (err) {
+    if (isAppleCancellation(err)) throw new AppleSignInCancelledError();
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Apple couldn't complete sign-in${msg ? `: ${msg}` : "."} Please try again, or use email sign-in.`,
+    );
+  }
 
   const token = result.response?.identityToken;
-  if (!token) throw new Error("Apple did not return a sign-in token.");
+  if (!token) {
+    throw new Error(
+      "Apple didn't return a sign-in token. Make sure you're signed in to iCloud on this device and try again.",
+    );
+  }
 
-  const { error } = await supabase.auth.signInWithIdToken({
-    provider: "apple",
-    token,
-    nonce: rawNonce,
-  });
-  if (error) throw error;
+  try {
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token,
+      nonce: rawNonce,
+    });
+    if (error) throw error;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Surface the token-exchange failure clearly so reviewers can report it.
+    throw new Error(
+      `We couldn't verify your Apple sign-in with our servers${msg ? ` (${msg})` : ""}. Please try again, or use email sign-in.`,
+    );
+  }
 }
 
 /**
