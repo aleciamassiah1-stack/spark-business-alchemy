@@ -159,7 +159,10 @@ export async function signInWithNativeOAuth(provider: "google" | "apple"): Promi
     });
   });
 
-  await Browser.open({ url: data.url, presentationStyle: "popover" });
+  // "fullscreen" keeps SFSafariViewController in-app on both iPhone and iPad.
+  // "popover" without an anchor view falls back to external Safari on iPad,
+  // which violates App Store Guideline 4 (and caused our prior rejection).
+  await Browser.open({ url: data.url, presentationStyle: "fullscreen" });
   await completion;
 }
 
