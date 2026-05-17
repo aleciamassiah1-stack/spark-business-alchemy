@@ -1,12 +1,19 @@
 import { useAuth } from "@/lib/auth-context";
 
-/** Email of the single test account that retains demo "Whitfield" mock data. */
-export const TEST_ACCOUNT_EMAIL = "angeliequep@gmail.com";
+/** Emails of test accounts that retain demo "Whitfield" mock data. */
+export const TEST_ACCOUNT_EMAILS = [
+  "angeliequep@gmail.com",
+  "aleciam69@icloud.com", // Apple App Review demo account
+] as const;
 
-/** True when the signed-in user is the designated test account. */
+/** Back-compat: primary test account email. */
+export const TEST_ACCOUNT_EMAIL = TEST_ACCOUNT_EMAILS[0];
+
+/** True when the signed-in user is one of the designated test accounts. */
 export function useIsTestAccount(): boolean {
   const { user } = useAuth();
-  return (user?.email ?? "").toLowerCase() === TEST_ACCOUNT_EMAIL;
+  const email = (user?.email ?? "").toLowerCase();
+  return TEST_ACCOUNT_EMAILS.some((e) => e === email);
 }
 
 /** Best-effort display name from auth metadata, falling back to the email local-part. */
