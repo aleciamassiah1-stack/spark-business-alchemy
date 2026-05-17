@@ -75,7 +75,9 @@ import {
   makeFundingRound,
   makeInsurance,
   makeDocument,
+  seedDemoBusiness,
 } from "@/lib/business-store";
+import { useIsTestAccount } from "@/lib/test-account";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
