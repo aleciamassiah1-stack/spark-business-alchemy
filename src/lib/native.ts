@@ -12,6 +12,22 @@ export const platform = () => Capacitor.getPlatform(); // "ios" | "android" | "w
  */
 export const isIosNative = () => Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 
+function randomString(len = 32): string {
+  const bytes = new Uint8Array(len);
+  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < len; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function signInWithNativeApple() {
   if (!isIosNative()) throw new Error("Native Apple sign-in is only available in the iOS app.");
 
@@ -20,21 +36,84 @@ export async function signInWithNativeApple() {
     import("@/integrations/supabase/client"),
   ]);
 
+  // Apple/Supabase recommend a nonce: raw random sent to Supabase, sha256(nonce) sent to Apple.
+  const rawNonce = randomString(32);
+  const hashedNonce = await sha256Hex(rawNonce);
+
   const result = await SignInWithApple.authorize({
     clientId: "co.aetherwealth.app",
     redirectURI: "https://aetherwealth.co/signin",
     scopes: "email name",
-    state:
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random()}`,
+    state: randomString(16),
+    nonce: hashedNonce,
   });
 
-  const token = result.response.identityToken;
+  const token = result.response?.identityToken;
   if (!token) throw new Error("Apple did not return a sign-in token.");
 
-  const { error } = await supabase.auth.signInWithIdToken({ provider: "apple", token });
+  const { error } = await supabase.auth.signInWithIdToken({
+    provider: "apple",
+    token,
+    nonce: rawNonce,
+  });
   if (error) throw error;
+}
+
+/**
+ * In-app Google sign-in for iOS native. Uses Supabase PKCE + SFSafariViewController
+ * (Capacitor Browser plugin) so authentication NEVER leaves the app to the system
+ * Safari browser — required by App Store Guideline 4.
+ */
+export async function signInWithNativeOAuth(provider: "google" | "apple"): Promise<void> {
+  if (!isIosNative()) throw new Error("Native OAuth is only available in the iOS app.");
+
+  const [{ Browser }, { App }, { supabase }] = await Promise.all([
+    import("@capacitor/browser"),
+    import("@capacitor/app"),
+    import("@/integrations/supabase/client"),
+  ]);
+
+  // Custom URL scheme registered in iOS Info.plist (CFBundleURLTypes).
+  const redirectTo = "co.aetherwealth.app://oauth-callback";
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+  if (!data?.url) throw new Error("Could not start sign-in.");
+
+  // Wait for the deep-link callback from SFSafariViewController, then close it.
+  const completion = new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      sub.then((s) => s.remove()).catch(() => {});
+      reject(new Error("Sign-in timed out. Please try again."));
+    }, 5 * 60 * 1000);
+
+    const sub = App.addListener("appUrlOpen", async (event: { url: string }) => {
+      try {
+        if (!event.url || !event.url.startsWith(redirectTo)) return;
+        const url = new URL(event.url);
+        const code = url.searchParams.get("code");
+        const errParam = url.searchParams.get("error_description") || url.searchParams.get("error");
+        await Browser.close().catch(() => {});
+        if (errParam) throw new Error(errParam);
+        if (!code) throw new Error("Sign-in callback missing authorization code.");
+        const { error: exchErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchErr) throw exchErr;
+        clearTimeout(timeout);
+        (await sub).remove();
+        resolve();
+      } catch (e) {
+        clearTimeout(timeout);
+        (await sub).remove();
+        reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    });
+  });
+
+  await Browser.open({ url: data.url, presentationStyle: "popover" });
+  await completion;
 }
 
 // Haptics --------------------------------------------------------------
