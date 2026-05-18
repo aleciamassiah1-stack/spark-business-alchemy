@@ -53,22 +53,6 @@ function isAppleCancellation(err: unknown): boolean {
   );
 }
 
-function isAppleNativeSetupFailure(err: unknown): boolean {
-  if (!err) return false;
-  const e = err as { code?: string | number; message?: string };
-  const code = String(e.code ?? "");
-  const msg = (typeof err === "string" ? err : (e.message ?? "")).toLowerCase();
-
-  return (
-    msg.includes("sign up not completed") ||
-    msg.includes("signup not completed") ||
-    msg.includes("sign-in not completed") ||
-    msg.includes("authorizationerror error 1000") ||
-    msg.includes("authorization failed") ||
-    code === "1000"
-  );
-}
-
 export async function signInWithNativeApple() {
   if (!isIosNative()) throw new Error("Native Apple sign-in is only available in the iOS app.");
 
@@ -92,14 +76,6 @@ export async function signInWithNativeApple() {
     });
   } catch (err) {
     if (isAppleCancellation(err)) throw new AppleSignInCancelledError();
-    // Some TestFlight builds still hit Apple's native ASAuthorization
-    // "Sign Up Not Completed" despite the entitlement being present. Keep the
-    // account flow in-app by falling back to the same SFSafariViewController
-    // OAuth path used for Google, instead of sending users to external Safari.
-    if (isAppleNativeSetupFailure(err)) {
-      await signInWithNativeOAuth("apple");
-      return;
-    }
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(
       `Apple couldn't complete sign-in${msg ? `: ${msg}` : "."} Please try again, or use email sign-in.`,
