@@ -884,6 +884,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               try {
                 await signInWithNativeApple();
                 navigate({ to: "/" });
+                setBusy(false);
               } catch (err) {
                 if (err instanceof AppleSignInCancelledError) {
                   // User tapped Cancel on the Apple sheet — stay silent.
@@ -898,6 +899,16 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 redirect_uri: `${window.location.origin}/`,
               });
               if (result.error) throw result.error;
+              if (result.redirected) {
+                // Browser is navigating to Apple — clear busy in case the
+                // redirect is blocked (e.g. inside the preview iframe) so the
+                // user isn't stuck on a "Working…" button forever.
+                setTimeout(() => setBusy(false), 1500);
+                return;
+              }
+              // Tokens received directly — session is set.
+              navigate({ to: "/" });
+              setBusy(false);
             }
           } catch (err) {
             const message =
