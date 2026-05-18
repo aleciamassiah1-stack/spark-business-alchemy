@@ -6,6 +6,7 @@
 // surface (Guideline 3.1.1) — included below.
 
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, RotateCcw, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -292,23 +293,13 @@ export function IosPaywall() {
           Subscriptions.
         </p>
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80">
-          <a
-            href="https://aetherwealth.co/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground"
-          >
+          <Link to="/terms" className="hover:text-foreground">
             Terms
-          </a>
+          </Link>
           <span>·</span>
-          <a
-            href="https://aetherwealth.co/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground"
-          >
+          <Link to="/privacy" className="hover:text-foreground">
             Privacy
-          </a>
+          </Link>
         </div>
       </div>
     </div>
