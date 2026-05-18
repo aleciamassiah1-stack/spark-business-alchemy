@@ -43,14 +43,29 @@ function isAppleCancellation(err: unknown): boolean {
   if (!err) return false;
   const e = err as { code?: string | number; message?: string };
   const code = String(e.code ?? "");
-  const msg = (e.message ?? "").toLowerCase();
-  // ASAuthorizationErrorCanceled = 1001; plugin sometimes returns "1000".
+  const msg = (typeof err === "string" ? err : (e.message ?? "")).toLowerCase();
+  // ASAuthorizationErrorCanceled = 1001.
   return (
     code === "1001" ||
-    code === "1000" ||
     msg.includes("canceled") ||
     msg.includes("cancelled") ||
     msg.includes("the user canceled")
+  );
+}
+
+function isAppleNativeSetupFailure(err: unknown): boolean {
+  if (!err) return false;
+  const e = err as { code?: string | number; message?: string };
+  const code = String(e.code ?? "");
+  const msg = (typeof err === "string" ? err : (e.message ?? "")).toLowerCase();
+
+  return (
+    msg.includes("sign up not completed") ||
+    msg.includes("signup not completed") ||
+    msg.includes("sign-in not completed") ||
+    msg.includes("authorizationerror error 1000") ||
+    msg.includes("authorization failed") ||
+    code === "1000"
   );
 }
 
@@ -77,6 +92,14 @@ export async function signInWithNativeApple() {
     });
   } catch (err) {
     if (isAppleCancellation(err)) throw new AppleSignInCancelledError();
+    // Some TestFlight builds still hit Apple's native ASAuthorization
+    // "Sign Up Not Completed" despite the entitlement being present. Keep the
+    // account flow in-app by falling back to the same SFSafariViewController
+    // OAuth path used for Google, instead of sending users to external Safari.
+    if (isAppleNativeSetupFailure(err)) {
+      await signInWithNativeOAuth("apple");
+      return;
+    }
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(
       `Apple couldn't complete sign-in${msg ? `: ${msg}` : "."} Please try again, or use email sign-in.`,
@@ -132,10 +155,13 @@ export async function signInWithNativeOAuth(provider: "google" | "apple"): Promi
 
   // Wait for the deep-link callback from SFSafariViewController, then close it.
   const completion = new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      sub.then((s) => s.remove()).catch(() => {});
-      reject(new Error("Sign-in timed out. Please try again."));
-    }, 5 * 60 * 1000);
+    const timeout = setTimeout(
+      () => {
+        sub.then((s) => s.remove()).catch(() => {});
+        reject(new Error("Sign-in timed out. Please try again."));
+      },
+      5 * 60 * 1000,
+    );
 
     const sub = App.addListener("appUrlOpen", async (event: { url: string }) => {
       try {
@@ -216,9 +242,7 @@ export async function hideSplash() {
 export async function requestTrackingPermission() {
   if (!isNative() || platform() !== "ios") return { status: "unavailable" as const };
   try {
-    const { AppTrackingTransparency } = await import(
-      "capacitor-plugin-app-tracking-transparency"
-    );
+    const { AppTrackingTransparency } = await import("capacitor-plugin-app-tracking-transparency");
     const current = await AppTrackingTransparency.getStatus();
     if (current.status === "notDetermined") {
       const res = await AppTrackingTransparency.requestPermission();
