@@ -876,6 +876,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         onClick={async () => {
           setBusy(true);
           setError(null);
+          const resetBusy = window.setTimeout(() => setBusy(false), 30_000);
           try {
             if (isIosNative()) {
               const { signInWithNativeApple, AppleSignInCancelledError } = await import(
@@ -923,6 +924,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               // toast is optional; the inline error already shows the message.
             }
             setBusy(false);
+          } finally {
+            window.clearTimeout(resetBusy);
           }
         }}
         className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-white/90 disabled:opacity-50"
