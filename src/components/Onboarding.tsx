@@ -897,7 +897,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             } else {
               const { lovable } = await import("@/integrations/lovable");
               const result = await lovable.auth.signInWithOAuth("apple", {
-                redirect_uri: `${window.location.origin}/`,
+                redirect_uri: window.location.origin,
               });
               if (result.error) throw result.error;
               if (result.redirected) {
