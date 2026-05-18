@@ -277,7 +277,8 @@ function ScreenBiometric({ onNext }: { onNext: () => void }) {
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
-              background: "radial-gradient(circle, oklch(0.78 0.16 295 / 0.35) 0%, transparent 65%)",
+              background:
+                "radial-gradient(circle, oklch(0.78 0.16 295 / 0.35) 0%, transparent 65%)",
             }}
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.85, 0.5] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
@@ -303,7 +304,12 @@ function ScreenBiometric({ onNext }: { onNext: () => void }) {
                   <Check className="h-8 w-8 text-success" strokeWidth={2.4} />
                 </motion.div>
               ) : (
-                <motion.div key="fp" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div
+                  key="fp"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
                   <Fingerprint className="h-16 w-16 text-primary" strokeWidth={1.4} />
                 </motion.div>
               )}
@@ -317,7 +323,9 @@ function ScreenBiometric({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="mt-8 space-y-3 pb-2">
-        <PrimaryCta onClick={onNext}>{enabled ? "Continue" : "Continue without biometric"}</PrimaryCta>
+        <PrimaryCta onClick={onNext}>
+          {enabled ? "Continue" : "Continue without biometric"}
+        </PrimaryCta>
         <div className="flex justify-center">
           <GhostBtn onClick={() => setShowPasscode(true)}>Use passcode instead</GhostBtn>
         </div>
@@ -431,7 +439,9 @@ function ScreenPersonalize({ onNext }: { onNext: () => void }) {
                   <span className="flex-1 text-sm text-foreground">{label}</span>
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                      active ? "border-primary bg-primary text-primary-foreground" : "border-white/[0.12]"
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-white/[0.12]"
                     }`}
                   >
                     {active && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -612,8 +622,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             const ua =
               typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
             await Promise.allSettled([
-              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
-              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+              recordConsent({
+                data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua },
+              }),
+              recordConsent({
+                data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua },
+              }),
             ]);
             markLocalConsent("terms");
             markLocalConsent("privacy");
@@ -704,8 +718,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             const ua =
               typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined;
             await Promise.allSettled([
-              recordConsent({ data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua } }),
-              recordConsent({ data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua } }),
+              recordConsent({
+                data: { kind: "terms", version: CONSENT_VERSIONS.terms, userAgent: ua },
+              }),
+              recordConsent({
+                data: { kind: "privacy", version: CONSENT_VERSIONS.privacy, userAgent: ua },
+              }),
             ]);
             markLocalConsent("terms");
             markLocalConsent("privacy");
@@ -775,7 +793,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               </span>
               <span
                 className={`font-mono text-[10px] uppercase tracking-wider ${
-                  pwScore >= 3 ? "text-success" : pwScore === 2 ? "text-warning" : "text-destructive"
+                  pwScore >= 3
+                    ? "text-success"
+                    : pwScore === 2
+                      ? "text-warning"
+                      : "text-destructive"
                 }`}
               >
                 {pwLabel}
@@ -826,14 +848,21 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           />
           <span>
             I agree to the{" "}
-            <Link to="/terms" className="text-foreground underline decoration-dotted hover:text-primary">
+            <Link
+              to="/terms"
+              className="text-foreground underline decoration-dotted hover:text-primary"
+            >
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link to="/privacy" className="text-foreground underline decoration-dotted hover:text-primary">
+            <Link
+              to="/privacy"
+              className="text-foreground underline decoration-dotted hover:text-primary"
+            >
               Privacy Policy
             </Link>
-            , and I understand that connecting a financial account uses Plaid as described in the Privacy Policy.
+            , and I understand that connecting a financial account uses Plaid as described in the
+            Privacy Policy.
           </span>
         </label>
       )}
@@ -879,9 +908,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           const resetBusy = window.setTimeout(() => setBusy(false), 30_000);
           try {
             if (isIosNative()) {
-              const { signInWithNativeApple, AppleSignInCancelledError } = await import(
-                "@/lib/native"
-              );
+              const { signInWithNativeApple, AppleSignInCancelledError } =
+                await import("@/lib/native");
               try {
                 await signInWithNativeApple();
                 navigate({ to: "/" });
@@ -896,8 +924,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               }
             } else {
               const { lovable } = await import("@/integrations/lovable");
+              const { validateAppleRedirectUri } = await import("@/lib/apple-redirect-validation");
+              const redirectUri = window.location.origin;
+              // Throws a clear error if this origin isn't registered with
+              // the managed Apple OAuth client — prevents the opaque
+              // "invalid_request" page from Apple.
+              validateAppleRedirectUri(redirectUri);
               const result = await lovable.auth.signInWithOAuth("apple", {
-                redirect_uri: window.location.origin,
+                redirect_uri: redirectUri,
               });
               if (result.error) throw result.error;
               if (result.redirected) {
@@ -931,7 +965,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-white/90 disabled:opacity-50"
       >
         <svg width="16" height="16" viewBox="0 0 384 512" aria-hidden fill="currentColor">
-          <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM260.7 91.4c25.5-30.3 23.2-57.9 22.3-67.4-22.4 1.3-48.3 15.3-63.1 32.5-16.3 18.4-25.9 41.2-23.8 65.4 24.2 1.9 46.3-10.5 64.6-30.5z"/>
+          <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM260.7 91.4c25.5-30.3 23.2-57.9 22.3-67.4-22.4 1.3-48.3 15.3-63.1 32.5-16.3 18.4-25.9 41.2-23.8 65.4 24.2 1.9 46.3-10.5 64.6-30.5z" />
         </svg>
         Continue with Apple
       </button>
@@ -962,10 +996,22 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.07] disabled:opacity-50"
       >
         <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"/>
-          <path fill="#FBBC05" d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"/>
-          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 9 0 9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/>
+          <path
+            fill="#4285F4"
+            d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"
+          />
+          <path
+            fill="#34A853"
+            d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"
+          />
+          <path
+            fill="#EA4335"
+            d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 9 0 9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"
+          />
         </svg>
         Continue with Google
       </button>
@@ -1039,11 +1085,7 @@ function Field({
 
 function Req({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <li
-      className={`flex items-center gap-1.5 ${
-        ok ? "text-success" : "text-muted-foreground"
-      }`}
-    >
+    <li className={`flex items-center gap-1.5 ${ok ? "text-success" : "text-muted-foreground"}`}>
       {ok ? (
         <Check className="h-3 w-3" strokeWidth={2.8} />
       ) : (
@@ -1279,9 +1321,7 @@ function WelcomeTier({
           {badge}
         </div>
       )}
-      <p className={`font-mono text-[10px] uppercase tracking-[0.22em] ${styles.label}`}>
-        {name}
-      </p>
+      <p className={`font-mono text-[10px] uppercase tracking-[0.22em] ${styles.label}`}>{name}</p>
       <div className="mt-2 flex items-baseline gap-1">
         <span className={`font-serif text-[26px] leading-none ${styles.price}`}>{price}</span>
         <span className="font-mono text-[10px] text-muted-foreground">{cadence}</span>
