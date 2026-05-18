@@ -43,11 +43,10 @@ function isAppleCancellation(err: unknown): boolean {
   if (!err) return false;
   const e = err as { code?: string | number; message?: string };
   const code = String(e.code ?? "");
-  const msg = (typeof err === "string" ? err : e.message ?? "").toLowerCase();
-  // ASAuthorizationErrorCanceled = 1001; plugin sometimes returns "1000".
+  const msg = (typeof err === "string" ? err : (e.message ?? "")).toLowerCase();
+  // ASAuthorizationErrorCanceled = 1001.
   return (
     code === "1001" ||
-    code === "1000" ||
     msg.includes("canceled") ||
     msg.includes("cancelled") ||
     msg.includes("the user canceled")
@@ -58,7 +57,7 @@ function isAppleNativeSetupFailure(err: unknown): boolean {
   if (!err) return false;
   const e = err as { code?: string | number; message?: string };
   const code = String(e.code ?? "");
-  const msg = (typeof err === "string" ? err : e.message ?? "").toLowerCase();
+  const msg = (typeof err === "string" ? err : (e.message ?? "")).toLowerCase();
 
   return (
     msg.includes("sign up not completed") ||
