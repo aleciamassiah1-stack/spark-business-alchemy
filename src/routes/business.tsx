@@ -114,17 +114,24 @@ function BusinessPage() {
   const isTestAccount = useIsTestAccount();
 
   useEffect(() => {
-    if (state.setupComplete) return;
+    // Test/reviewer accounts: always force-seed the rich demo dataset on first
+    // visit per browser, even if a prior empty state was saved. This guarantees
+    // App Review sees a fully populated business workspace.
     if (isTestAccount) {
-      // Auto-seed the rich demo dataset for App Review / demo accounts so
-      // every section of the business workspace is populated on first visit.
-      const seeded = seedDemoBusiness();
-      saveBusiness(seeded);
-      setState(seeded);
+      const SEED_FLAG = "aether.business.demo-seeded.v2";
+      const alreadySeeded =
+        typeof window !== "undefined" && window.localStorage.getItem(SEED_FLAG) === "1";
+      if (!alreadySeeded || !state.setupComplete || !state.name) {
+        const seeded = seedDemoBusiness();
+        saveBusiness(seeded);
+        setState(seeded);
+        if (typeof window !== "undefined") window.localStorage.setItem(SEED_FLAG, "1");
+      }
       return;
     }
+    if (state.setupComplete) return;
     setSetupOpen(true);
-  }, [state.setupComplete, isTestAccount]);
+  }, [state.setupComplete, state.name, isTestAccount]);
 
   const update = (patch: Partial<BusinessState> | ((s: BusinessState) => BusinessState)) => {
     setState((prev) => {
