@@ -826,13 +826,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           />
           <span>
             I agree to the{" "}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+            <Link to="/terms" className="text-foreground underline decoration-dotted hover:text-primary">
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-dotted hover:text-primary">
+            <Link to="/privacy" className="text-foreground underline decoration-dotted hover:text-primary">
               Privacy Policy
-            </a>
+            </Link>
             , and I understand that connecting a financial account uses Plaid as described in the Privacy Policy.
           </span>
         </label>
