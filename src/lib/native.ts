@@ -214,14 +214,15 @@ export async function tapHaptic() {
 // Biometrics (Face ID / Touch ID) -------------------------------------
 export async function biometricUnlock(reason = "Unlock Æther Wealth") {
   if (!isNative()) return { available: false, verified: false };
-  const { NativeBiometric } = await import("capacitor-native-biometric");
-  const result = await NativeBiometric.isAvailable();
+  const { NativeBiometric } = await import("@capgo/capacitor-native-biometric");
+  const result = await NativeBiometric.isAvailable({ useFallback: true });
   if (!result.isAvailable) return { available: false, verified: false };
   try {
     await NativeBiometric.verifyIdentity({
       reason,
       title: "Æther Wealth",
       subtitle: "Authenticate to view your portfolio",
+      useFallback: true,
     });
     return { available: true, verified: true };
   } catch {
