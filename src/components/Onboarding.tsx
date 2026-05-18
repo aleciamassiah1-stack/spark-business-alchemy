@@ -896,8 +896,16 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               }
             } else {
               const { lovable } = await import("@/integrations/lovable");
+              const { validateAppleRedirectUri } = await import(
+                "@/lib/apple-redirect-validation"
+              );
+              const redirectUri = window.location.origin;
+              // Throws a clear error if this origin isn't registered with
+              // the managed Apple OAuth client — prevents the opaque
+              // "invalid_request" page from Apple.
+              validateAppleRedirectUri(redirectUri);
               const result = await lovable.auth.signInWithOAuth("apple", {
-                redirect_uri: window.location.origin,
+                redirect_uri: redirectUri,
               });
               if (result.error) throw result.error;
               if (result.redirected) {
