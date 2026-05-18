@@ -59,9 +59,7 @@ export function validateAppleRedirectUri(redirectUri: string): void {
     throw new AppleRedirectMismatchError(redirectUri);
   }
 
-  const allowed = ALLOWED_APPLE_REDIRECT_ORIGINS.some((pattern) =>
-    originMatches(origin, pattern),
-  );
+  const allowed = ALLOWED_APPLE_REDIRECT_ORIGINS.some((pattern) => originMatches(origin, pattern));
 
   if (!allowed) {
     throw new AppleRedirectMismatchError(origin);
