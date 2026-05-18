@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "postinstall": "node scripts/patch-apple-sign-in.cjs",
+    "cap:sync:ios": "node scripts/patch-apple-sign-in.cjs && cap sync ios",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts"
   },
