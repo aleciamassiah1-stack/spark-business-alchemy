@@ -8,7 +8,7 @@ import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { Toaster } from "@/components/ui/sonner";
 import { installAuthFetch } from "@/lib/auth-fetch";
-import { InstallPwaPrompt } from "@/components/InstallPwaPrompt";
+
 
 import appCss from "../styles.css?url";
 
@@ -128,7 +128,7 @@ function RootComponent() {
             <PaymentTestModeBanner />
             <SyncStatusBar />
             <Outlet />
-            <InstallPwaPrompt />
+            
             <Toaster theme="dark" position="top-center" />
           </WealthProvider>
         </OnboardingProvider>
