@@ -153,34 +153,70 @@ export async function signInWithNativeOAuth(provider: "google" | "apple"): Promi
   if (error) throw error;
   if (!data?.url) throw new Error("Could not start sign-in.");
 
-  // Wait for the deep-link callback from SFSafariViewController, then close it.
+  // Wait for the deep-link callback from SFSafariViewController. Some iOS
+  // builds set the session successfully but do not deliver the appUrlOpen
+  // event back to the WebView, so also resolve from auth state/session checks.
   const completion = new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(
-      () => {
-        sub.then((s) => s.remove()).catch(() => {});
-        reject(new Error("Sign-in timed out. Please try again."));
-      },
-      5 * 60 * 1000,
-    );
+    let settled = false;
+    let appSub: Promise<{ remove: () => void }> | null = null;
+    let poll: ReturnType<typeof setInterval> | null = null;
 
-    const sub = App.addListener("appUrlOpen", async (event: { url: string }) => {
+    const cleanup = async () => {
+      if (poll) clearInterval(poll);
+      await Browser.close().catch(() => {});
+      await appSub?.then((s) => s.remove()).catch(() => {});
+      authSub.unsubscribe();
+    };
+
+    const finish = (errorToThrow?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      void cleanup().finally(() => {
+        if (errorToThrow) {
+          reject(errorToThrow instanceof Error ? errorToThrow : new Error(String(errorToThrow)));
+        } else {
+          resolve();
+        }
+      });
+    };
+
+    const resolveIfSessionExists = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) finish();
+    };
+
+    const {
+      data: { subscription: authSub },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) finish();
+    });
+
+    const timeout = setTimeout(() => {
+      finish(new Error("Sign-in timed out. Please try again."));
+    }, 45 * 1000);
+
+    poll = setInterval(() => {
+      void resolveIfSessionExists().catch(() => {});
+    }, 1000);
+
+    appSub = App.addListener("appUrlOpen", async (event: { url: string }) => {
       try {
         if (!event.url || !event.url.startsWith(redirectTo)) return;
         const url = new URL(event.url);
         const code = url.searchParams.get("code");
         const errParam = url.searchParams.get("error_description") || url.searchParams.get("error");
-        await Browser.close().catch(() => {});
         if (errParam) throw new Error(errParam);
-        if (!code) throw new Error("Sign-in callback missing authorization code.");
+        if (!code) {
+          await resolveIfSessionExists();
+          if (!settled) throw new Error("Sign-in callback missing authorization code.");
+          return;
+        }
         const { error: exchErr } = await supabase.auth.exchangeCodeForSession(code);
         if (exchErr) throw exchErr;
-        clearTimeout(timeout);
-        (await sub).remove();
-        resolve();
+        finish();
       } catch (e) {
-        clearTimeout(timeout);
-        (await sub).remove();
-        reject(e instanceof Error ? e : new Error(String(e)));
+        finish(e);
       }
     });
   });
