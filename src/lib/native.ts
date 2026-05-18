@@ -155,10 +155,13 @@ export async function signInWithNativeOAuth(provider: "google" | "apple"): Promi
 
   // Wait for the deep-link callback from SFSafariViewController, then close it.
   const completion = new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      sub.then((s) => s.remove()).catch(() => {});
-      reject(new Error("Sign-in timed out. Please try again."));
-    }, 5 * 60 * 1000);
+    const timeout = setTimeout(
+      () => {
+        sub.then((s) => s.remove()).catch(() => {});
+        reject(new Error("Sign-in timed out. Please try again."));
+      },
+      5 * 60 * 1000,
+    );
 
     const sub = App.addListener("appUrlOpen", async (event: { url: string }) => {
       try {
@@ -239,9 +242,7 @@ export async function hideSplash() {
 export async function requestTrackingPermission() {
   if (!isNative() || platform() !== "ios") return { status: "unavailable" as const };
   try {
-    const { AppTrackingTransparency } = await import(
-      "capacitor-plugin-app-tracking-transparency"
-    );
+    const { AppTrackingTransparency } = await import("capacitor-plugin-app-tracking-transparency");
     const current = await AppTrackingTransparency.getStatus();
     if (current.status === "notDetermined") {
       const res = await AppTrackingTransparency.requestPermission();
