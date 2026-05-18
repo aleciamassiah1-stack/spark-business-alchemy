@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "postinstall": "node scripts/patch-apple-sign-in.cjs",
-    "cap:sync:ios": "node scripts/patch-apple-sign-in.cjs && cap sync ios",
+    "cap:sync:ios": "node scripts/patch-apple-sign-in.cjs && cap sync ios && node scripts/patch-ios-apple-capability.cjs",
+    "cap:add:ios": "cap add ios && node scripts/patch-ios-apple-capability.cjs",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts"
   },
