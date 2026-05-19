@@ -124,6 +124,10 @@ const TIERS: Tier[] = [
     features: [
       "Everything in Private, plus",
       "Unlimited family members and client profiles",
+      "White-glove account aggregation — we set up your accounts for you",
+      "Family governance facilitation — annual family meeting prep and agenda",
+      "Consolidated multi-entity reporting — trusts, LLCs and foundations in one view",
+      "Role-based access for trustees, CPA and attorneys with full audit log",
       "Full white label — your brand, your domain",
       "Dedicated on-call wealth manager",
       "Custom API integrations",
@@ -193,7 +197,17 @@ const COMPARISON: Section[] = [
       { label: "Email support", values: [true, true, true] },
       { label: "Priority response", values: [false, "24 hours", "1 hour"] },
       { label: "Dedicated on-call wealth manager", values: [false, false, true] },
+      { label: "White-glove account setup", values: [false, false, true] },
+      { label: "Family governance facilitation", values: [false, false, true] },
       { label: "Quarterly strategy reviews", values: [false, false, true] },
+    ],
+  },
+  {
+    title: "Advanced Reporting & Access",
+    rows: [
+      { label: "Consolidated multi-entity reporting", values: [false, false, true] },
+      { label: "Role-based trustee & advisor access", values: [false, false, true] },
+      { label: "Full audit log", values: [false, false, true] },
     ],
   },
   {
