@@ -77,18 +77,35 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
       const { maxFamilyMembers } = limitsForTier(tier);
       if (maxFamilyMembers != null) {
         if (maxFamilyMembers === 0) {
-          throw new Error(
-            "Family Vault is included with Private. Upgrade your plan to add family members.",
-          );
+          const reason =
+            "Family Vault is included with Private. Upgrade your plan to add family members.";
+          await supabaseAdmin.from("tier_denial_log").insert({
+            user_id: userId,
+            tier,
+            action: "family_member_add",
+            reason,
+            limit_value: 0,
+            current_count: 0,
+            metadata: { name: data.name, relationship: data.relationship },
+          });
+          throw new Error(reason);
         }
         const { count } = await supabaseAdmin
           .from("family_members")
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId);
         if ((count ?? 0) >= maxFamilyMembers) {
-          throw new Error(
-            `Your plan includes up to ${maxFamilyMembers} family members. Upgrade to Family Office for unlimited members.`,
-          );
+          const reason = `Your plan includes up to ${maxFamilyMembers} family members. Upgrade to Family Office for unlimited members.`;
+          await supabaseAdmin.from("tier_denial_log").insert({
+            user_id: userId,
+            tier,
+            action: "family_member_add",
+            reason,
+            limit_value: maxFamilyMembers,
+            current_count: count ?? 0,
+            metadata: { name: data.name, relationship: data.relationship },
+          });
+          throw new Error(reason);
         }
       }
     }

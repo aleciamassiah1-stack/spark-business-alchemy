@@ -1026,6 +1026,42 @@ export type Database = {
           },
         ]
       }
+      tier_denial_log: {
+        Row: {
+          action: string
+          created_at: string
+          current_count: number | null
+          id: string
+          limit_value: number | null
+          metadata: Json
+          reason: string
+          tier: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          current_count?: number | null
+          id?: string
+          limit_value?: number | null
+          metadata?: Json
+          reason: string
+          tier?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          current_count?: number | null
+          id?: string
+          limit_value?: number | null
+          metadata?: Json
+          reason?: string
+          tier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       transaction_rules: {
         Row: {
           amount_max: number | null
