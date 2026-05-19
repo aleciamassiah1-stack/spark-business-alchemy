@@ -398,17 +398,43 @@ function FamilyPage() {
       </div>
 
       <div className="mt-5 flex items-center justify-between px-5">
-        <p className="label-mono">Manual members</p>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/25"
-        >
-          <Plus className="h-3 w-3" /> Add member
-        </button>
+        <div>
+          <p className="label-mono">Manual members</p>
+          {limits.maxFamilyMembers != null && limits.maxFamilyMembers > 0 && (
+            <p className="font-mono text-[10px] text-muted-foreground">
+              {members.length}/{limits.maxFamilyMembers} on your plan
+            </p>
+          )}
+        </div>
+        {!familyLocked && (
+          <button
+            onClick={openAdd}
+            disabled={
+              limits.maxFamilyMembers != null && members.length >= limits.maxFamilyMembers
+            }
+            className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/25 disabled:opacity-50"
+          >
+            <Plus className="h-3 w-3" /> Add member
+          </button>
+        )}
       </div>
 
       <div className="mt-2 flex flex-col gap-2 px-5 pb-6">
-        {loading ? (
+        {familyLocked ? (
+          <LuxCard className="border border-warning/30 bg-warning/5 p-6 text-center">
+            <p className="font-serif text-base text-foreground">Family Vault is a Private feature</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Track a spouse, children, or dependents on a single household net worth.
+              Available on Private (up to 5 members) and Family Office (unlimited).
+            </p>
+            <Link
+              to="/pricing"
+              className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+            >
+              View pricing
+            </Link>
+          </LuxCard>
+        ) : loading ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Loading…</p>
         ) : members.length === 0 ? (
           <LuxCard className="p-6 text-center">
@@ -423,6 +449,26 @@ function FamilyPage() {
               <Plus className="h-3 w-3" /> Add first member
             </button>
           </LuxCard>
+        ) : (
+          <>
+            {limits.maxFamilyMembers != null &&
+              members.length >= limits.maxFamilyMembers && (
+                <LuxCard className="border border-warning/30 bg-warning/5 p-4">
+                  <p className="font-serif text-sm text-foreground">
+                    You've reached your {limits.maxFamilyMembers}-member limit
+                  </p>
+                  <p className="mt-1 text-[12px] text-muted-foreground">
+                    Upgrade to Family Office for unlimited family members and full white label.
+                  </p>
+                  <Link
+                    to="/pricing"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+                  >
+                    Upgrade to Family Office
+                  </Link>
+                </LuxCard>
+              )}
+          </>
         ) : (
           members.map((m, i) => {
             const isOpen = open === m.id;
