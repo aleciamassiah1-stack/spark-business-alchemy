@@ -124,6 +124,10 @@ const TIERS: Tier[] = [
     features: [
       "Everything in Private, plus",
       "Unlimited family members and client profiles",
+      "White-glove account aggregation — we set up your accounts for you",
+      "Family governance facilitation — annual family meeting prep and agenda",
+      "Consolidated multi-entity reporting — trusts, LLCs and foundations in one view",
+      "Role-based access for trustees, CPA and attorneys with full audit log",
       "Full white label — your brand, your domain",
       "Dedicated on-call wealth manager",
       "Custom API integrations",
