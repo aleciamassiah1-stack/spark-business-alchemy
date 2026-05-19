@@ -146,6 +146,8 @@ export const adminGetMetrics = createServerFn({ method: "GET" }).handler(async (
     private_annual: 3990 / 12,
     family_monthly: 1000,
     family_annual: 9990 / 12,
+    family_monthly_v2: 1000,
+    family_annual_v2: 9990 / 12,
   };
 
   const active = (subs ?? []).filter(
