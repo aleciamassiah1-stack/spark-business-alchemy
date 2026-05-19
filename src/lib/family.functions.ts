@@ -67,6 +67,32 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+
+    // Tier gate on insert (not edit): Essential = 0 (locked feature),
+    // Private = 5 members, Family = unlimited.
+    if (!data.id) {
+      const { getCurrentTier } = await import("./access.functions");
+      const { limitsForTier } = await import("./tier");
+      const tier = await getCurrentTier();
+      const { maxFamilyMembers } = limitsForTier(tier);
+      if (maxFamilyMembers != null) {
+        if (maxFamilyMembers === 0) {
+          throw new Error(
+            "Family Vault is included with Private. Upgrade your plan to add family members.",
+          );
+        }
+        const { count } = await supabaseAdmin
+          .from("family_members")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        if ((count ?? 0) >= maxFamilyMembers) {
+          throw new Error(
+            `Your plan includes up to ${maxFamilyMembers} family members. Upgrade to Family Office for unlimited members.`,
+          );
+        }
+      }
+    }
+
     const payload = {
       user_id: userId,
       name: data.name,

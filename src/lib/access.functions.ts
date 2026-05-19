@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getCurrentUserId, requireUserId } from "@/integrations/supabase/auth-helper";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
+import { tierFromPriceId, type Tier } from "@/lib/tier";
 
 function getPaymentsEnvironment(): "sandbox" | "live" {
   const env = process.env.STRIPE_ENVIRONMENT;
@@ -65,12 +66,12 @@ export const checkMyPendingDeletion = createServerFn({ method: "GET" }).handler(
 export const checkAccess = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) {
-    return { authenticated: false, hasAccess: false, isAdmin: false } as const;
+    return { authenticated: false, hasAccess: false, isAdmin: false, tier: null as Tier | null } as const;
   }
 
   const env = getPaymentsEnvironment();
 
-  const [{ data: roleRow }, { data: hasSubRow }] = await Promise.all([
+  const [{ data: roleRow }, { data: hasSubRow }, { data: subRow }] = await Promise.all([
     supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -78,13 +79,60 @@ export const checkAccess = createServerFn({ method: "GET" }).handler(async () =>
       .eq("role", "admin")
       .maybeSingle(),
     supabaseAdmin.rpc("has_active_subscription", { user_uuid: userId, check_env: env }),
+    supabaseAdmin
+      .from("subscriptions")
+      .select("price_id, status, current_period_end")
+      .eq("user_id", userId)
+      .eq("environment", env)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const isAdmin = !!roleRow;
   const hasAccess = isAdmin || hasSubRow === true;
 
-  return { authenticated: true, hasAccess, isAdmin } as const;
+  // Derive tier from price_id. Admins / manual_access without a sub get
+  // the top tier so internal accounts see the full surface.
+  let tier: Tier | null = tierFromPriceId(subRow?.price_id ?? null);
+  if (hasAccess && !tier) tier = "family";
+
+  return { authenticated: true, hasAccess, isAdmin, tier } as const;
 });
+
+/** Server-side helper: returns the user's resolved tier (or null). */
+export async function getCurrentTier(): Promise<Tier | null> {
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+  const env = getPaymentsEnvironment();
+  const [{ data: roleRow }, { data: subRow }, { data: manual }] = await Promise.all([
+    supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle(),
+    supabaseAdmin
+      .from("subscriptions")
+      .select("price_id, status, current_period_end")
+      .eq("user_id", userId)
+      .eq("environment", env)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("manual_access")
+      .select("expires_at")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  const isAdmin = !!roleRow;
+  const compActive = manual ? !manual.expires_at || new Date(manual.expires_at) > new Date() : false;
+  const tier = tierFromPriceId(subRow?.price_id ?? null);
+  if (tier) return tier;
+  if (isAdmin || compActive) return "family";
+  return null;
+}
 
 /** Returns whether the current user has any LIVE Stripe subscription on record. */
 export const checkLiveSubscription = createServerFn({ method: "GET" }).handler(async () => {
