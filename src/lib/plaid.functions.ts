@@ -181,6 +181,19 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId);
         if ((count ?? 0) >= maxInstitutions) {
+          const reason = `Your plan includes up to ${maxInstitutions} connected institutions. Upgrade to Private for unlimited accounts.`;
+          await supabaseAdmin.from("tier_denial_log").insert({
+            user_id: userId,
+            tier,
+            action: "plaid_connect_institution",
+            reason,
+            limit_value: maxInstitutions,
+            current_count: count ?? 0,
+            metadata: {
+              institution_id: data.institution_id ?? null,
+              institution_name: data.institution_name ?? null,
+            },
+          });
           return {
             ok: false as const,
             itemId: null,
@@ -189,7 +202,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
             holdingsUpdated: 0,
             liabilitiesUpdated: 0,
             transactionsUpdated: 0,
-            error: `Your plan includes up to ${maxInstitutions} connected institutions. Upgrade to Private for unlimited accounts.`,
+            error: reason,
           };
         }
       }
