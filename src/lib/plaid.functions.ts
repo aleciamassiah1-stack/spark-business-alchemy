@@ -167,6 +167,33 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const userId = await requireUserId();
+
+      // Tier gate: Essential is capped at 3 connected institutions.
+      // Private + Family Office are unlimited. Admins / manual_access resolve
+      // to "family" via getCurrentTier so internal accounts are never capped.
+      const { getCurrentTier } = await import("./access.functions");
+      const { limitsForTier } = await import("./tier");
+      const tier = await getCurrentTier();
+      const { maxInstitutions } = limitsForTier(tier);
+      if (maxInstitutions != null) {
+        const { count } = await supabaseAdmin
+          .from("plaid_items")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        if ((count ?? 0) >= maxInstitutions) {
+          return {
+            ok: false as const,
+            itemId: null,
+            duplicate: false as const,
+            accountsUpdated: 0,
+            holdingsUpdated: 0,
+            liabilitiesUpdated: 0,
+            transactionsUpdated: 0,
+            error: `Your plan includes up to ${maxInstitutions} connected institutions. Upgrade to Private for unlimited accounts.`,
+          };
+        }
+      }
+
       const { access_token, item_id } = await exchangePublicToken(data.public_token);
 
       // Duplicate-Item detection (Plaid best practice):
