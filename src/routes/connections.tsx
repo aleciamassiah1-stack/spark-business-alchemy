@@ -1194,8 +1194,12 @@ function AccountsTab({
   onDisconnect: (id: string, name: string | null) => void;
   onReconnect: (id: string, name: string | null, opts?: { accountSelection?: boolean }) => void;
 }) {
+  const { tier, limits } = useAccess();
   const acctsByItem = (id: string) => accounts.filter((a) => a.item_id === id);
   const hasDemo = items.some((i) => i.institution_name?.includes("(Demo)"));
+  const nonDemoCount = items.filter((i) => !i.institution_name?.includes("(Demo)")).length;
+  const atInstitutionCap =
+    limits.maxInstitutions != null && nonDemoCount >= limits.maxInstitutions;
 
   return (
     <div>
@@ -1227,22 +1231,52 @@ function AccountsTab({
         </LuxCard>
       )}
 
+      {atInstitutionCap && (
+        <LuxCard className="mb-4 border border-warning/30 bg-warning/5 p-4">
+          <p className="font-serif text-sm text-foreground">
+            You've reached your {limits.maxInstitutions}-account limit
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            The Essential plan includes up to {limits.maxInstitutions} connected institutions.
+            Upgrade to Private for unlimited connected accounts plus trust & estate tools.
+          </p>
+          <Link
+            to="/pricing"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+          >
+            Upgrade to Private
+          </Link>
+        </LuxCard>
+      )}
+
       {/* Primary CTA: Plaid Link is presented as the default option, full
           width and visually dominant. Demo mode is demoted to a text link. */}
       <button
         onClick={onConnect}
-        disabled={linking}
+        disabled={linking || atInstitutionCap}
         className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-medium text-primary-foreground glow-violet disabled:opacity-50"
       >
         <Plus className="h-4 w-4" />
-        {linking ? "Opening Plaid…" : "Connect bank with Plaid"}
+        {linking
+          ? "Opening Plaid…"
+          : atInstitutionCap
+            ? `Account limit reached (${limits.maxInstitutions})`
+            : "Connect bank with Plaid"}
       </button>
       <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-        {plaidEnv === "production"
-          ? "Plaid Production · sign in with your real bank, brokerage, or Robinhood credentials"
-          : plaidEnv === "sandbox"
-            ? "Plaid Sandbox · use credentials user_good / pass_good"
-            : "Detecting environment…"}
+        {tier
+          ? `${limits.maxInstitutions == null ? "Unlimited" : `${nonDemoCount}/${limits.maxInstitutions}`} institutions · ${
+              plaidEnv === "production"
+                ? "Plaid Production"
+                : plaidEnv === "sandbox"
+                  ? "Plaid Sandbox · user_good / pass_good"
+                  : "Detecting environment…"
+            }`
+          : plaidEnv === "production"
+            ? "Plaid Production · sign in with your real bank, brokerage, or Robinhood credentials"
+            : plaidEnv === "sandbox"
+              ? "Plaid Sandbox · use credentials user_good / pass_good"
+              : "Detecting environment…"}
       </p>
       {isAdmin && (
         <div className="mt-2 flex items-center justify-center">
