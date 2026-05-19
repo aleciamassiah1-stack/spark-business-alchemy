@@ -70,6 +70,11 @@ const TIER_META = {
     features: [
       "Everything in Private, plus",
       "Unlimited family members",
+      "Dedicated on-call wealth manager",
+      "White-glove account aggregation — we set up your accounts for you",
+      "Family governance facilitation — annual family meeting prep and agenda",
+      "Consolidated multi-entity reporting — trusts, LLCs and foundations in one view",
+      "Role-based access for trustees, CPA and attorneys with full audit log",
       "Multi-generational planning",
       "Cap table and exit planning",
       "Concierge support",
