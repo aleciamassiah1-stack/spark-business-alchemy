@@ -2,11 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { checkAccess } from "@/lib/access.functions";
 import { useAuth } from "@/lib/auth-context";
 import { initRevenueCat, logoutRevenueCat } from "@/lib/revenuecat";
+import { limitsForTier, type Tier, type TierLimits } from "@/lib/tier";
 
 type AccessState = {
   ready: boolean;
   hasAccess: boolean;
   isAdmin: boolean;
+  tier: Tier | null;
+  limits: TierLimits;
   refresh: () => Promise<boolean>;
 };
 
@@ -16,6 +19,8 @@ const noop: AccessState = {
   ready: false,
   hasAccess: false,
   isAdmin: false,
+  tier: null,
+  limits: limitsForTier(null),
   refresh: async () => false,
 };
 
@@ -24,11 +29,13 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [tier, setTier] = useState<Tier | null>(null);
 
   const load = useCallback(async () => {
     if (!auth.user) {
       setHasAccess(false);
       setIsAdmin(false);
+      setTier(null);
       setReady(true);
       return false;
     }
@@ -36,10 +43,12 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       const res = await checkAccess();
       setHasAccess(res.hasAccess);
       setIsAdmin(res.isAdmin);
+      setTier(res.tier ?? null);
       return res.hasAccess;
     } catch {
       setHasAccess(false);
       setIsAdmin(false);
+      setTier(null);
       return false;
     } finally {
       setReady(true);
@@ -52,6 +61,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     setReady(false);
     setHasAccess(false);
     setIsAdmin(false);
+    setTier(null);
     void load();
     // Sync RevenueCat identity on iOS native (no-op on web).
     if (auth.user?.id) {
@@ -77,8 +87,10 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
+  const limits = limitsForTier(tier);
+
   return (
-    <AccessContext.Provider value={{ ready, hasAccess, isAdmin, refresh: load }}>
+    <AccessContext.Provider value={{ ready, hasAccess, isAdmin, tier, limits, refresh: load }}>
       {children}
     </AccessContext.Provider>
   );
