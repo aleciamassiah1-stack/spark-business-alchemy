@@ -988,7 +988,7 @@ export function Welcome({
   const tiers = {
     essential: { monthly: "$149", annual: "$1,490" },
     private: { monthly: "$399", annual: "$3,990" },
-    family: { monthly: "$1,499", annual: "$14,990" },
+    family: { monthly: "$1,000", annual: "$9,990" },
   } as const;
   const cadence = billing === "annual" ? "/yr" : "/mo";
   return (
