@@ -465,6 +465,7 @@ function FamilyPage() {
                     className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
                   >
                     Upgrade to Family Office
+                  </Link>
                 </LuxCard>
               )}
             {members.map((m, i) => {
