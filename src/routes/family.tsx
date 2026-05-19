@@ -465,91 +465,89 @@ function FamilyPage() {
                     className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
                   >
                     Upgrade to Family Office
-                  </Link>
                 </LuxCard>
               )}
-          </>
-        ) : (
-          members.map((m, i) => {
-            const isOpen = open === m.id;
-            return (
-              <LuxCard key={m.id} delay={i * 0.06} className="overflow-hidden">
-                <button
-                  onClick={() => setOpen(isOpen ? null : m.id)}
-                  className="flex w-full items-center gap-3 px-4 py-4 text-left"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
-                    {m.initials || initialsOf(m.name)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-serif text-base text-foreground">{m.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {m.relationship}
-                      {m.age != null ? ` · Age ${m.age}` : ""}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-sm tabular-nums text-foreground">
-                      {fmtCurrency(Number(m.net_worth || 0), { compact: true })}
-                    </p>
-                    <p className="font-mono text-[10px] text-muted-foreground">
-                      {m.accounts.length} account{m.accounts.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="border-t border-white/[0.06] px-4 py-3">
-                        <p className="label-mono mb-2">Linked accounts</p>
-                        {m.accounts.length === 0 ? (
-                          <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-center text-[11px] text-muted-foreground">
-                            No accounts linked yet
-                          </p>
-                        ) : (
-                          <div className="flex flex-col gap-1.5">
-                            {m.accounts.map((a, idx) => (
-                              <div
-                                key={`${a.name}-${idx}`}
-                                className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5"
-                              >
-                                <p className="text-xs text-foreground">{a.name}</p>
-                                <p className="font-mono text-xs tabular-nums text-foreground">
-                                  {fmtCurrency(Number(a.balance || 0), { compact: true })}
-                                </p>
-                              </div>
-                            ))}
+            {members.map((m, i) => {
+              const isOpen = open === m.id;
+              return (
+                <LuxCard key={m.id} delay={i * 0.06} className="overflow-hidden">
+                  <button
+                    onClick={() => setOpen(isOpen ? null : m.id)}
+                    className="flex w-full items-center gap-3 px-4 py-4 text-left"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
+                      {m.initials || initialsOf(m.name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-serif text-base text-foreground">{m.name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {m.relationship}
+                        {m.age != null ? ` · Age ${m.age}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-sm tabular-nums text-foreground">
+                        {fmtCurrency(Number(m.net_worth || 0), { compact: true })}
+                      </p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        {m.accounts.length} account{m.accounts.length === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-white/[0.06] px-4 py-3">
+                          <p className="label-mono mb-2">Linked accounts</p>
+                          {m.accounts.length === 0 ? (
+                            <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-center text-[11px] text-muted-foreground">
+                              No accounts linked yet
+                            </p>
+                          ) : (
+                            <div className="flex flex-col gap-1.5">
+                              {m.accounts.map((a, idx) => (
+                                <div
+                                  key={`${a.name}-${idx}`}
+                                  className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5"
+                                >
+                                  <p className="text-xs text-foreground">{a.name}</p>
+                                  <p className="font-mono text-xs tabular-nums text-foreground">
+                                    {fmtCurrency(Number(a.balance || 0), { compact: true })}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={() => openEdit(m)}
+                              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.06]"
+                            >
+                              <Pencil className="h-3 w-3" /> Edit profile
+                            </button>
+                            <button
+                              onClick={() => handleDelete(m.id)}
+                              className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive transition hover:bg-destructive/20"
+                              aria-label="Remove member"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </div>
-                        )}
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            onClick={() => openEdit(m)}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.06]"
-                          >
-                            <Pencil className="h-3 w-3" /> Edit profile
-                          </button>
-                          <button
-                            onClick={() => handleDelete(m.id)}
-                            className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive transition hover:bg-destructive/20"
-                            aria-label="Remove member"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
                         </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </LuxCard>
-            );
-          })
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </LuxCard>
+              );
+            })}
+          </>
         )}
       </div>
 
