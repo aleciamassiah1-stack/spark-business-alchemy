@@ -197,7 +197,17 @@ const COMPARISON: Section[] = [
       { label: "Email support", values: [true, true, true] },
       { label: "Priority response", values: [false, "24 hours", "1 hour"] },
       { label: "Dedicated on-call wealth manager", values: [false, false, true] },
+      { label: "White-glove account setup", values: [false, false, true] },
+      { label: "Family governance facilitation", values: [false, false, true] },
       { label: "Quarterly strategy reviews", values: [false, false, true] },
+    ],
+  },
+  {
+    title: "Advanced Reporting & Access",
+    rows: [
+      { label: "Consolidated multi-entity reporting", values: [false, false, true] },
+      { label: "Role-based trustee & advisor access", values: [false, false, true] },
+      { label: "Full audit log", values: [false, false, true] },
     ],
   },
   {
