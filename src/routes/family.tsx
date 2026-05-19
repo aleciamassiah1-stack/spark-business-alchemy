@@ -68,6 +68,11 @@ function initialsOf(name: string): string {
 
 function FamilyPage() {
   const { user, ready } = useAuth();
+  const { tier, limits } = useAccess();
+  const familyLocked = limits.maxFamilyMembers === 0;
+  const atMemberCap =
+    limits.maxFamilyMembers != null &&
+    limits.maxFamilyMembers > 0;
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<string | null>(null);
