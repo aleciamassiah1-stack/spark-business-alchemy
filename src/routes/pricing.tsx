@@ -125,7 +125,7 @@ const TIERS: Tier[] = [
       "Everything in Private, plus",
       "Unlimited family members and client profiles",
       "Full white label — your brand, your domain",
-      "Dedicated account manager",
+      "Dedicated on-call wealth manager",
       "Custom API integrations",
       "Multi-generational legacy planning suite",
       "Advanced business — cap table, exit planning, M&A",
@@ -192,7 +192,7 @@ const COMPARISON: Section[] = [
     rows: [
       { label: "Email support", values: [true, true, true] },
       { label: "Priority response", values: [false, "24 hours", "1 hour"] },
-      { label: "Dedicated account manager", values: [false, false, true] },
+      { label: "Dedicated on-call wealth manager", values: [false, false, true] },
       { label: "Quarterly strategy reviews", values: [false, false, true] },
     ],
   },
