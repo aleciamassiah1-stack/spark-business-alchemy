@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getCurrentUserId, requireUserId } from "@/integrations/supabase/auth-helper";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
+import { tierFromPriceId, type Tier } from "@/lib/tier";
 
 function getPaymentsEnvironment(): "sandbox" | "live" {
   const env = process.env.STRIPE_ENVIRONMENT;
