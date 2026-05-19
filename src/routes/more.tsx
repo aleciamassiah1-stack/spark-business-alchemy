@@ -113,6 +113,25 @@ function MorePage() {
           </NavGroup>
         )}
 
+        {hasAccess && (access.tier === "family" || access.isAdmin) && (
+          <Link
+            to="/family-office"
+            className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-gold/40 bg-[oklch(0.20_0.025_280)] px-4 py-3.5 shadow-[0_0_40px_-15px_oklch(0.82_0.12_85/0.45)]"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/20 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/15">
+                <Crown className="h-4 w-4 text-gold" />
+              </div>
+              <div>
+                <p className="label-mono text-gold/80">Family Office</p>
+                <p className="text-sm text-foreground">Your dedicated private office</p>
+              </div>
+            </div>
+            <ArrowRight className="relative h-4 w-4 text-gold" />
+          </Link>
+        )}
+
         {hasAccess && (
           <>
             <NavGroup title="Wealth tools">
