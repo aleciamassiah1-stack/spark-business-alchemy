@@ -120,7 +120,7 @@ const TIERS: Tier[] = [
     cta: "Get Started",
     ctaAction: "checkout",
     variant: "family",
-    priceIds: { monthly: "family_monthly", annual: "family_annual" },
+    priceIds: { monthly: "family_monthly_v2", annual: "family_annual_v2" },
     features: [
       "Everything in Private, plus",
       "Unlimited family members and client profiles",
