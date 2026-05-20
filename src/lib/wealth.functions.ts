@@ -814,6 +814,179 @@ export type InsuranceExtraction = {
   beneficiaries?: string[];
 };
 
+export type EstateExtraction = {
+  document_type: "will" | "healthcare_directive" | "power_of_attorney" | "trust" | "other";
+  suggested_title: string;
+  signed_date?: string | null;
+  expiration_date?: string | null;
+  grantor?: string | null;
+  executor?: string | null;
+  trustees?: string[];
+  beneficiaries?: string[];
+  notes?: string | null;
+};
+
+// AI parse estate document PDF — extracts type, parties, beneficiaries, dates
+export const parseEstatePdf = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { fileName: string; base64: string; mimeType: string }) =>
+      z
+        .object({
+          fileName: z.string().trim().min(1).max(255),
+          base64: z
+            .string()
+            .min(10)
+            .max(14_000_000)
+            .regex(/^[A-Za-z0-9+/=\s]+$/, "Invalid base64 payload"),
+          mimeType: z
+            .string()
+            .trim()
+            .min(3)
+            .max(80)
+            .refine(
+              (v) =>
+                v === "application/pdf" ||
+                v === "image/jpeg" ||
+                v === "image/png" ||
+                v === "image/webp",
+              "Unsupported mime type",
+            ),
+        })
+        .parse(input),
+  )
+  .handler(async ({ data }) => {
+    await requireUserId();
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error: "LOVABLE_API_KEY not configured",
+        extracted: null as null | EstateExtraction,
+      };
+    }
+
+    const systemPrompt = `You extract structured data from US estate planning documents — last will & testament, revocable/irrevocable trusts, durable power of attorney, healthcare directive/living will. Be precise. If a field is not present, return null. Dates must be ISO YYYY-MM-DD. Lists must contain full names only.`;
+    const userPrompt = `Extract the key parties and details from this estate document. Return ONLY the structured data via the tool call.`;
+
+    const body = {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: userPrompt },
+            {
+              type: "image_url",
+              image_url: { url: `data:${data.mimeType};base64,${data.base64}` },
+            },
+          ],
+        },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "extract_estate_document",
+            description: "Extract structured estate document fields",
+            parameters: {
+              type: "object",
+              properties: {
+                document_type: {
+                  type: "string",
+                  enum: ["will", "healthcare_directive", "power_of_attorney", "trust", "other"],
+                  description: "Detected document type",
+                },
+                suggested_title: {
+                  type: "string",
+                  description: "Short human-readable title, e.g. 'Last Will & Testament of Jane Doe'",
+                },
+                signed_date: { type: ["string", "null"], description: "ISO date the document was executed" },
+                expiration_date: { type: ["string", "null"], description: "ISO date the document expires, if any" },
+                grantor: { type: ["string", "null"], description: "Testator / grantor / principal full name" },
+                executor: {
+                  type: ["string", "null"],
+                  description: "Named executor / personal representative / attorney-in-fact / healthcare agent",
+                },
+                trustees: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Named trustees (trusts only)",
+                },
+                beneficiaries: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Named beneficiaries / heirs",
+                },
+                notes: { type: ["string", "null"], description: "Short note on extraction confidence or caveats" },
+              },
+              required: ["document_type", "suggested_title"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "extract_estate_document" } },
+    };
+
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) {
+          return {
+            ok: false as const,
+            error: "Rate limit reached on AI parser. Please try again in a moment.",
+            extracted: null,
+          };
+        }
+        if (res.status === 402) {
+          return {
+            ok: false as const,
+            error: "AI credits exhausted. Add credits in workspace settings.",
+            extracted: null,
+          };
+        }
+        console.error("Lovable AI estate parse error:", res.status, text);
+        return {
+          ok: false as const,
+          error: `AI parser failed (${res.status})`,
+          extracted: null,
+        };
+      }
+
+      const json = (await res.json()) as {
+        choices?: Array<{
+          message?: {
+            tool_calls?: Array<{ function?: { arguments?: string } }>;
+          };
+        }>;
+      };
+
+      const argsStr = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      if (!argsStr) {
+        return { ok: false as const, error: "AI returned no extraction", extracted: null };
+      }
+
+      const parsed = JSON.parse(argsStr) as EstateExtraction;
+      return { ok: true as const, error: null, extracted: parsed };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI parse failed";
+      console.error("parseEstatePdf error:", msg);
+      return { ok: false as const, error: msg, extracted: null };
+    }
+  });
+
+
+
 // =================================================================
 // Tax Return AI Extraction
 // =================================================================

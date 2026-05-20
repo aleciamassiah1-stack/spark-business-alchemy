@@ -64,6 +64,7 @@ import {
   listEstateDocuments,
   upsertEstateDocument,
   deleteEstateDocument,
+  parseEstatePdf,
   uploadWealthDocument,
   seedDemoData,
   clearDemoData,
@@ -2361,6 +2362,48 @@ function EstateFormModal({
   const [type, setType] = useState<"will" | "healthcare_directive" | "power_of_attorney" | "trust" | "other">("will");
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [signedDate, setSignedDate] = useState<string>("");
+  const [expirationDate, setExpirationDate] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [parsedByAi, setParsedByAi] = useState(false);
+
+  const handleFilePick = async (f: File | null) => {
+    setFile(f);
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) {
+      onError("File too large (max 8 MB)");
+      return;
+    }
+    setParsing(true);
+    try {
+      const base64 = await fileToBase64(f);
+      const parsed = await parseEstatePdf({
+        data: { fileName: f.name, base64, mimeType: f.type || "application/pdf" },
+      });
+      if (parsed.ok && parsed.extracted) {
+        const e = parsed.extracted;
+        setType(e.document_type);
+        if (e.suggested_title) setTitle(e.suggested_title);
+        if (e.signed_date) setSignedDate(e.signed_date);
+        if (e.expiration_date) setExpirationDate(e.expiration_date);
+        const noteParts: string[] = [];
+        if (e.grantor) noteParts.push(`Grantor: ${e.grantor}`);
+        if (e.executor) noteParts.push(`Executor / agent: ${e.executor}`);
+        if (e.trustees?.length) noteParts.push(`Trustees: ${e.trustees.join(", ")}`);
+        if (e.beneficiaries?.length) noteParts.push(`Beneficiaries: ${e.beneficiaries.join(", ")}`);
+        if (e.notes) noteParts.push(e.notes);
+        if (noteParts.length) setNotes(noteParts.join("\n"));
+        setParsedByAi(true);
+      } else if (!parsed.ok) {
+        onError(parsed.error ?? "AI parse failed — fill manually");
+      }
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "AI parse failed");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const submit = async () => {
     if (!title.trim()) return onError("Title required");
@@ -2369,7 +2412,6 @@ function EstateFormModal({
       let document_path: string | null = null;
       let document_url: string | null = null;
       if (file) {
-        if (file.size > 8 * 1024 * 1024) throw new Error("File too large (max 8 MB)");
         const base64 = await fileToBase64(file);
         const up = await uploadWealthDocument({
           data: { folder: "estate", fileName: file.name, base64, mimeType: file.type },
@@ -2383,6 +2425,9 @@ function EstateFormModal({
           title: title.trim(),
           document_type: type,
           status: "current",
+          signed_date: signedDate || null,
+          expiration_date: expirationDate || null,
+          notes: notes.trim() || null,
           document_path,
           document_url,
         },
@@ -2418,21 +2463,41 @@ function EstateFormModal({
         </div>
       </div>
       <div className="mt-3">
-        <p className="label-mono mb-1.5">Attach PDF (optional)</p>
+        <p className="label-mono mb-1.5">Attach PDF (AI will extract details)</p>
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:bg-white/[0.04]">
           <Upload className="h-3.5 w-3.5" />
-          {file ? file.name : "Choose file"}
+          {parsing ? "AI extracting…" : file ? file.name : "Choose file"}
           <input
             type="file"
             accept="application/pdf,image/*"
             className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            disabled={parsing}
+            onChange={(e) => handleFilePick(e.target.files?.[0] ?? null)}
           />
         </label>
+        {parsedByAi && !parsing && (
+          <p className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-gold">
+            ✦ AI extracted — review before saving
+          </p>
+        )}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Field label="Signed date" type="date" value={signedDate} onChange={setSignedDate} />
+        <Field label="Expires" type="date" value={expirationDate} onChange={setExpirationDate} />
+      </div>
+      <div className="mt-1">
+        <p className="label-mono mb-1.5">Notes (parties, beneficiaries)</p>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={4}
+          placeholder="Executor, trustees, beneficiaries…"
+          className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/40 focus:outline-none"
+        />
       </div>
       <button
         onClick={submit}
-        disabled={saving}
+        disabled={saving || parsing}
         className="mt-4 w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground glow-violet disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save document"}
