@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { ActiveProfileProvider } from "@/lib/active-profile-context";
 import { AccessProvider } from "@/lib/access-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
