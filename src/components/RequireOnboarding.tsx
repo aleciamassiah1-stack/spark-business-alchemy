@@ -86,7 +86,11 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  if (!onb.onboarded && !SETUP_ALLOWED.has(location.pathname)) {
+  // Admins (and any internal/comp'd account that resolves to a tier without a
+  // paid sub) bypass the localStorage-based onboarding gate. Otherwise an
+  // admin signing in on a fresh browser/device gets blocked behind the
+  // Onboarding modal even though their server-side access is fine.
+  if (!access.isAdmin && !onb.onboarded && !SETUP_ALLOWED.has(location.pathname)) {
     return <Onboarding forceOpen />;
   }
 
