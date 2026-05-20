@@ -101,6 +101,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const messages = (payload as { messages?: unknown })?.messages;
+    const sessionIdRaw = (payload as { sessionId?: unknown })?.sessionId;
+    const sessionId =
+      typeof sessionIdRaw === "string" && sessionIdRaw.length > 0 && sessionIdRaw.length <= 80
+        ? sessionIdRaw
+        : `s_${crypto.randomUUID()}`;
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: "messages must be a non-empty array" }),
