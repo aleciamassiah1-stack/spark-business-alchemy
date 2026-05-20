@@ -74,7 +74,7 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
     // Tier gate on insert (not edit): Essential = 0 (locked feature),
     // Private = 5 members, Family = unlimited.
     if (!data.id) {
-      const { getCurrentTier } = await import("./access.functions");
+      const { getCurrentTier } = await import("./access.server");
       const { limitsForTier } = await import("./tier");
       const tier = await getCurrentTier();
       const { maxFamilyMembers } = limitsForTier(tier);
