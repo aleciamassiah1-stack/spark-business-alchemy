@@ -465,37 +465,38 @@ export const getAggregatedData = createServerFn({ method: "GET" }).handler(async
         error: null,
       };
     }
+    const profileId = await resolveActiveProfileId(userId);
     const [itemsRes, accountsRes, holdingsRes, liabilitiesRes, syncRes, txRes] = await Promise.all([
       supabaseAdmin
         .from("plaid_items")
         .select("id, institution_name, institution_id, status, last_synced_at, created_at, new_accounts_available")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("created_at", { ascending: false }),
       supabaseAdmin
         .from("aggregated_accounts")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("current_balance", { ascending: false, nullsFirst: false }),
       supabaseAdmin
         .from("aggregated_holdings")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("institution_value", { ascending: false, nullsFirst: false }),
       supabaseAdmin
         .from("aggregated_liabilities")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("next_payment_due_date", { ascending: true, nullsFirst: false }),
       supabaseAdmin
         .from("sync_log")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("created_at", { ascending: false })
         .limit(10),
       supabaseAdmin
         .from("aggregated_transactions")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", profileId)
         .order("date", { ascending: false })
         .limit(50),
     ]);
