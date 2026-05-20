@@ -21,7 +21,7 @@ export function DemoSeederCard({ hasDemo, onChange }: Props) {
   const runSeed = async () => {
     setBusy("seed");
     try {
-      await seed({ data: {} });
+      await seed();
       toast.success("Sample data loaded", {
         description: "Explore the app, then remove it any time.",
       });
@@ -38,7 +38,7 @@ export function DemoSeederCard({ hasDemo, onChange }: Props) {
   const runClear = async () => {
     setBusy("clear");
     try {
-      await clear({ data: {} });
+      await clear();
       toast.success("Sample data removed");
       await onChange();
     } catch (e) {
