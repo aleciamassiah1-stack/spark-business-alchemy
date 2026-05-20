@@ -71,6 +71,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [unreadRequests, setUnreadRequests] = useState(0);
 
   // Redirect non-admins
   useEffect(() => {
