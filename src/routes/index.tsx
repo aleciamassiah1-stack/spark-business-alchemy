@@ -13,6 +13,8 @@ import { CompletionBanner } from "@/components/CompletionBanner";
 import { MfaNudge } from "@/components/MfaNudge";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { listFamilyMembers } from "@/lib/family.functions";
+import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
