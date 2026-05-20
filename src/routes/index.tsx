@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw } from "lucide-react";
+import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw, Crown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { IosPaywall } from "@/components/IosPaywall";
@@ -326,6 +326,28 @@ function HomePage() {
           </div>
         </LuxCard>
       </div>
+
+      {/* Family Office hub entry — only for family tier */}
+      {(access.tier === "family" || access.isAdmin) && (
+        <div className="px-5 pt-4">
+          <Link
+            to="/family-office"
+            className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-gold/40 bg-[oklch(0.20_0.025_280)] px-4 py-3.5 shadow-[0_0_40px_-15px_oklch(0.82_0.12_85/0.5)]"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/25 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/15">
+                <Crown className="h-4 w-4 text-gold" />
+              </div>
+              <div>
+                <p className="label-mono text-gold/80">Family Office</p>
+                <p className="text-sm text-foreground">Open your dedicated hub</p>
+              </div>
+            </div>
+            <ArrowRight className="relative h-4 w-4 text-gold" />
+          </Link>
+        </div>
+      )}
 
       {/* 2FA nudge — only renders if user hasn't enabled MFA and hasn't dismissed */}
       <div className="px-5 pt-4">

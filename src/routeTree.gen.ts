@@ -32,6 +32,7 @@ import { Route as LegacyRouteImport } from './routes/legacy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as FamilyOfficeRouteImport } from './routes/family-office'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as EligibilityRouteImport } from './routes/eligibility'
 import { Route as ConnectionsRouteImport } from './routes/connections'
@@ -168,6 +169,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FamilyOfficeRoute = FamilyOfficeRouteImport.update({
+  id: '/family-office',
+  path: '/family-office',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FamilyRoute = FamilyRouteImport.update({
   id: '/family',
   path: '/family',
@@ -282,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/family-office': typeof FamilyOfficeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
@@ -327,6 +334,7 @@ export interface FileRoutesByTo {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/family-office': typeof FamilyOfficeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
@@ -373,6 +381,7 @@ export interface FileRoutesById {
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
   '/family': typeof FamilyRoute
+  '/family-office': typeof FamilyOfficeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/intake': typeof IntakeRoute
   '/launch': typeof LaunchRoute
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/family-office'
     | '/forgot-password'
     | '/intake'
     | '/launch'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/family-office'
     | '/forgot-password'
     | '/intake'
     | '/launch'
@@ -510,6 +521,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/eligibility'
     | '/family'
+    | '/family-office'
     | '/forgot-password'
     | '/intake'
     | '/launch'
@@ -556,6 +568,7 @@ export interface RootRouteChildren {
   ConnectionsRoute: typeof ConnectionsRoute
   EligibilityRoute: typeof EligibilityRoute
   FamilyRoute: typeof FamilyRoute
+  FamilyOfficeRoute: typeof FamilyOfficeRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   IntakeRoute: typeof IntakeRoute
   LaunchRoute: typeof LaunchRoute
@@ -755,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/family-office': {
+      id: '/family-office'
+      path: '/family-office'
+      fullPath: '/family-office'
+      preLoaderRoute: typeof FamilyOfficeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/family': {
       id: '/family'
       path: '/family'
@@ -918,6 +938,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectionsRoute: ConnectionsRoute,
   EligibilityRoute: EligibilityRoute,
   FamilyRoute: FamilyRoute,
+  FamilyOfficeRoute: FamilyOfficeRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   IntakeRoute: IntakeRoute,
   LaunchRoute: LaunchRoute,
