@@ -91,3 +91,138 @@ export const createManagedProfile = createServerFn({ method: "POST" })
 
     return { id: created.id };
   });
+
+/** Delete a managed (non-self) profile owned by the current user. */
+export const deleteManagedProfile = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const uid = await requireUserId();
+    const { data: prof } = await supabaseAdmin
+      .from("managed_profiles")
+      .select("id, owner_user_id, is_self")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    if (prof.owner_user_id !== uid) throw new Error("Not authorized");
+    if (prof.is_self) throw new Error("You cannot delete your own profile");
+
+    await supabaseAdmin.from("profile_access").delete().eq("profile_id", data.id);
+    const { error } = await supabaseAdmin
+      .from("managed_profiles")
+      .delete()
+      .eq("id", data.id)
+      .eq("owner_user_id", uid);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export type ProfileMember = {
+  auth_user_id: string;
+  email: string;
+  name: string;
+  role: "owner" | "member";
+  is_self: boolean;
+};
+
+/** List auth users with access to a profile owned by the caller. */
+export const listProfileMembers = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ profile_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const uid = await requireUserId();
+    const { data: prof } = await supabaseAdmin
+      .from("managed_profiles")
+      .select("id, owner_user_id")
+      .eq("id", data.profile_id)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    if (prof.owner_user_id !== uid) throw new Error("Not authorized");
+
+    const { data: rows } = await supabaseAdmin
+      .from("profile_access")
+      .select("auth_user_id, role")
+      .eq("profile_id", data.profile_id);
+
+    const members: ProfileMember[] = [];
+    for (const r of rows ?? []) {
+      let email = "";
+      let name = "";
+      try {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.auth_user_id);
+        const meta = (u?.user?.user_metadata ?? {}) as Record<string, unknown>;
+        email = u?.user?.email ?? "";
+        name = (meta.full_name as string) || (meta.name as string) || email || "Member";
+      } catch {}
+      members.push({
+        auth_user_id: r.auth_user_id,
+        email,
+        name,
+        role: (r.role as "owner" | "member") ?? "member",
+        is_self: r.auth_user_id === uid,
+      });
+    }
+    return { members };
+  });
+
+/** Grant a login (by email) member access to a profile the caller owns. */
+export const grantProfileAccessByEmail = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        profile_id: z.string().uuid(),
+        email: z.string().trim().toLowerCase().email().max(255),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const uid = await requireUserId();
+    const { data: prof } = await supabaseAdmin
+      .from("managed_profiles")
+      .select("id, owner_user_id")
+      .eq("id", data.profile_id)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    if (prof.owner_user_id !== uid) throw new Error("Not authorized");
+
+    let foundId: string | null = null;
+    try {
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const match = list?.users?.find((u) => u.email?.toLowerCase() === data.email);
+      foundId = match?.id ?? null;
+    } catch {}
+    if (!foundId)
+      throw new Error("No account found with that email. Ask them to sign up first.");
+
+    const { error } = await supabaseAdmin
+      .from("profile_access")
+      .insert({ profile_id: data.profile_id, auth_user_id: foundId, role: "member" });
+    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Revoke a member's access (cannot revoke the owner). */
+export const revokeProfileAccess = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({ profile_id: z.string().uuid(), auth_user_id: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const uid = await requireUserId();
+    const { data: prof } = await supabaseAdmin
+      .from("managed_profiles")
+      .select("id, owner_user_id")
+      .eq("id", data.profile_id)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    if (prof.owner_user_id !== uid) throw new Error("Not authorized");
+    if (data.auth_user_id === prof.owner_user_id)
+      throw new Error("Cannot revoke the owner's access");
+
+    const { error } = await supabaseAdmin
+      .from("profile_access")
+      .delete()
+      .eq("profile_id", data.profile_id)
+      .eq("auth_user_id", data.auth_user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

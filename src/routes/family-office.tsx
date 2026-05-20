@@ -111,6 +111,7 @@ function FamilyOfficeHub() {
         <MobileShell>
           <Hero />
           <ManagerCard />
+          <HouseholdLink />
           <QuickActions />
           <EntitiesRollup />
           <Governance />
@@ -264,6 +265,28 @@ function QuickActions() {
           }
         />
       </LuxCard>
+    </div>
+  );
+}
+
+
+function HouseholdLink() {
+  return (
+    <div className="px-5 pt-5">
+      <Link to="/household" className="block">
+        <LuxCard className="flex items-center gap-3 p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10">
+            <Users className="h-4 w-4 text-gold" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Manage household profiles</p>
+            <p className="truncate text-xs text-muted-foreground">
+              Add spouse, children, or trusts and invite logins
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </LuxCard>
+      </Link>
     </div>
   );
 }
