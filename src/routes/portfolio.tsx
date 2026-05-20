@@ -143,6 +143,14 @@ function PortfolioPage() {
         </LuxCard>
       </div>
 
+      {!loading && (
+        <div className="px-5 pt-5">
+          <FinancialHealthScore signals={signals} delay={0.2} />
+        </div>
+      )}
+
+
+
       {!loading && holdings.length === 0 ? (
         <div className="px-5 pt-5">
           <LuxCard className="p-6 text-center">
