@@ -17,6 +17,7 @@ import { listFamilyMembers } from "@/lib/family.functions";
 import { hasDemoData } from "@/lib/demo.functions";
 import { DemoSeederCard } from "@/components/DemoSeederCard";
 import { PlanOverviewCard } from "@/components/PlanOverviewCard";
+import { NetWorthProjection } from "@/components/NetWorthProjection";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
@@ -494,13 +495,7 @@ function HomePage() {
       </div>
 
       <div className="px-5 pt-6">
-        <Link to="/timeline" className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
-          <div>
-            <p className="label-mono">Net worth</p>
-            <p className="text-sm text-foreground">View 36-month timeline</p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-primary" />
-        </Link>
+        <NetWorthProjection currentNetWorth={total} />
       </div>
 
       {showIosTiers && (
