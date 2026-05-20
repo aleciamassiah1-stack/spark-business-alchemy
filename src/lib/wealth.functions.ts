@@ -552,10 +552,11 @@ export const deletePropertyValuation = createServerFn({ method: "POST" })
 export const listInsurancePolicies = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { policies: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("insurance_policies")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: false });
   return { policies: data ?? [], error: error?.message ?? null };
 });
