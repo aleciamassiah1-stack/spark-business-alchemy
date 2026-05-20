@@ -97,11 +97,12 @@ export const deleteProperty = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("properties")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
