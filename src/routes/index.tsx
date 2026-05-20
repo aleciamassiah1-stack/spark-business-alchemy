@@ -16,6 +16,7 @@ import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/li
 import { listFamilyMembers } from "@/lib/family.functions";
 import { hasDemoData } from "@/lib/demo.functions";
 import { DemoSeederCard } from "@/components/DemoSeederCard";
+import { PlanOverviewCard } from "@/components/PlanOverviewCard";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
