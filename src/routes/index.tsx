@@ -379,6 +379,14 @@ function HomePage() {
         </div>
       )}
 
+      {/* Demo seeder — full card when dashboard is empty, slim toggle when demo loaded */}
+      {!isLoading && (hasNoData || demoLoaded) && (
+        <div className="px-5 pt-4">
+          <DemoSeederCard hasDemo={demoLoaded} onChange={loadAll} />
+        </div>
+      )}
+
+
       {/* 2FA nudge — only renders if user hasn't enabled MFA and hasn't dismissed */}
       <div className="px-5 pt-4">
         <MfaNudge />
