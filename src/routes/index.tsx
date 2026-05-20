@@ -78,6 +78,7 @@ function HomePage() {
   const [properties, setProperties] = useState<Array<{ estimated_value: number | null; mortgage_balance: number | null }>>([]);
   const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
+  const [familyCount, setFamilyCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
