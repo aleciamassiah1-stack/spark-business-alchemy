@@ -521,10 +521,11 @@ export const listPropertyValuations = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const userId = await getCurrentUserId();
     if (!userId) return { valuations: [], error: null as string | null };
+    const profileId = await resolveActiveProfileId(userId);
     const { data: rows, error } = await supabaseAdmin
       .from("property_valuations")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", profileId)
       .eq("property_id", data.property_id)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -535,11 +536,12 @@ export const deletePropertyValuation = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("property_valuations")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
