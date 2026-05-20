@@ -39,6 +39,14 @@ export function installAuthFetch() {
       if (!headers.has("authorization")) {
         headers.set("authorization", `Bearer ${token}`);
       }
+      try {
+        const activeProfileId = window.localStorage.getItem("aw:active-profile-id");
+        if (activeProfileId && !headers.has("x-active-profile-id")) {
+          headers.set("x-active-profile-id", activeProfileId);
+        }
+      } catch {
+        // ignore localStorage errors
+      }
       return original(input, { ...(init ?? {}), headers });
     } catch {
       // If anything goes wrong looking up the session, fall through to a

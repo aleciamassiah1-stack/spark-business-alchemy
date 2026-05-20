@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
+import { resolveActiveProfileId } from "./active-profile.server";
 
 const accountSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -33,10 +34,11 @@ type FamilyMemberRow = {
 export const listFamilyMembers = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { members: [] as FamilyMemberRow[] };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("family_members")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: true });
   if (error) {
     console.error("listFamilyMembers error", error);
@@ -67,6 +69,7 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
 
     // Tier gate on insert (not edit): Essential = 0 (locked feature),
     // Private = 5 members, Family = unlimited.
@@ -93,7 +96,7 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
         const { count } = await supabaseAdmin
           .from("family_members")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", userId);
+          .eq("user_id", profileId);
         if ((count ?? 0) >= maxFamilyMembers) {
           const reason = `Your plan includes up to ${maxFamilyMembers} family members. Upgrade to Family Office for unlimited members.`;
           await supabaseAdmin.from("tier_denial_log").insert({
@@ -111,7 +114,7 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
     }
 
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       name: data.name,
       relationship: data.relationship,
       age: data.age,
@@ -124,7 +127,7 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
         .from("family_members")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId) // critical: server-enforced ownership
+        .eq("user_id", profileId) // critical: server-enforced ownership
         .select()
         .single();
       if (error || !row) {
@@ -151,11 +154,12 @@ export const deleteFamilyMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("family_members")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId); // critical: server-enforced ownership
+      .eq("user_id", profileId); // critical: server-enforced ownership
     if (error) {
       console.error("deleteFamilyMember error", error);
       throw new Error("Could not delete family member");

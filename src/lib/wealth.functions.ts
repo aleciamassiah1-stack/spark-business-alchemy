@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
+import { resolveActiveProfileId } from "./active-profile.server";
 
 // =================================================================
 // Properties (real estate) — scoped to authenticated user
@@ -24,10 +25,11 @@ const propertyInputSchema = z.object({
 export const listProperties = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { properties: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("properties")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("estimated_value", { ascending: false });
   return { properties: data ?? [], error: error?.message ?? null };
 });
@@ -59,8 +61,9 @@ export const upsertProperty = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       name: data.name,
       address: data.address,
       property_type: data.property_type,
@@ -79,7 +82,7 @@ export const upsertProperty = createServerFn({ method: "POST" })
         .from("properties")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null, id: data.id as string | null };
     }
     const { data: inserted, error } = await supabaseAdmin
@@ -94,11 +97,12 @@ export const deleteProperty = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("properties")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
@@ -472,12 +476,13 @@ export const savePropertyValuation = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     // verify property ownership
     const { data: prop, error: propErr } = await supabaseAdmin
       .from("properties")
       .select("id")
       .eq("id", data.property_id)
-      .eq("user_id", userId)
+      .eq("user_id", profileId)
       .maybeSingle();
     if (propErr || !prop) {
       return { ok: false as const, error: "Property not found", id: null as string | null };
@@ -486,7 +491,7 @@ export const savePropertyValuation = createServerFn({ method: "POST" })
     const { data: inserted, error } = await supabaseAdmin
       .from("property_valuations")
       .insert({
-        user_id: userId,
+        user_id: profileId,
         property_id: data.property_id,
         estimated_value: v.estimated_value,
         value_low: v.value_low,
@@ -516,10 +521,11 @@ export const listPropertyValuations = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const userId = await getCurrentUserId();
     if (!userId) return { valuations: [], error: null as string | null };
+    const profileId = await resolveActiveProfileId(userId);
     const { data: rows, error } = await supabaseAdmin
       .from("property_valuations")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", profileId)
       .eq("property_id", data.property_id)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -530,11 +536,12 @@ export const deletePropertyValuation = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("property_valuations")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
@@ -545,10 +552,11 @@ export const deletePropertyValuation = createServerFn({ method: "POST" })
 export const listInsurancePolicies = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { policies: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("insurance_policies")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: false });
   return { policies: data ?? [], error: error?.message ?? null };
 });
@@ -602,8 +610,9 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       policy_type: data.policy_type,
       insurer_name: data.insurer_name,
       policy_number: data.policy_number ?? null,
@@ -624,7 +633,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
         .from("insurance_policies")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("insurance_policies").insert(payload);
@@ -635,11 +644,12 @@ export const deleteInsurancePolicy = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("insurance_policies")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
@@ -1468,10 +1478,11 @@ function emptyAggregated(): TaxReturnAggregated {
 export const listEstateDocuments = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { documents: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("estate_documents")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: false });
   return { documents: data ?? [], error: error?.message ?? null };
 });
@@ -1506,8 +1517,9 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       document_type: data.document_type,
       title: data.title,
       status: data.status,
@@ -1522,7 +1534,7 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
         .from("estate_documents")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("estate_documents").insert(payload);
@@ -1533,11 +1545,12 @@ export const deleteEstateDocument = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("estate_documents")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
