@@ -64,6 +64,7 @@ import {
   listEstateDocuments,
   upsertEstateDocument,
   deleteEstateDocument,
+  parseEstatePdf,
   uploadWealthDocument,
   seedDemoData,
   clearDemoData,
