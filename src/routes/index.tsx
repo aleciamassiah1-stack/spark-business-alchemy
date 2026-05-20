@@ -13,6 +13,8 @@ import { CompletionBanner } from "@/components/CompletionBanner";
 import { MfaNudge } from "@/components/MfaNudge";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { listFamilyMembers } from "@/lib/family.functions";
+import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
@@ -76,6 +78,7 @@ function HomePage() {
   const [properties, setProperties] = useState<Array<{ estimated_value: number | null; mortgage_balance: number | null }>>([]);
   const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
+  const [familyCount, setFamilyCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
@@ -91,16 +94,18 @@ function HomePage() {
   useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
   const loadAll = useCallback(async () => {
-    const [agg, props, ins, est] = await Promise.all([
+    const [agg, props, ins, est, fam] = await Promise.all([
       getAggregatedData(),
       listProperties(),
       listInsurancePolicies(),
       listEstateDocuments(),
+      listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
     ]);
     setAggregated(agg);
     setProperties((props.properties ?? []) as typeof properties);
     setPolicies((ins.policies ?? []) as typeof policies);
     setDocuments((est.documents ?? []) as typeof documents);
+    setFamilyCount(((fam as { members?: unknown[] }).members ?? []).length);
   }, []);
 
   const runSync = useCallback(
@@ -346,6 +351,22 @@ function HomePage() {
             </div>
             <ArrowRight className="relative h-4 w-4 text-gold" />
           </Link>
+        </div>
+      )}
+
+      {/* Financial Health Score */}
+      {!isLoading && (
+        <div className="px-5 pt-4">
+          <FinancialHealthScore
+            signals={{
+              hasAccounts: accounts.length > 0,
+              hasInsurance: policies.length > 0,
+              hasEstateDocs: documents.length > 0,
+              hasBeneficiaries: familyCount > 0,
+              hasProperties: properties.length > 0,
+            }}
+            delay={0.25}
+          />
         </div>
       )}
 

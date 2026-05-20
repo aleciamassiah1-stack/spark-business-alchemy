@@ -231,7 +231,7 @@ function BusinessPage() {
         { description: `${aCount} asset(s) · ${lCount} liability(ies)` },
       );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sync failed");
+      toast.error("Couldn't classify your business accounts.", { description: e instanceof Error ? e.message : "Please try again." });
     } finally {
       setSyncing(false);
     }

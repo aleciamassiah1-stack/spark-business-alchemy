@@ -133,7 +133,7 @@ function IntakePage() {
       toast.success("Profile saved");
       navigate({ to: "/profile" });
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error("Couldn't save your profile. Please try again.", { description: (e as Error).message });
     } finally {
       setSaving(false);
     }

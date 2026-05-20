@@ -124,7 +124,7 @@ export function MfaPanel() {
     if (!confirm("Disable two-factor authentication? Your account will be less secure.")) return;
     const { error: err } = await supabase.auth.mfa.unenroll({ factorId: verifiedFactor.id });
     if (err) {
-      toast.error(err.message);
+      toast.error("Couldn't disable two-factor authentication.", { description: err.message });
       return;
     }
     toast.success("Two-factor authentication disabled");

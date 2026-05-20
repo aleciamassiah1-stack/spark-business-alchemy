@@ -92,7 +92,7 @@ function ProfilePage() {
       if (error || !data?.url) throw new Error(error?.message || "Could not open billing portal");
       window.open(data.url, "_blank", "noopener,noreferrer");
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error("Couldn't open billing portal.", { description: (e as Error).message });
     } finally {
       setPortalLoading(false);
     }
