@@ -606,6 +606,20 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           },
         });
         if (err) throw err;
+
+        // Supabase returns a "fake" user object (identities: []) when the email
+        // is already registered, to prevent account enumeration. Detect this
+        // BEFORE advancing onboarding state or recording consent — otherwise
+        // we'd pollute local state for an account that isn't really ours.
+        const isRepeatSignup =
+          !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+        if (isRepeatSignup) {
+          setError(
+            "An account with this email already exists. Try signing in, or reset your password.",
+          );
+          return;
+        }
+
         update({ fullName });
         markStep("account");
 
@@ -641,24 +655,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           } catch {
             // ignore
           }
-        }
-        // Supabase returns a "fake" user object (identities: []) when the email
-        // is already registered, to prevent account enumeration. In that case
-        // no confirmation email is sent — we must explicitly resend it.
-        const isRepeatSignup =
-          !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
-        if (isRepeatSignup) {
-          const { error: resendErr } = await supabase.auth.resend({
-            type: "signup",
-            email,
-            options: { emailRedirectTo: `${window.location.origin}/signin` },
-          });
-          setError(
-            resendErr
-              ? "This email already has an account. Try signing in, or reset your password."
-              : "This email already has an unconfirmed account. We just sent a fresh confirmation link — check your inbox.",
-          );
-          return;
         }
 
         // If email confirmation is required, no session is created. Surface that.
