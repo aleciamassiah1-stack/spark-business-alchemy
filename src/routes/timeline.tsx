@@ -222,6 +222,13 @@ function TimelinePage() {
         </LuxCard>
       </div>
 
+      <div className="mt-6 px-5">
+        <p className="label-mono mb-2">Project the next chapter</p>
+        <NetWorthProjection currentNetWorth={end} />
+      </div>
+
+
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
