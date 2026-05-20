@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 import { resolveActiveProfileId } from "./active-profile.server";
+import { getCurrentTier } from "./access.server";
 import {
   createLinkToken,
   createUpdateLinkToken,
@@ -172,7 +173,6 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
       // Tier gate: Essential is capped at 3 connected institutions.
       // Private + Family Office are unlimited. Admins / manual_access resolve
       // to "family" via getCurrentTier so internal accounts are never capped.
-      const { getCurrentTier } = await import("./access.server");
       const { limitsForTier } = await import("./tier");
       const tier = await getCurrentTier();
       const { maxInstitutions } = limitsForTier(tier);
