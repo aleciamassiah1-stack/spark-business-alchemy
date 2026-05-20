@@ -154,11 +154,12 @@ export const deleteFamilyMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("family_members")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId); // critical: server-enforced ownership
+      .eq("user_id", profileId); // critical: server-enforced ownership
     if (error) {
       console.error("deleteFamilyMember error", error);
       throw new Error("Could not delete family member");
