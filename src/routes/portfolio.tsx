@@ -6,7 +6,10 @@ import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { Sparkline } from "@/components/Sparkline";
+import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { getAggregatedData } from "@/lib/plaid.functions";
+import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { listFamilyMembers } from "@/lib/family.functions";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 
 export const Route = createFileRoute("/portfolio")({
