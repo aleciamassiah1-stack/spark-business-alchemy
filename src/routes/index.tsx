@@ -14,6 +14,8 @@ import { MfaNudge } from "@/components/MfaNudge";
 import { getAggregatedData, plaidSyncAll } from "@/lib/plaid.functions";
 import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
 import { listFamilyMembers } from "@/lib/family.functions";
+import { hasDemoData } from "@/lib/demo.functions";
+import { DemoSeederCard } from "@/components/DemoSeederCard";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
@@ -79,6 +81,7 @@ function HomePage() {
   const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null; beneficiaries?: unknown }>>([]);
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
   const [familyCount, setFamilyCount] = useState(0);
+  const [demoLoaded, setDemoLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(() => getLastSyncAt());
@@ -94,18 +97,20 @@ function HomePage() {
   useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
   const loadAll = useCallback(async () => {
-    const [agg, props, ins, est, fam] = await Promise.all([
+    const [agg, props, ins, est, fam, demo] = await Promise.all([
       getAggregatedData(),
       listProperties(),
       listInsurancePolicies(),
       listEstateDocuments(),
       listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
+      hasDemoData().catch(() => ({ hasDemo: false })),
     ]);
     setAggregated(agg);
     setProperties((props.properties ?? []) as typeof properties);
     setPolicies((ins.policies ?? []) as typeof policies);
     setDocuments((est.documents ?? []) as typeof documents);
     setFamilyCount(((fam as { members?: unknown[] }).members ?? []).length);
+    setDemoLoaded(!!(demo as { hasDemo?: boolean }).hasDemo);
   }, []);
 
   const runSync = useCallback(
