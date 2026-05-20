@@ -131,6 +131,17 @@ function AdminPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              to="/admin/requests"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/20"
+            >
+              Requests
+              {unreadRequests > 0 && (
+                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
+                  {unreadRequests}
+                </span>
+              )}
+            </Link>
+            <Link
               to="/admin/property-image-test"
               className="hidden sm:inline-flex items-center rounded-full border border-border/40 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/30"
             >
