@@ -294,6 +294,42 @@ export type Database = {
         }
         Relationships: []
       }
+      concierge_chat_logs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json
+          model: string | null
+          role: string
+          session_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          model?: string | null
+          role: string
+          session_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          model?: string | null
+          role?: string
+          session_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
