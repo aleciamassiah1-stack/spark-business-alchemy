@@ -207,6 +207,22 @@ function ManagerAction({
 }
 
 function QuickActions() {
+  async function submit(
+    type: "wealth_manager" | "other" | "meeting",
+    subject: string,
+    successMsg: string,
+  ) {
+    try {
+      await submitServiceRequestWithEmail({
+        type,
+        subject,
+        body: { message: subject, source: "family-office:quick-actions" },
+      });
+      toast.success(successMsg);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send request");
+    }
+  }
   return (
     <div className="px-5 pt-5">
       <p className="label-mono mb-2 px-1">White-glove services</p>
@@ -216,7 +232,11 @@ function QuickActions() {
           title="Set up an account for me"
           desc="Our team will aggregate it on your behalf"
           onClick={() =>
-            toast.success("Request sent. Your wealth manager will be in touch within 24h.")
+            submit(
+              "wealth_manager",
+              "Set up an account for me",
+              "Request sent. Your wealth manager will be in touch within 24h.",
+            )
           }
         />
         <ActionRow
@@ -224,19 +244,30 @@ function QuickActions() {
           title="Add an entity (trust, LLC, foundation)"
           desc="We'll structure the rollup and tax treatment"
           onClick={() =>
-            toast.success("Entity request received. Expect a call shortly.")
+            submit(
+              "other",
+              "Add an entity (trust, LLC, foundation)",
+              "Entity request received. Expect a call shortly.",
+            )
           }
         />
         <ActionRow
           icon={Users}
           title="Schedule a family meeting"
           desc="Annual governance with agenda preparation"
-          onClick={() => toast.success("Governance team notified.")}
+          onClick={() =>
+            submit(
+              "meeting",
+              "Schedule a family meeting",
+              "Governance team notified.",
+            )
+          }
         />
       </LuxCard>
     </div>
   );
 }
+
 
 function ActionRow({
   icon: Icon,
