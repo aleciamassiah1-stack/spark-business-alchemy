@@ -610,8 +610,9 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       policy_type: data.policy_type,
       insurer_name: data.insurer_name,
       policy_number: data.policy_number ?? null,
@@ -632,7 +633,7 @@ export const upsertInsurancePolicy = createServerFn({ method: "POST" })
         .from("insurance_policies")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("insurance_policies").insert(payload);
@@ -643,11 +644,12 @@ export const deleteInsurancePolicy = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("insurance_policies")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
