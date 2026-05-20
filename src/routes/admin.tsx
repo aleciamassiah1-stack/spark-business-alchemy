@@ -107,6 +107,8 @@ function AdminPage() {
     const refresh = () => {
       void getUnreadServiceRequestCount().then((r) => {
         if (!cancelled) setUnreadRequests(r.count);
+      }).catch(() => {
+        if (!cancelled) setUnreadRequests(0);
       });
     };
     refresh();
