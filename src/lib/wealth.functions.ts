@@ -61,8 +61,9 @@ export const upsertProperty = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       name: data.name,
       address: data.address,
       property_type: data.property_type,
@@ -81,7 +82,7 @@ export const upsertProperty = createServerFn({ method: "POST" })
         .from("properties")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null, id: data.id as string | null };
     }
     const { data: inserted, error } = await supabaseAdmin
