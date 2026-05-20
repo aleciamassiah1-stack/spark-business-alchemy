@@ -65,7 +65,7 @@ export function NetWorthProjection({
           <MoneyText value={fmtCurrency(projected, { compact: true })} />
         </p>
         <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-          Projected in {months} {months === 1 ? "month" : "months"} · +
+          Projected in {months} months · +
           <MoneyText value={fmtCurrency(Math.max(0, delta), { compact: true })} fallback="••••" />
         </p>
       </div>
@@ -109,7 +109,7 @@ export function NetWorthProjection({
               }}
               labelStyle={{ color: "oklch(0.66 0.03 280)" }}
               itemStyle={{ color: "oklch(0.96 0.01 280)" }}
-              formatter={(v: number, name: string) => [fmtCurrency(Number(v), { compact: true }), name === "value" ? "Projected" : "Contributions"]}
+              formatter={(v, name) => [fmtCurrency(Number(v), { compact: true }), name === "value" ? "Projected" : "Contributions"] as [string, string]}
             />
             <ReferenceLine y={currentNetWorth} stroke="oklch(1 0 0 / 0.15)" strokeDasharray="3 3" />
             <Area
