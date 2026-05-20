@@ -46,6 +46,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
 import { Route as AdminEmailPreviewRouteImport } from './routes/admin.email-preview'
+import { Route as AdminChatsRouteImport } from './routes/admin.chats'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicPlaidWebhookRouteImport } from './routes/api/public/plaid-webhook'
 import { Route as ApiPublicPlaidRetentionSweepRouteImport } from './routes/api/public/plaid-retention-sweep'
@@ -241,6 +242,11 @@ const AdminEmailPreviewRoute = AdminEmailPreviewRouteImport.update({
   path: '/email-preview',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminChatsRoute = AdminChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => AdminRoute,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/admin/requests': typeof AdminRequestsRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/admin/requests': typeof AdminRequestsRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
   '/admin/requests': typeof AdminRequestsRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/admin/requests'
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/admin/requests'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
     | '/admin/requests'
@@ -891,6 +903,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmailPreviewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/chats': {
+      id: '/admin/chats'
+      path: '/chats'
+      fullPath: '/admin/chats'
+      preLoaderRoute: typeof AdminChatsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -958,12 +977,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminChatsRoute: typeof AdminChatsRoute
   AdminEmailPreviewRoute: typeof AdminEmailPreviewRoute
   AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminChatsRoute: AdminChatsRoute,
   AdminEmailPreviewRoute: AdminEmailPreviewRoute,
   AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
   AdminRequestsRoute: AdminRequestsRoute,
