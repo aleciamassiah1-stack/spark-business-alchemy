@@ -5,6 +5,7 @@ import { AlertTriangle, Plus, Pencil, Sparkles, Loader2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { UpgradeWall } from "@/components/UpgradeWall";
 import { beneficiaries as demoBeneficiaries, conflicts as demoConflicts } from "@/lib/mock-data";
 import { useIsTestAccount } from "@/lib/test-account";
 import { listInsurancePolicies } from "@/lib/wealth.functions";
@@ -19,7 +20,19 @@ export const Route = createFileRoute("/beneficiaries")({
   }),
   component: () => (
     <RequireOnboarding>
-      <BeneficiariesPage />
+      <UpgradeWall
+        minTier="private"
+        feature="Beneficiary Manager"
+        description="See every beneficiary across insurance, retirement, and trust accounts in one unified view — and surface conflicts before they become disputes."
+        perks={[
+          "AI-extracted beneficiaries from policy documents",
+          "Conflict detection across overlapping accounts",
+          "Inheritance allocation per person",
+          "One-click updates synced to your advisor",
+        ]}
+      >
+        <BeneficiariesPage />
+      </UpgradeWall>
     </RequireOnboarding>
   ),
 });

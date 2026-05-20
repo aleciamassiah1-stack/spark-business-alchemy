@@ -49,3 +49,12 @@ export const TIER_LABEL: Record<Tier, string> = {
   private: "Private",
   family: "Family Office",
 };
+
+const TIER_RANK: Record<Tier, number> = { essential: 0, private: 1, family: 2 };
+
+/** True when `tier` meets or exceeds `minimum`. Null tier never qualifies. */
+export function tierAtLeast(tier: Tier | null, minimum: Tier): boolean {
+  if (!tier) return false;
+  return TIER_RANK[tier] >= TIER_RANK[minimum];
+}
+

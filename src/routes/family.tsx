@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { useAccess } from "@/lib/access-context";
+import { UpgradeWall } from "@/components/UpgradeWall";
 
 export const Route = createFileRoute("/family")({
   head: () => ({
@@ -421,19 +422,20 @@ function FamilyPage() {
 
       <div className="mt-2 flex flex-col gap-2 px-5 pb-6">
         {familyLocked ? (
-          <LuxCard className="border border-warning/30 bg-warning/5 p-6 text-center">
-            <p className="font-serif text-base text-foreground">Family Vault is a Private feature</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Track a spouse, children, or dependents on a single household net worth.
-              Available on Private (up to 5 members) and Family Office (unlimited).
-            </p>
-            <Link
-              to="/pricing"
-              className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
-            >
-              View pricing
-            </Link>
-          </LuxCard>
+          <UpgradeWall
+            minTier="private"
+            feature="Family Vault"
+            description="Track a spouse, children, and dependents on a single household net worth — with optional invite-based linking."
+            perks={[
+              "Up to 5 manual members on Private, unlimited on Family Office",
+              "Combined household net worth at a glance",
+              "Invite spouse to securely link their accounts",
+              "Per-member account breakdowns",
+            ]}
+            fullPage={false}
+          >
+            <></>
+          </UpgradeWall>
         ) : loading ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Loading…</p>
         ) : members.length === 0 ? (
