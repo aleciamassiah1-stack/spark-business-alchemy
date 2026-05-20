@@ -3,6 +3,7 @@ import { getRequestHost } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
+import { resolveActiveProfileId } from "./active-profile.server";
 import {
   createLinkToken,
   createUpdateLinkToken,
