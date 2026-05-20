@@ -185,14 +185,17 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     };
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
+          sessionId: sessionIdRef.current,
         }),
         signal: controller.signal,
       });
