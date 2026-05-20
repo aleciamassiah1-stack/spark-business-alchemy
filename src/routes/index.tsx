@@ -494,11 +494,6 @@ function HomePage() {
         <NetWorthProjection currentNetWorth={total} />
       </div>
 
-      {showIosTiers && (
-        <div className="pt-2">
-          <IosPaywall />
-        </div>
-      )}
 
       {/* Trust strip — bank-grade security attribution */}
       <div className="px-5 pt-6">
