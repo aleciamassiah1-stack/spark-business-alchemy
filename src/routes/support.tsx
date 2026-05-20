@@ -132,6 +132,11 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [emailingTeam, setEmailingTeam] = useState(false);
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `s_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+  );
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
