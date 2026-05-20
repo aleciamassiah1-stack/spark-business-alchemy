@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw, Crown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
-import { IosPaywall } from "@/components/IosPaywall";
-import { isIosNative } from "@/lib/native";
+
+
 import { useAccess } from "@/lib/access-context";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
@@ -16,7 +16,6 @@ import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/li
 import { listFamilyMembers } from "@/lib/family.functions";
 import { hasDemoData } from "@/lib/demo.functions";
 import { DemoSeederCard } from "@/components/DemoSeederCard";
-import { PlanOverviewCard } from "@/components/PlanOverviewCard";
 import { NetWorthProjection } from "@/components/NetWorthProjection";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { useWealth } from "@/lib/wealth-context";
@@ -92,7 +91,7 @@ function HomePage() {
   const { user } = useAuth();
   const isTestAccount = useIsTestAccount();
   const access = useAccess();
-  const showIosTiers = isIosNative() && access.ready && !access.hasAccess;
+  void access;
   const displayName = displayNameFromUser(user) || "Welcome";
   const userInitials = initialsFromName(displayName);
 
@@ -361,10 +360,6 @@ function HomePage() {
         </div>
       )}
 
-      {/* Plan overview — shows Essential / Private / Family Office at a glance */}
-      <div className="px-5 pt-4">
-        <PlanOverviewCard />
-      </div>
 
       {/* Financial Health Score */}
       {!isLoading && (
@@ -498,11 +493,6 @@ function HomePage() {
         <NetWorthProjection currentNetWorth={total} />
       </div>
 
-      {showIosTiers && (
-        <div className="pt-2">
-          <IosPaywall />
-        </div>
-      )}
 
       {/* Trust strip — bank-grade security attribution */}
       <div className="px-5 pt-6">

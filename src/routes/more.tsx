@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { PlanOverviewCard } from "@/components/PlanOverviewCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 
 import { useAuth } from "@/lib/auth-context";
@@ -56,6 +57,9 @@ function MorePage() {
 
   return (
     <MobileShell title="More" subtitle="Tools & settings">
+      <div className="px-5 pb-3">
+        <PlanOverviewCard />
+      </div>
       <div className="flex flex-col gap-3 px-5">
         {!isIosNative() && (
           <Link
