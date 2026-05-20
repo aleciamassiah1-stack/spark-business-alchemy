@@ -177,6 +177,12 @@ function AdminPage() {
               )}
             </Link>
             <Link
+              to="/admin/chats"
+              className="hidden sm:inline-flex items-center rounded-full border border-border/40 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            >
+              Chat logs
+            </Link>
+            <Link
               to="/admin/property-image-test"
               className="hidden sm:inline-flex items-center rounded-full border border-border/40 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/30"
             >
