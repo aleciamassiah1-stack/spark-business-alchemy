@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw, Crown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
-import { IosPaywall } from "@/components/IosPaywall";
+
 import { isIosNative } from "@/lib/native";
 import { useAccess } from "@/lib/access-context";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
