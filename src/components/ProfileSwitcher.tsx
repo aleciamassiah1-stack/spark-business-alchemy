@@ -16,7 +16,7 @@ export function ProfileSwitcher({ className = "" }: { className?: string }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  if (!ready || profiles.length <= 1) return null;
+  if (!ready || profiles.length === 0) return null;
   const active = activeProfile ?? profiles[0];
 
   return (
