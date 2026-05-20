@@ -9,6 +9,7 @@ import {
   listServiceRequests,
   updateServiceRequest,
 } from "@/lib/service-requests.functions";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/requests")({
