@@ -42,6 +42,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminPropertyImageTestRouteImport } from './routes/admin.property-image-test'
 import { Route as AdminEmailPreviewRouteImport } from './routes/admin.email-preview'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -219,6 +220,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRequestsRoute = AdminRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPropertyImageTestRoute = AdminPropertyImageTestRouteImport.update({
   id: '/property-image-test',
   path: '/property-image-test',
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
@@ -360,6 +367,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
@@ -407,6 +415,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/admin/email-preview'
     | '/admin/property-image-test'
+    | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/admin/email-preview'
     | '/admin/property-image-test'
+    | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/admin/email-preview'
     | '/admin/property-image-test'
+    | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
     | '/api/public/plaid-retention-sweep'
@@ -838,6 +850,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/requests': {
+      id: '/admin/requests'
+      path: '/requests'
+      fullPath: '/admin/requests'
+      preLoaderRoute: typeof AdminRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/property-image-test': {
       id: '/admin/property-image-test'
       path: '/property-image-test'
@@ -921,11 +940,13 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminEmailPreviewRoute: typeof AdminEmailPreviewRoute
   AdminPropertyImageTestRoute: typeof AdminPropertyImageTestRoute
+  AdminRequestsRoute: typeof AdminRequestsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminEmailPreviewRoute: AdminEmailPreviewRoute,
   AdminPropertyImageTestRoute: AdminPropertyImageTestRoute,
+  AdminRequestsRoute: AdminRequestsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

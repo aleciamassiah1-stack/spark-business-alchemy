@@ -31,6 +31,7 @@ import {
   adminPurgeAccountNow,
   checkAccess,
 } from "@/lib/access.functions";
+import { getUnreadServiceRequestCount } from "@/lib/service-requests.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import { redirect } from "@tanstack/react-router";
@@ -71,6 +72,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [unreadRequests, setUnreadRequests] = useState(0);
 
   // Redirect non-admins
   useEffect(() => {
@@ -97,6 +99,32 @@ function AdminPage() {
   useEffect(() => {
     if (access.ready && access.isAdmin) load();
   }, [access.ready, access.isAdmin, load]);
+
+  // Unread service request count + realtime
+  useEffect(() => {
+    if (!access.ready || !access.isAdmin) return;
+    let cancelled = false;
+    const refresh = () => {
+      void getUnreadServiceRequestCount().then((r) => {
+        if (!cancelled) setUnreadRequests(r.count);
+      });
+    };
+    refresh();
+    const ch = supabase
+      .channel("admin-request-badge")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_requests" },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [access.ready, access.isAdmin]);
+
+
 
   if (!access.ready || (access.ready && !access.isAdmin)) {
     return <div className="min-h-screen bg-background" aria-hidden />;
@@ -130,6 +158,17 @@ function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              to="/admin/requests"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/20"
+            >
+              Requests
+              {unreadRequests > 0 && (
+                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
+                  {unreadRequests}
+                </span>
+              )}
+            </Link>
             <Link
               to="/admin/property-image-test"
               className="hidden sm:inline-flex items-center rounded-full border border-border/40 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted/30"

@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 import { LegalFooter } from "./LegalFooter";
+import { ProfileSwitcher } from "./ProfileSwitcher";
 import { motion } from "framer-motion";
 
 type Props = {
@@ -15,10 +16,15 @@ export function MobileShell({ children, title, subtitle }: Props) {
       <div className="mx-auto min-h-screen w-full max-w-[430px]">
         {(title || subtitle) && (
           <header className="px-5 pb-2 pt-6">
-            {subtitle && <p className="label-mono">{subtitle}</p>}
-            {title && (
-              <h1 className="font-serif text-[34px] leading-tight text-foreground">{title}</h1>
-            )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                {subtitle && <p className="label-mono">{subtitle}</p>}
+                {title && (
+                  <h1 className="font-serif text-[34px] leading-tight text-foreground">{title}</h1>
+                )}
+              </div>
+              <ProfileSwitcher className="mt-1 shrink-0" />
+            </div>
           </header>
         )}
         <motion.main
@@ -34,3 +40,4 @@ export function MobileShell({ children, title, subtitle }: Props) {
     </div>
   );
 }
+

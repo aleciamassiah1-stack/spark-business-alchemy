@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { ActiveProfileProvider } from "@/lib/active-profile-context";
 import { AccessProvider } from "@/lib/access-context";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -123,15 +124,17 @@ function RootComponent() {
   return (
     <AuthProvider>
       <AccessProvider>
-        <OnboardingProvider>
-          <WealthProvider>
-            <PaymentTestModeBanner />
-            <SyncStatusBar />
-            <Outlet />
-            
-            <Toaster theme="dark" position="top-center" />
-          </WealthProvider>
-        </OnboardingProvider>
+        <ActiveProfileProvider>
+          <OnboardingProvider>
+            <WealthProvider>
+              <PaymentTestModeBanner />
+              <SyncStatusBar />
+              <Outlet />
+
+              <Toaster theme="dark" position="top-center" />
+            </WealthProvider>
+          </OnboardingProvider>
+        </ActiveProfileProvider>
       </AccessProvider>
     </AuthProvider>
   );
