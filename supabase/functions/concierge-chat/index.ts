@@ -3,6 +3,8 @@
 // validates the JWT before invoking this function (verify_jwt = true), which
 // gives us a basic rate-limit surface and prevents anonymous credit drain.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const ALLOWED_ORIGINS = [
   "https://aetherwealth.co",
   "https://www.aetherwealth.co",
@@ -99,6 +101,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const messages = (payload as { messages?: unknown })?.messages;
+    const sessionIdRaw = (payload as { sessionId?: unknown })?.sessionId;
+    const sessionId =
+      typeof sessionIdRaw === "string" && sessionIdRaw.length > 0 && sessionIdRaw.length <= 80
+        ? sessionIdRaw
+        : `s_${crypto.randomUUID()}`;
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: "messages must be a non-empty array" }),
@@ -153,6 +160,31 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Resolve the requesting user (best-effort) for the chat log.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const admin = SUPABASE_URL && SERVICE_ROLE ? createClient(SUPABASE_URL, SERVICE_ROLE) : null;
+
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+    const authHeader = req.headers.get("authorization") ?? "";
+    const bearer = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+    if (admin && bearer) {
+      try {
+        const { data } = await admin.auth.getUser(bearer);
+        if (data?.user) {
+          userId = data.user.id;
+          userEmail = data.user.email ?? null;
+        }
+      } catch {
+        /* anon — leave nulls */
+      }
+    }
+
+    const MODEL = "google/gemini-3-flash-preview";
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -160,7 +192,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: MODEL,
         messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitized],
         stream: true,
       }),
@@ -187,7 +219,72 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    return new Response(response.body, {
+    // Log the latest user message immediately (best-effort, fire-and-forget).
+    const lastUser = [...sanitized].reverse().find((m) => m.role === "user");
+    if (admin && lastUser) {
+      admin
+        .from("concierge_chat_logs")
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          session_id: sessionId,
+          role: "user",
+          content: lastUser.content,
+          model: MODEL,
+        })
+        .then(({ error }) => {
+          if (error) console.error("chat log user insert failed:", error.message);
+        });
+    }
+
+    // Tee the SSE stream: one branch goes to the client, the other is parsed
+    // server-side so we can persist the full assistant reply when done.
+    const [clientStream, logStream] = response.body.tee();
+
+    (async () => {
+      if (!admin) return;
+      try {
+        const reader = logStream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let assistant = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            const data = trimmed.slice(5).trim();
+            if (!data || data === "[DONE]") continue;
+            try {
+              const json = JSON.parse(data);
+              const delta = json?.choices?.[0]?.delta?.content;
+              if (typeof delta === "string") assistant += delta;
+            } catch {
+              /* ignore malformed SSE frames */
+            }
+          }
+        }
+        if (assistant.trim().length > 0) {
+          const { error } = await admin.from("concierge_chat_logs").insert({
+            user_id: userId,
+            user_email: userEmail,
+            session_id: sessionId,
+            role: "assistant",
+            content: assistant,
+            model: MODEL,
+          });
+          if (error) console.error("chat log assistant insert failed:", error.message);
+        }
+      } catch (err) {
+        console.error("chat log stream error:", err);
+      }
+    })();
+
+    return new Response(clientStream, {
       headers: { ...cors, "Content-Type": "text/event-stream" },
     });
   } catch (e) {

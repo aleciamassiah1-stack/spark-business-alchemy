@@ -11,6 +11,7 @@ import { sendTransactionalEmail } from "@/lib/email/send";
 import { submitServiceRequest } from "@/lib/service-requests.functions";
 import { isIosNative } from "@/lib/native";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -132,6 +133,11 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [emailingTeam, setEmailingTeam] = useState(false);
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `s_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+  );
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -180,14 +186,17 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     };
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
+          sessionId: sessionIdRef.current,
         }),
         signal: controller.signal,
       });
