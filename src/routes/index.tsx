@@ -94,16 +94,18 @@ function HomePage() {
   useEffect(() => subscribeBusiness(() => setBusiness(loadBusiness())), []);
 
   const loadAll = useCallback(async () => {
-    const [agg, props, ins, est] = await Promise.all([
+    const [agg, props, ins, est, fam] = await Promise.all([
       getAggregatedData(),
       listProperties(),
       listInsurancePolicies(),
       listEstateDocuments(),
+      listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
     ]);
     setAggregated(agg);
     setProperties((props.properties ?? []) as typeof properties);
     setPolicies((ins.policies ?? []) as typeof policies);
     setDocuments((est.documents ?? []) as typeof documents);
+    setFamilyCount(((fam as { members?: unknown[] }).members ?? []).length);
   }, []);
 
   const runSync = useCallback(
