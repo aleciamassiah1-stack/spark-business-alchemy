@@ -100,39 +100,10 @@ export const checkAccess = createServerFn({ method: "GET" }).handler(async () =>
   return { authenticated: true, hasAccess, isAdmin, tier } as const;
 });
 
-/** Server-side helper: returns the user's resolved tier (or null). */
-export async function getCurrentTier(): Promise<Tier | null> {
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
-  const env = getPaymentsEnvironment();
-  const [{ data: roleRow }, { data: subRow }, { data: manual }] = await Promise.all([
-    supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle(),
-    supabaseAdmin
-      .from("subscriptions")
-      .select("price_id, status, current_period_end")
-      .eq("user_id", userId)
-      .eq("environment", env)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("manual_access")
-      .select("expires_at")
-      .eq("user_id", userId)
-      .maybeSingle(),
-  ]);
-  const isAdmin = !!roleRow;
-  const compActive = manual ? !manual.expires_at || new Date(manual.expires_at) > new Date() : false;
-  const tier = tierFromPriceId(subRow?.price_id ?? null);
-  if (tier) return tier;
-  if (isAdmin || compActive) return "family";
-  return null;
-}
+// getCurrentTier lives in ./access.server.ts so this .functions.ts file stays
+// thin (only createServerFn declarations) and the splitter can keep the
+// client.server import out of the client bundle.
+
 
 /** Returns whether the current user has any LIVE Stripe subscription on record. */
 export const checkLiveSubscription = createServerFn({ method: "GET" }).handler(async () => {
