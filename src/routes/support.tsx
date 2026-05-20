@@ -11,6 +11,7 @@ import { sendTransactionalEmail } from "@/lib/email/send";
 import { submitServiceRequest } from "@/lib/service-requests.functions";
 import { isIosNative } from "@/lib/native";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
