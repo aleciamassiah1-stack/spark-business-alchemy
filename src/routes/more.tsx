@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { PlanOverviewCard } from "@/components/PlanOverviewCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 
 import { useAuth } from "@/lib/auth-context";
