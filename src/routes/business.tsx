@@ -45,6 +45,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { MoneyText, HideToggle } from "@/components/HideToggle";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { UpgradeWall } from "@/components/UpgradeWall";
 import { SectionHeader } from "@/components/SectionHeader";
 import { BusinessQuickSetup } from "@/components/BusinessQuickSetup";
 import { classifyBusinessAccounts } from "@/lib/business-ai.functions";
