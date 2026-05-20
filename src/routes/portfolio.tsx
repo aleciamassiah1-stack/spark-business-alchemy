@@ -72,24 +72,27 @@ function PortfolioPage() {
       try {
         const [agg, props, pols, docs, fam] = await Promise.all([
           getAggregatedData(),
-          listProperties().catch(() => []),
-          listInsurancePolicies().catch(() => []),
-          listEstateDocuments().catch(() => []),
-          listFamilyMembers().catch(() => []),
+          listProperties().catch(() => ({ properties: [] })),
+          listInsurancePolicies().catch(() => ({ policies: [] })),
+          listEstateDocuments().catch(() => ({ documents: [] })),
+          listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
         ]);
         if (!alive) return;
         setHoldings((agg?.holdings ?? []) as HoldingRow[]);
+        const propsList = ("properties" in props ? props.properties : []) as Array<unknown>;
+        const polsList = ("policies" in pols ? pols.policies : []) as Array<{ beneficiaries?: unknown }>;
+        const docsList = ("documents" in docs ? docs.documents : []) as Array<unknown>;
+        const famList = ("members" in fam ? fam.members : []) as Array<unknown>;
         setSignals({
           hasAccounts: (agg?.accounts ?? []).length > 0,
-          hasInsurance: (pols ?? []).length > 0,
-          hasEstateDocs: (docs ?? []).length > 0,
+          hasInsurance: polsList.length > 0,
+          hasEstateDocs: docsList.length > 0,
           hasBeneficiaries:
-            (fam ?? []).length > 0 ||
-            (pols ?? []).some(
-              (p: { beneficiaries?: unknown }) =>
-                Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
+            famList.length > 0 ||
+            polsList.some(
+              (p) => Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
             ),
-          hasProperties: (props ?? []).length > 0,
+          hasProperties: propsList.length > 0,
         });
       } finally {
         if (alive) setLoading(false);
