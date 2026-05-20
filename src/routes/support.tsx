@@ -303,6 +303,17 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
           pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
         },
       });
+      // Also record this as a service request so it shows up in the admin inbox.
+      void submitServiceRequest({
+        data: {
+          type: "concierge",
+          subject: lastUserMessage.slice(0, 120),
+          body: { message: lastUserMessage, conversation: transcript },
+          pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        },
+      }).catch(() => {
+        /* DB row is best-effort here since email already succeeded */
+      });
       toast.success("Sent to the team. They'll reply to you by email shortly.");
       setMessages((prev) => [
         ...prev,
