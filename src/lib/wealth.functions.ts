@@ -25,10 +25,11 @@ const propertyInputSchema = z.object({
 export const listProperties = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { properties: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("properties")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("estimated_value", { ascending: false });
   return { properties: data ?? [], error: error?.message ?? null };
 });
