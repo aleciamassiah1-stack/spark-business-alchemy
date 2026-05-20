@@ -5,7 +5,7 @@ import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet,
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 
-import { isIosNative } from "@/lib/native";
+
 import { useAccess } from "@/lib/access-context";
 import { HideToggle, MoneyText } from "@/components/HideToggle";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
