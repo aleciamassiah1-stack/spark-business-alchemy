@@ -17,4 +17,5 @@ export interface TemplateEntry {
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'concierge-message': conciergeMessage,
+  'service-request-notification': serviceRequestNotification,
 }
