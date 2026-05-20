@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -66,6 +66,7 @@ function AdminPage() {
   const auth = useAuth();
   const access = useAccess();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [members, setMembers] = useState<Members>([]);
@@ -130,6 +131,10 @@ function AdminPage() {
 
   if (!access.ready || (access.ready && !access.isAdmin)) {
     return <div className="min-h-screen bg-background" aria-hidden />;
+  }
+
+  if (location.pathname !== "/admin") {
+    return <Outlet />;
   }
 
   const filtered = members.filter((m) =>

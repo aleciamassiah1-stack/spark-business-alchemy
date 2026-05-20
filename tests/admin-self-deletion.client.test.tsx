@@ -23,6 +23,8 @@ vi.mock("@tanstack/react-router", () => ({
     return { component: cfg.component, options: cfg };
   },
   Link: ({ children, ...props }: React.ComponentProps<"a">) => <a {...props}>{children}</a>,
+  Outlet: () => null,
+  useLocation: () => ({ pathname: "/admin" }),
   useNavigate: () => vi.fn(),
 }));
 
