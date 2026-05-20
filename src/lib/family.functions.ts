@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
+import { resolveActiveProfileId } from "./active-profile.server";
 
 const accountSchema = z.object({
   name: z.string().trim().min(1).max(80),
