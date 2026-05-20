@@ -6,7 +6,10 @@ import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { Sparkline } from "@/components/Sparkline";
+import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { getAggregatedData } from "@/lib/plaid.functions";
+import { listProperties, listInsurancePolicies, listEstateDocuments } from "@/lib/wealth.functions";
+import { listFamilyMembers } from "@/lib/family.functions";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 
 export const Route = createFileRoute("/portfolio")({
@@ -55,14 +58,42 @@ function PortfolioPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [holdings, setHoldings] = useState<HoldingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signals, setSignals] = useState({
+    hasAccounts: false,
+    hasInsurance: false,
+    hasEstateDocs: false,
+    hasBeneficiaries: false,
+    hasProperties: false,
+  });
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const agg = await getAggregatedData();
+        const [agg, props, pols, docs, fam] = await Promise.all([
+          getAggregatedData(),
+          listProperties().catch(() => ({ properties: [] })),
+          listInsurancePolicies().catch(() => ({ policies: [] })),
+          listEstateDocuments().catch(() => ({ documents: [] })),
+          listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
+        ]);
         if (!alive) return;
         setHoldings((agg?.holdings ?? []) as HoldingRow[]);
+        const propsList = ("properties" in props ? props.properties : []) as Array<unknown>;
+        const polsList = ("policies" in pols ? pols.policies : []) as Array<{ beneficiaries?: unknown }>;
+        const docsList = ("documents" in docs ? docs.documents : []) as Array<unknown>;
+        const famList = ("members" in fam ? fam.members : []) as Array<unknown>;
+        setSignals({
+          hasAccounts: (agg?.accounts ?? []).length > 0,
+          hasInsurance: polsList.length > 0,
+          hasEstateDocs: docsList.length > 0,
+          hasBeneficiaries:
+            famList.length > 0 ||
+            polsList.some(
+              (p) => Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
+            ),
+          hasProperties: propsList.length > 0,
+        });
       } finally {
         if (alive) setLoading(false);
       }
@@ -111,6 +142,14 @@ function PortfolioPage() {
           </div>
         </LuxCard>
       </div>
+
+      {!loading && (
+        <div className="px-5 pt-5">
+          <FinancialHealthScore signals={signals} delay={0.2} />
+        </div>
+      )}
+
+
 
       {!loading && holdings.length === 0 ? (
         <div className="px-5 pt-5">

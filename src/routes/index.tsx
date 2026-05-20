@@ -17,7 +17,7 @@ import { listFamilyMembers } from "@/lib/family.functions";
 import { hasDemoData } from "@/lib/demo.functions";
 import { DemoSeederCard } from "@/components/DemoSeederCard";
 import { NetWorthProjection } from "@/components/NetWorthProjection";
-import { FinancialHealthScore } from "@/components/FinancialHealthScore";
+
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
@@ -361,25 +361,6 @@ function HomePage() {
       )}
 
 
-      {/* Financial Health Score */}
-      {!isLoading && (
-        <div className="px-5 pt-4">
-          <FinancialHealthScore
-            signals={{
-              hasAccounts: accounts.length > 0,
-              hasInsurance: policies.length > 0,
-              hasEstateDocs: documents.length > 0,
-              hasBeneficiaries:
-                familyCount > 0 ||
-                policies.some(
-                  (p) => Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
-                ),
-              hasProperties: properties.length > 0,
-            }}
-            delay={0.25}
-          />
-        </div>
-      )}
 
       {/* Demo seeder — full card when dashboard is empty, slim toggle when demo loaded */}
       {!isLoading && (hasNoData || demoLoaded) && (
