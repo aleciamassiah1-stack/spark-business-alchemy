@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, RefreshCw, Loader2, CheckCircle2, Clock, Inbox } from "lucide-react";
+import { ChevronLeft, RefreshCw, Loader2, CheckCircle2, Clock, Inbox, Eye, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
@@ -158,21 +158,16 @@ function AdminRequestsPage() {
         ) : (
           <div className="grid gap-3">
             {rows.map((r) => (
-              <div
+              <article
                 key={r.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelected(r)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelected(r);
-                  }
-                }}
-                className="cursor-pointer rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-colors hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(r)}
+                    className="min-w-0 flex-1 cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">
                         {r.type}
@@ -188,8 +183,14 @@ function AdminRequestsPage() {
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {r.user_email ?? r.user_id}
                     </p>
-                  </div>
+                  </button>
                   <div className="flex shrink-0 gap-1.5">
+                    <ActionBtn
+                      onClick={() => setSelected(r)}
+                      aria-label={`Open request ${r.subject}`}
+                    >
+                      <Eye className="h-3 w-3" /> Open
+                    </ActionBtn>
                     {r.status !== "in_progress" && (
                       <ActionBtn
                         disabled={busyId === r.id}
@@ -214,7 +215,7 @@ function AdminRequestsPage() {
                     )}
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
