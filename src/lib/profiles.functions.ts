@@ -163,7 +163,11 @@ export const listProfileMembers = createServerFn({ method: "POST" })
     return { members };
   });
 
-/** Grant a login (by email) member access to a profile the caller owns. */
+/**
+ * Grant a login (by email) member access to a profile the caller owns.
+ * If no account exists for that email, returns { status: 'invited' } so
+ * the caller can send an invitation email instead of erroring.
+ */
 export const grantProfileAccessByEmail = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
@@ -177,26 +181,52 @@ export const grantProfileAccessByEmail = createServerFn({ method: "POST" })
     const uid = await requireUserId();
     const { data: prof } = await supabaseAdmin
       .from("managed_profiles")
-      .select("id, owner_user_id")
+      .select("id, owner_user_id, display_name")
       .eq("id", data.profile_id)
       .maybeSingle();
     if (!prof) throw new Error("Profile not found");
     if (prof.owner_user_id !== uid) throw new Error("Not authorized");
 
+    // Resolve inviter display name (for the email)
+    let inviterName = "A family member";
+    try {
+      const { data: inviter } = await supabaseAdmin.auth.admin.getUserById(uid);
+      const meta = (inviter?.user?.user_metadata ?? {}) as Record<string, unknown>;
+      inviterName =
+        (meta.full_name as string) ||
+        (meta.name as string) ||
+        inviter?.user?.email ||
+        inviterName;
+    } catch {}
+
+    // Look up the invitee
     let foundId: string | null = null;
     try {
       const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
       const match = list?.users?.find((u) => u.email?.toLowerCase() === data.email);
       foundId = match?.id ?? null;
     } catch {}
-    if (!foundId)
-      throw new Error("No account found with that email. Ask them to sign up first.");
+
+    if (!foundId) {
+      // No account yet — caller will send an invitation email.
+      return {
+        status: "invited" as const,
+        email: data.email,
+        inviterName,
+        profileName: prof.display_name,
+      };
+    }
 
     const { error } = await supabaseAdmin
       .from("profile_access")
       .insert({ profile_id: data.profile_id, auth_user_id: foundId, role: "member" });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
-    return { ok: true as const };
+    return {
+      status: "granted" as const,
+      email: data.email,
+      inviterName,
+      profileName: prof.display_name,
+    };
   });
 
 /** Revoke a member's access (cannot revoke the owner). */
