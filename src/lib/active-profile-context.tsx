@@ -53,8 +53,14 @@ export function ActiveProfileProvider({ children }: { children: ReactNode }) {
   }, [authReady, user?.id]);
 
   const setActiveProfileId = (id: string) => {
+    if (id === activeProfileId) return;
     setActiveProfileIdState(id);
-    if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, id);
+      // Hard reload so every mounted page refetches against the newly
+      // active profile (data hooks load on mount with empty deps).
+      window.location.reload();
+    }
   };
 
   const activeProfile = useMemo(
