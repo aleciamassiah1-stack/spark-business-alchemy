@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { template as conciergeMessage } from './concierge-message'
 import { template as serviceRequestNotification } from './service-request-notification'
 import { template as serviceRequestStatusUpdate } from './service-request-status-update'
+import { template as householdInvite } from './household-invite'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -20,4 +21,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'concierge-message': conciergeMessage,
   'service-request-notification': serviceRequestNotification,
   'service-request-status-update': serviceRequestStatusUpdate,
+  'household-invite': householdInvite,
 }

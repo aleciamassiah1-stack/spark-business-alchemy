@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, UserPlus, X } from "lucide-react";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAccess } from "@/lib/access-context";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import {
   listMyProfiles,
   createManagedProfile,
@@ -266,12 +267,38 @@ function MembersPanel({ profileId }: { profileId: string }) {
 
   const grantM = useMutation({
     mutationFn: () => grant({ data: { profile_id: profileId, email: email.trim() } }),
-    onSuccess: () => {
-      toast.success("Access granted");
+    onSuccess: async (res) => {
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "https://aetherwealth.co";
+      const actionUrl =
+        res.status === "granted" ? `${origin}/family-office` : `${origin}/signup`;
+      // Best-effort invite/notification email
+      try {
+        await sendTransactionalEmail({
+          templateName: "household-invite",
+          recipientEmail: res.email,
+          idempotencyKey: `hh-${profileId}-${res.email}-${res.status}`,
+          templateData: {
+            inviterName: res.inviterName,
+            profileName: res.profileName,
+            hasAccount: res.status === "granted",
+            actionUrl,
+          },
+        });
+      } catch {
+        // Email is best-effort; access (when granted) is already in place.
+      }
+      if (res.status === "granted") {
+        toast.success(`${res.email} now has access. We've emailed them a heads-up.`);
+      } else {
+        toast.success(
+          `Invitation sent to ${res.email}. They'll have access as soon as they sign up.`,
+        );
+      }
       setEmail("");
       qc.invalidateQueries({ queryKey: ["profile-members", profileId] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Could not grant access"),
+    onError: (e: any) => toast.error(e?.message ?? "Could not send invite"),
   });
 
   const revokeM = useMutation({
@@ -344,7 +371,8 @@ function MembersPanel({ profileId }: { profileId: string }) {
         </Button>
       </div>
       <p className="text-[10px] text-muted-foreground">
-        They must already have an Æther Wealth account. Ask them to sign up first if needed.
+        We'll email them an invite. If they don't have an Æther account yet,
+        they'll get a sign-up link.
       </p>
     </div>
   );
