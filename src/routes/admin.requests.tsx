@@ -29,11 +29,21 @@ export const Route = createFileRoute("/admin/requests")({
 
 type Req = Awaited<ReturnType<typeof listServiceRequests>>["requests"][number];
 type Filter = "all" | "new" | "in_progress" | "resolved";
+type TypeFilter = "all" | "meeting" | "report" | "concierge" | "wealth_manager" | "other";
+type SortKey = "newest" | "oldest";
 
 const STATUS_LABEL: Record<string, string> = {
   new: "New",
   in_progress: "In progress",
   resolved: "Resolved",
+};
+
+const TYPE_LABEL: Record<string, string> = {
+  meeting: "Meeting",
+  report: "Report",
+  concierge: "Concierge",
+  wealth_manager: "Wealth manager",
+  other: "Other",
 };
 
 function AdminRequestsPage() {
