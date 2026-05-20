@@ -111,6 +111,7 @@ function FamilyOfficeHub() {
         <MobileShell>
           <Hero />
           <ManagerCard />
+          <HouseholdLink />
           <QuickActions />
           <EntitiesRollup />
           <Governance />
