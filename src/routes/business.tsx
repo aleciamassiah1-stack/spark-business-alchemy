@@ -92,7 +92,19 @@ export const Route = createFileRoute("/business")({
 function BusinessRoute() {
   return (
     <RequireOnboarding>
-      <BusinessPage />
+      <UpgradeWall
+        minTier="private"
+        feature="Business Hub"
+        description="Track your company's valuation, financials, ownership, and exit planning alongside personal wealth."
+        perks={[
+          "Live valuation with revenue, EBITDA, and multiples",
+          "Cap table, equity grants, and ownership view",
+          "Tax return parsing with AI",
+          "Exit and succession planning timeline",
+        ]}
+      >
+        <BusinessPage />
+      </UpgradeWall>
     </RequireOnboarding>
   );
 }
