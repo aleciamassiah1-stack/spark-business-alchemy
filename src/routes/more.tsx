@@ -57,6 +57,9 @@ function MorePage() {
 
   return (
     <MobileShell title="More" subtitle="Tools & settings">
+      <div className="px-5 pb-3">
+        <PlanOverviewCard />
+      </div>
       <div className="flex flex-col gap-3 px-5">
         {!isIosNative() && (
           <Link
