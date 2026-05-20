@@ -100,6 +100,28 @@ function AdminRequestsPage() {
     return c;
   }, [rows]);
 
+  const visibleRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = rows.filter((r) => {
+      if (typeFilter !== "all" && r.type !== typeFilter) return false;
+      if (!q) return true;
+      const hay = [
+        r.subject,
+        r.user_email ?? "",
+        r.admin_notes ?? "",
+        JSON.stringify(r.body ?? {}),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+    return filtered.sort((a, b) => {
+      const da = new Date(a.created_at).getTime();
+      const db = new Date(b.created_at).getTime();
+      return sort === "newest" ? db - da : da - db;
+    });
+  }, [rows, typeFilter, search, sort]);
+
   async function setStatus(r: Req, status: "new" | "in_progress" | "resolved") {
     setBusyId(r.id);
     try {
