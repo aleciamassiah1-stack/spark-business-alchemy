@@ -51,6 +51,9 @@ function AdminRequestsPage() {
   const access = useAccess();
   const [rows, setRows] = useState<Req[]>([]);
   const [filter, setFilter] = useState<Filter>("new");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortKey>("newest");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Req | null>(null);
