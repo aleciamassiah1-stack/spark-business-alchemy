@@ -476,12 +476,13 @@ export const savePropertyValuation = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     // verify property ownership
     const { data: prop, error: propErr } = await supabaseAdmin
       .from("properties")
       .select("id")
       .eq("id", data.property_id)
-      .eq("user_id", userId)
+      .eq("user_id", profileId)
       .maybeSingle();
     if (propErr || !prop) {
       return { ok: false as const, error: "Property not found", id: null as string | null };
@@ -490,7 +491,7 @@ export const savePropertyValuation = createServerFn({ method: "POST" })
     const { data: inserted, error } = await supabaseAdmin
       .from("property_valuations")
       .insert({
-        user_id: userId,
+        user_id: profileId,
         property_id: data.property_id,
         estimated_value: v.estimated_value,
         value_low: v.value_low,
