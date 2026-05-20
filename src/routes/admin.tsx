@@ -31,6 +31,7 @@ import {
   adminPurgeAccountNow,
   checkAccess,
 } from "@/lib/access.functions";
+import { getUnreadServiceRequestCount } from "@/lib/service-requests.functions";
 import { fmtCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import { redirect } from "@tanstack/react-router";
