@@ -4,7 +4,7 @@
 // `profile_access` table. Falls back to the auth user id (each user has
 // a self-profile with profile_id == auth.user.id).
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "./client.server.helpers";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export async function resolveActiveProfileId(userId: string): Promise<string> {
   try {
