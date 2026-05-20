@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, RefreshCw, Loader2, CheckCircle2, Clock, Inbox, Eye, X } from "lucide-react";
+import { ChevronLeft, RefreshCw, Loader2, CheckCircle2, Clock, Inbox, Eye, X, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
