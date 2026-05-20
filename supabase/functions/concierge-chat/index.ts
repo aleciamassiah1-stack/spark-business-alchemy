@@ -3,6 +3,8 @@
 // validates the JWT before invoking this function (verify_jwt = true), which
 // gives us a basic rate-limit surface and prevents anonymous credit drain.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const ALLOWED_ORIGINS = [
   "https://aetherwealth.co",
   "https://www.aetherwealth.co",
