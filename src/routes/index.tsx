@@ -76,7 +76,7 @@ function HomePage() {
     null,
   );
   const [properties, setProperties] = useState<Array<{ estimated_value: number | null; mortgage_balance: number | null }>>([]);
-  const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null }>>([]);
+  const [policies, setPolicies] = useState<Array<{ coverage_amount: number | null; beneficiaries?: unknown }>>([]);
   const [documents, setDocuments] = useState<Array<{ status: string | null }>>([]);
   const [familyCount, setFamilyCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -362,7 +362,11 @@ function HomePage() {
               hasAccounts: accounts.length > 0,
               hasInsurance: policies.length > 0,
               hasEstateDocs: documents.length > 0,
-              hasBeneficiaries: familyCount > 0,
+              hasBeneficiaries:
+                familyCount > 0 ||
+                policies.some(
+                  (p) => Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
+                ),
               hasProperties: properties.length > 0,
             }}
             delay={0.25}
