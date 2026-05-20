@@ -124,15 +124,17 @@ function RootComponent() {
   return (
     <AuthProvider>
       <AccessProvider>
-        <OnboardingProvider>
-          <WealthProvider>
-            <PaymentTestModeBanner />
-            <SyncStatusBar />
-            <Outlet />
-            
-            <Toaster theme="dark" position="top-center" />
-          </WealthProvider>
-        </OnboardingProvider>
+        <ActiveProfileProvider>
+          <OnboardingProvider>
+            <WealthProvider>
+              <PaymentTestModeBanner />
+              <SyncStatusBar />
+              <Outlet />
+
+              <Toaster theme="dark" position="top-center" />
+            </WealthProvider>
+          </OnboardingProvider>
+        </ActiveProfileProvider>
       </AccessProvider>
     </AuthProvider>
   );
