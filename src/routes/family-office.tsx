@@ -19,6 +19,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { useAccess } from "@/lib/access-context";
+import { submitServiceRequestWithEmail } from "@/lib/service-requests";
 
 export const Route = createFileRoute("/family-office")({
   head: () => ({
