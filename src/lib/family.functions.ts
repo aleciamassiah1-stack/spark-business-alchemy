@@ -34,10 +34,11 @@ type FamilyMemberRow = {
 export const listFamilyMembers = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { members: [] as FamilyMemberRow[] };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("family_members")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: true });
   if (error) {
     console.error("listFamilyMembers error", error);
