@@ -223,6 +223,9 @@ function AdminRequestsPage() {
 
       {selected && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="service-request-title"
           className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() => setSelected(null)}
         >
@@ -230,13 +233,23 @@ function AdminRequestsPage() {
             className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-background p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 flex items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">
-                {selected.type}
-              </span>
-              <StatusBadge status={selected.status} />
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">
+                  {selected.type}
+                </span>
+                <StatusBadge status={selected.status} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/40 bg-background/40 text-muted-foreground hover:text-foreground"
+                aria-label="Close request details"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <h2 className="mb-1 font-serif text-2xl">{selected.subject}</h2>
+            <h2 id="service-request-title" className="mb-1 font-serif text-2xl">{selected.subject}</h2>
             <p className="mb-4 text-xs text-muted-foreground">
               From {selected.user_email ?? selected.user_id} ·{" "}
               {new Date(selected.created_at).toLocaleString()}
