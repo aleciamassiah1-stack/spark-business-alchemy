@@ -158,10 +158,18 @@ function AdminRequestsPage() {
         ) : (
           <div className="grid gap-3">
             {rows.map((r) => (
-              <button
+              <div
                 key={r.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelected(r)}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-colors hover:bg-white/[0.04]"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelected(r);
+                  }
+                }}
+                className="cursor-pointer rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-colors hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -206,7 +214,7 @@ function AdminRequestsPage() {
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
