@@ -94,6 +94,27 @@ function AdminRequestsPage() {
       toast.success(`Marked ${STATUS_LABEL[status].toLowerCase()}`);
       load(filter);
       if (selected?.id === r.id) setSelected({ ...selected, status });
+
+      // Notify the requester by email (best-effort; don't block on failure).
+      if (r.user_email && status !== "new") {
+        try {
+          await sendTransactionalEmail({
+            templateName: "service-request-status-update",
+            recipientEmail: r.user_email,
+            idempotencyKey: `service-request-${r.id}-${status}`,
+            templateData: {
+              requestType: r.type,
+              subject: r.subject,
+              status,
+              requestId: r.id,
+              adminNotes: r.admin_notes ?? undefined,
+            },
+          });
+        } catch (emailErr) {
+          console.error("Failed to notify requester", emailErr);
+          toast.error("Status updated, but email notification failed.");
+        }
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update failed");
     } finally {
