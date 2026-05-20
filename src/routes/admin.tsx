@@ -99,6 +99,32 @@ function AdminPage() {
     if (access.ready && access.isAdmin) load();
   }, [access.ready, access.isAdmin, load]);
 
+  // Unread service request count + realtime
+  useEffect(() => {
+    if (!access.ready || !access.isAdmin) return;
+    let cancelled = false;
+    const refresh = () => {
+      void getUnreadServiceRequestCount().then((r) => {
+        if (!cancelled) setUnreadRequests(r.count);
+      });
+    };
+    refresh();
+    const ch = supabase
+      .channel("admin-request-badge")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_requests" },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [access.ready, access.isAdmin]);
+
+
+
   if (!access.ready || (access.ready && !access.isAdmin)) {
     return <div className="min-h-screen bg-background" aria-hidden />;
   }
