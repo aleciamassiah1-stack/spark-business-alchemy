@@ -32,7 +32,7 @@ export const submitServiceRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const uid = await requireUserId();
 
-    // Fetch user email + name for the email payload
+    // Pull user email/name to return to the client so it can include them in the email payload.
     const { data: userResp } = await supabaseAdmin.auth.admin.getUserById(uid);
     const email = userResp?.user?.email ?? null;
     const fullName =
@@ -54,46 +54,12 @@ export const submitServiceRequest = createServerFn({ method: "POST" })
       .single();
     if (insertErr) throw new Error(insertErr.message);
 
-    // Notify admin via the transactional email pipeline (best-effort)
-    try {
-      const url = process.env.SUPABASE_URL;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      const baseHost = process.env.SITE_URL ?? "https://aetherwealth.co";
-      if (url && serviceKey) {
-        const bodyText =
-          typeof data.body?.message === "string"
-            ? (data.body.message as string)
-            : JSON.stringify(data.body ?? {}, null, 2);
-        await fetch(`${url}/functions/v1/send-transactional-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-          },
-          body: JSON.stringify({
-            templateName: "service-request-notification",
-            idempotencyKey: `svc-${inserted.id}`,
-            templateData: {
-              requestType: data.type,
-              subject: data.subject,
-              fromName: fullName ?? email ?? "Member",
-              fromEmail: email ?? undefined,
-              body: bodyText,
-              requestId: inserted.id,
-              pageUrl: data.pageUrl,
-              adminUrl: `${baseHost}/admin/requests`,
-            },
-          }),
-        }).catch(() => {
-          /* email is best-effort; the row is the source of truth */
-        });
-      }
-    } catch {
-      /* swallow — DB row is the source of truth */
-    }
-
-    return { id: inserted.id, createdAt: inserted.created_at };
+    return {
+      id: inserted.id,
+      createdAt: inserted.created_at,
+      memberEmail: email,
+      memberName: fullName ?? email,
+    };
   });
 
 export const listServiceRequests = createServerFn({ method: "GET" })
@@ -113,7 +79,6 @@ export const listServiceRequests = createServerFn({ method: "GET" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    // Decorate with member email
     const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
     const emailById = new Map<string, string | null>();
     for (const uid of userIds) {
@@ -132,19 +97,23 @@ export const listServiceRequests = createServerFn({ method: "GET" })
     };
   });
 
+const updateSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["new", "in_progress", "resolved"]).optional(),
+  admin_notes: z.string().max(4000).optional(),
+});
+
 export const updateServiceRequest = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z
-      .object({
-        id: z.string().uuid(),
-        status: z.enum(["new", "in_progress", "resolved"]).optional(),
-        admin_notes: z.string().max(4000).optional(),
-      })
-      .parse(input),
-  )
+  .inputValidator((input) => updateSchema.parse(input))
   .handler(async ({ data }) => {
     const adminId = await requireAdminId();
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: {
+      status?: "new" | "in_progress" | "resolved";
+      assigned_admin?: string;
+      resolved_at?: string;
+      admin_notes?: string;
+      updated_at: string;
+    } = { updated_at: new Date().toISOString() };
     if (data.status) {
       patch.status = data.status;
       patch.assigned_admin = adminId;
