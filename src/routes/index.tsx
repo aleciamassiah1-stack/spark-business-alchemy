@@ -361,10 +361,6 @@ function HomePage() {
         </div>
       )}
 
-      {/* Plan overview — shows Essential / Private / Family Office at a glance */}
-      <div className="px-5 pt-4">
-        <PlanOverviewCard />
-      </div>
 
       {/* Financial Health Score */}
       {!isLoading && (
