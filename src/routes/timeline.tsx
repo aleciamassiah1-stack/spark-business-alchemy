@@ -1,16 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
+import { NetWorthProjection } from "@/components/NetWorthProjection";
 import { timelines } from "@/lib/mock-data";
 import { fmtCurrency, fmtPct } from "@/lib/format";
 import { useIsTestAccount } from "@/lib/test-account";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { getAggregatedData } from "@/lib/plaid.functions";
+import { listProperties } from "@/lib/wealth.functions";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({
