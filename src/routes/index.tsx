@@ -354,6 +354,22 @@ function HomePage() {
         </div>
       )}
 
+      {/* Financial Health Score */}
+      {!isLoading && (
+        <div className="px-5 pt-4">
+          <FinancialHealthScore
+            signals={{
+              hasAccounts: accounts.length > 0,
+              hasInsurance: policies.length > 0,
+              hasEstateDocs: documents.length > 0,
+              hasBeneficiaries: familyCount > 0,
+              hasProperties: properties.length > 0,
+            }}
+            delay={0.25}
+          />
+        </div>
+      )}
+
       {/* 2FA nudge — only renders if user hasn't enabled MFA and hasn't dismissed */}
       <div className="px-5 pt-4">
         <MfaNudge />
