@@ -172,7 +172,7 @@ export const plaidExchangeToken = createServerFn({ method: "POST" })
       // Tier gate: Essential is capped at 3 connected institutions.
       // Private + Family Office are unlimited. Admins / manual_access resolve
       // to "family" via getCurrentTier so internal accounts are never capped.
-      const { getCurrentTier } = await import("./access.functions");
+      const { getCurrentTier } = await import("./access.server");
       const { limitsForTier } = await import("./tier");
       const tier = await getCurrentTier();
       const { maxInstitutions } = limitsForTier(tier);
