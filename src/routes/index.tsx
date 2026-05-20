@@ -91,7 +91,7 @@ function HomePage() {
   const { user } = useAuth();
   const isTestAccount = useIsTestAccount();
   const access = useAccess();
-  const showIosTiers = isIosNative() && access.ready && !access.hasAccess;
+  void access;
   const displayName = displayNameFromUser(user) || "Welcome";
   const userInitials = initialsFromName(displayName);
 
