@@ -362,7 +362,11 @@ function HomePage() {
               hasAccounts: accounts.length > 0,
               hasInsurance: policies.length > 0,
               hasEstateDocs: documents.length > 0,
-              hasBeneficiaries: familyCount > 0,
+              hasBeneficiaries:
+                familyCount > 0 ||
+                policies.some(
+                  (p) => Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
+                ),
               hasProperties: properties.length > 0,
             }}
             delay={0.25}
