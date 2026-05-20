@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId, getCurrentUserId } from "@/integrations/supabase/auth-helper";
 import { resolveActiveProfileId } from "./active-profile.server";
+import { getCurrentTier } from "./access.server";
 
 const accountSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -74,7 +75,6 @@ export const upsertFamilyMember = createServerFn({ method: "POST" })
     // Tier gate on insert (not edit): Essential = 0 (locked feature),
     // Private = 5 members, Family = unlimited.
     if (!data.id) {
-      const { getCurrentTier } = await import("./access.server");
       const { limitsForTier } = await import("./tier");
       const tier = await getCurrentTier();
       const { maxFamilyMembers } = limitsForTier(tier);
