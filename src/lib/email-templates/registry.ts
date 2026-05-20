@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { template as conciergeMessage } from './concierge-message'
+import { template as serviceRequestNotification } from './service-request-notification'
 
 export interface TemplateEntry {
   component: ComponentType<any>
