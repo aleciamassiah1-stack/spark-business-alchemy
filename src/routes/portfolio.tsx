@@ -58,14 +58,39 @@ function PortfolioPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [holdings, setHoldings] = useState<HoldingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signals, setSignals] = useState({
+    hasAccounts: false,
+    hasInsurance: false,
+    hasEstateDocs: false,
+    hasBeneficiaries: false,
+    hasProperties: false,
+  });
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const agg = await getAggregatedData();
+        const [agg, props, pols, docs, fam] = await Promise.all([
+          getAggregatedData(),
+          listProperties().catch(() => []),
+          listInsurancePolicies().catch(() => []),
+          listEstateDocuments().catch(() => []),
+          listFamilyMembers().catch(() => []),
+        ]);
         if (!alive) return;
         setHoldings((agg?.holdings ?? []) as HoldingRow[]);
+        setSignals({
+          hasAccounts: (agg?.accounts ?? []).length > 0,
+          hasInsurance: (pols ?? []).length > 0,
+          hasEstateDocs: (docs ?? []).length > 0,
+          hasBeneficiaries:
+            (fam ?? []).length > 0 ||
+            (pols ?? []).some(
+              (p: { beneficiaries?: unknown }) =>
+                Array.isArray(p.beneficiaries) && (p.beneficiaries as unknown[]).length > 0,
+            ),
+          hasProperties: (props ?? []).length > 0,
+        });
       } finally {
         if (alive) setLoading(false);
       }
