@@ -620,6 +620,45 @@ export type Database = {
         }
         Relationships: []
       }
+      managed_profiles: {
+        Row: {
+          color: string | null
+          created_at: string
+          date_of_birth: string | null
+          display_name: string
+          id: string
+          initials: string | null
+          is_self: boolean
+          owner_user_id: string
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name: string
+          id?: string
+          initials?: string | null
+          is_self?: boolean
+          owner_user_id: string
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string
+          id?: string
+          initials?: string | null
+          is_self?: boolean
+          owner_user_id?: string
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manual_access: {
         Row: {
           created_at: string
@@ -773,6 +812,38 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_access: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          role: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          role?: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_access_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "managed_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string
@@ -900,6 +971,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_requests: {
+        Row: {
+          admin_notes: string | null
+          assigned_admin: string | null
+          body: Json
+          created_at: string
+          id: string
+          profile_id: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_admin?: string | null
+          body?: Json
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_admin?: string | null
+          body?: Json
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -1257,6 +1373,7 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      has_profile_access: { Args: { _profile_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

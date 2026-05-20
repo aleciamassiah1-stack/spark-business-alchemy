@@ -1,59 +1,57 @@
-## Goal
 
-Bring the app's end-user notices and consent flow up to what Plaid's MSA + production-launch checklist requires, and document it so the requirement is verifiably met.
+# Two features to build
 
-## Current state
+## 1. Household profile switcher (Option C)
 
-- **`/connections`** shows pre-Link disclosure text naming Plaid, linking to Plaid's End User Privacy Policy, and pointing to our Privacy/Terms.
-- **`/privacy`** Section 11 already mentions Plaid as a data processor and links to plaid.com/legal.
-- **Onboarding "Connect" screen** only says "via Plaid · Read-only · 256-bit encrypted" before pushing the user to `/connections`.
-- **Signup form** has no explicit "I agree to Terms / Privacy" acknowledgment.
-- **No record** is kept of when/where a user accepted these terms.
+Goal: when logged in as `aleciamassiah1`, you can switch between "My data" and "Husband's data" from a single account, and edit either side.
 
-## Gaps Plaid expects us to close
+### Approach (lightweight — no full RLS rewrite)
 
-1. Affirmative consent at signup to Terms + Privacy (and, by extension, the Plaid disclosure inside Privacy).
-2. Stronger pre-Link disclosure: name Plaid, list the data categories accessed (balances, transactions, identity, account/routing, investment holdings, liabilities), state the purpose, give the user a clear way to decline/revoke.
-3. First-time pre-Link consent confirmation so we can prove the user saw the disclosure before Link opened.
-4. Audit trail: persist `consent_accepted_at`, `consent_version`, and `plaid_disclosure_accepted_at` per user.
-5. Privacy policy tweaks: data categories Plaid receives, US processing, retention after disconnect.
+Rather than re-keying every table from `user_id` → `household_id` (a multi-day refactor across ~20 tables), use a **"managed profiles"** model:
 
-## Plan
+- New table `managed_profiles` — extra wealth profiles owned by your auth user (you, spouse, child, etc.). Each has its own `id` (uuid) used as the `user_id` value in existing data tables.
+- New table `profile_access` — maps `auth_user_id` → list of `profile_ids` they can act as, with a role (`owner` / `member`).
+- Add a `has_profile_access(profile_id)` security-definer function.
+- Update RLS on all wealth tables (`aggregated_*`, `properties`, `insurance_policies`, `estate_documents`, `family_members`, `user_intake`, `transaction_rules`, `sync_log`, `plaid_link_events`) so `user_id = auth.uid() OR has_profile_access(user_id)`.
+- Your existing `auth.uid()` becomes profile #1 automatically (backfill migration).
+- Frontend: profile switcher in the header (avatar dropdown). Selected `activeProfileId` stored in React context + localStorage. All Supabase reads filter by `activeProfileId`; all inserts set `user_id = activeProfileId`.
+- Plaid items stay scoped to the auth user (one bank connection per real person), but linked profiles can view aggregated data via the access check.
 
-### 1. Signup consent (frontend)
-- Add a required checkbox to the signup form in `src/components/Onboarding.tsx` (`AuthForm`): "I agree to the Terms of Service and Privacy Policy, and I understand that connecting a financial account uses Plaid as described in the Privacy Policy."
-- Block submit until checked. Surface inline error if missing.
+This gives you true shared-account editing without rewriting the data model.
 
-### 2. Pre-Link consent gate (frontend)
-- New `PlaidConsentDialog` component in `src/components/PlaidConsentDialog.tsx` shown on `/connections` the first time the user clicks "Connect bank" (and again from the Onboarding "Connect" screen if launched there).
-- Dialog content: Plaid name + role, exact data categories pulled, purpose, link to Plaid End User Privacy Policy, link to our Privacy. Two actions: "Continue to Plaid" / "Cancel".
-- Persist acceptance locally (`localStorage`) and server-side (see step 4) so it's not shown again.
+### What stays the same
 
-### 3. Tighten existing /connections disclosure copy
-- Replace the current short paragraph in `src/routes/connections.tsx` (around line 1118) with the same canonical disclosure used in the dialog, so even returning users always see it next to the Connect button.
+- Subscription, role, MFA, auth — all keyed to `auth.uid()`, unchanged.
+- Family Links (cross-account view) — still works for couples with separate logins.
 
-### 4. Consent audit trail (backend)
-- Add columns to `public.user_intake` (or a new `user_consents` table — leaning toward a new table): `terms_accepted_at`, `privacy_accepted_at`, `terms_version`, `plaid_disclosure_accepted_at`, `plaid_disclosure_version`.
-- New server fn `recordConsent({ kind, version })` in a `*.functions.ts` file, gated by `requireSupabaseAuth`.
-- Call it: on successful signup (terms/privacy) and on accepting the Plaid dialog.
+## 2. Admin request inbox + email notifications
 
-### 5. Privacy policy updates
-- In `src/routes/privacy.tsx` Section 11, add: explicit data categories Plaid accesses on our behalf, that Plaid processes data in the US, that disconnecting an institution triggers `/item/remove` and purges the related stored data within 30 days.
-- Bump "Last updated" date.
+### Database
+- `service_requests` table: `id`, `user_id`, `profile_id` (nullable, which profile it's about), `type` (`meeting` | `report` | `concierge` | `wealth_manager` | `other`), `subject`, `body` (jsonb payload), `status` (`new` | `in_progress` | `resolved`), `assigned_admin`, `created_at`, `resolved_at`.
+- RLS: users see/insert their own; admins see/manage all.
+- Realtime enabled so the admin badge updates live.
 
-### 6. QA
-- Verify signup is blocked without the checkbox.
-- Verify the consent dialog appears once, and that the Plaid Link handler only opens after acceptance.
-- Verify `recordConsent` rows land in the DB with the right `user_id`.
-- Verify retention sweep + `/item/remove` references in the privacy copy still match the code.
+### Server fn `submitServiceRequest`
+- Inserts the row.
+- Sends transactional email to admin (`aleciamassiah1@gmail.com`) via existing `/lovable/email/transactional/send` infra with a new `service-request-notification` template.
+- Returns request id.
 
-## Out of scope
+### Wire existing CTAs
+- "Schedule meeting", "Request report", "Message advisor / wealth manager" buttons currently route to UI-only modals or the single transactional email. Repoint them all at `submitServiceRequest`.
 
-- Cookie banner (only essential cookies — not legally required in US; can revisit for EU rollout).
-- Reconsent prompts when versions bump (will add when we first bump a version).
+### Admin UI
+- New route `/admin/requests` — table of all requests, filter by status, click row to view details + mark resolved.
+- Badge with unread count on the admin nav entry (realtime subscription).
 
-## Technical notes
+---
 
-- The new table option is preferred over expanding `user_intake` because intake is a one-time profile blob, while consent should be append-only and queryable per kind/version.
-- Server fn must use `requireSupabaseAuth` middleware (see tanstack-supabase-integration). RLS: users can `select`/`insert` their own rows; no update/delete from clients.
-- The Plaid disclosure dialog should NOT itself open Plaid Link — it just gates the existing `openPlaidLink` flow in `connections.tsx`, so `loadPlaidScript` / token exchange code is untouched.
+## Order of work
+
+1. Migrations: `managed_profiles`, `profile_access`, `has_profile_access()`, backfill auth users as profile #1, update RLS across wealth tables.
+2. Migrations: `service_requests` + RLS + realtime.
+3. Frontend: `ActiveProfileContext` + profile switcher in header.
+4. Frontend: thread `activeProfileId` through all data hooks/queries.
+5. Server fn `submitServiceRequest` + email template + wire CTAs.
+6. Admin `/admin/requests` page + badge.
+
+This is ~1500–2000 LOC across migrations, server fns, context, switcher, and admin page. Will be one large change set. Ready to start when you confirm.
