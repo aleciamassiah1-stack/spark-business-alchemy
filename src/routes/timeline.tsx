@@ -35,6 +35,33 @@ type Range = (typeof RANGES)[number];
 function TimelinePage() {
   const [range, setRange] = useState<Range>("1Y");
   const isTestAccount = useIsTestAccount();
+  const [liveNetWorth, setLiveNetWorth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isTestAccount) return;
+    let alive = true;
+    (async () => {
+      try {
+        const [agg, props] = await Promise.all([getAggregatedData(), listProperties()]);
+        if (!alive) return;
+        const accounts = (agg.accounts ?? []) as Array<{ type: string; current_balance: number | null }>;
+        const investments = accounts.filter((a) => a.type === "investment").reduce((s, a) => s + (a.current_balance ?? 0), 0);
+        const banking = accounts.filter((a) => a.type === "depository").reduce((s, a) => s + (a.current_balance ?? 0), 0);
+        const credit = accounts.filter((a) => a.type === "credit" || a.type === "loan").reduce((s, a) => s + (a.current_balance ?? 0), 0);
+        const realEstate = (props.properties ?? []).reduce(
+          (s: number, p: { estimated_value: number | null; mortgage_balance: number | null }) =>
+            s + ((p.estimated_value ?? 0) - (p.mortgage_balance ?? 0)),
+          0,
+        );
+        setLiveNetWorth(investments + banking + realEstate - credit);
+      } catch {
+        setLiveNetWorth(0);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [isTestAccount]);
 
   if (!isTestAccount) {
     return (
@@ -53,6 +80,11 @@ function TimelinePage() {
               <Plus className="h-3 w-3" /> Connect accounts
             </Link>
           </LuxCard>
+
+          <div className="mt-6">
+            <p className="label-mono mb-2">Project the next chapter</p>
+            <NetWorthProjection currentNetWorth={Math.max(0, liveNetWorth ?? 0)} />
+          </div>
         </div>
       </MobileShell>
     );
