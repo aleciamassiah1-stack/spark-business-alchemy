@@ -1478,10 +1478,11 @@ function emptyAggregated(): TaxReturnAggregated {
 export const listEstateDocuments = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await getCurrentUserId();
   if (!userId) return { documents: [], error: null as string | null };
+  const profileId = await resolveActiveProfileId(userId);
   const { data, error } = await supabaseAdmin
     .from("estate_documents")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", profileId)
     .order("created_at", { ascending: false });
   return { documents: data ?? [], error: error?.message ?? null };
 });
@@ -1516,8 +1517,9 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const payload = {
-      user_id: userId,
+      user_id: profileId,
       document_type: data.document_type,
       title: data.title,
       status: data.status,
@@ -1532,7 +1534,7 @@ export const upsertEstateDocument = createServerFn({ method: "POST" })
         .from("estate_documents")
         .update(payload)
         .eq("id", data.id)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       return { ok: !error, error: error?.message ?? null };
     }
     const { error } = await supabaseAdmin.from("estate_documents").insert(payload);
@@ -1543,11 +1545,12 @@ export const deleteEstateDocument = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const userId = await requireUserId();
+    const profileId = await resolveActiveProfileId(userId);
     const { error } = await supabaseAdmin
       .from("estate_documents")
       .delete()
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", profileId);
     return { ok: !error, error: error?.message ?? null };
   });
 
