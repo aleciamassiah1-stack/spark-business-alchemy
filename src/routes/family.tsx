@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { useAccess } from "@/lib/access-context";
+import { UpgradeWall } from "@/components/UpgradeWall";
 
 export const Route = createFileRoute("/family")({
   head: () => ({
