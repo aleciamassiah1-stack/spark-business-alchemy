@@ -93,6 +93,7 @@
     text-size-adjust: 100%;
     touch-action: pan-x pan-y;
     overflow-x: hidden;
+    overscroll-behavior: none;
   }
   body {
     background-color: var(--color-background);
@@ -100,6 +101,7 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    overscroll-behavior-y: none;
     max-width: 100vw;
     background-image:
       radial-gradient(circle at 0% 0%, oklch(0.32 0.10 295 / 0.20) 0%, transparent 45%),
