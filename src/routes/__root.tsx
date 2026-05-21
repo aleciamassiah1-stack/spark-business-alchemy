@@ -1,4 +1,4 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { WealthProvider } from "@/lib/wealth-context";
 import { OnboardingProvider } from "@/lib/onboarding-context";
@@ -127,6 +127,7 @@ function RootComponent() {
         <ActiveProfileProvider>
           <OnboardingProvider>
             <WealthProvider>
+              <ScrollToTop />
               <PaymentTestModeBanner />
               <SyncStatusBar />
               <Outlet />
@@ -138,4 +139,14 @@ function RootComponent() {
       </AccessProvider>
     </AuthProvider>
   );
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
 }
