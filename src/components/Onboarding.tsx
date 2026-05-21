@@ -988,7 +988,7 @@ export function Welcome({
   } as const;
   const cadence = billing === "annual" ? "/yr" : "/mo";
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center overflow-hidden bg-background px-6 py-10">
+    <div className="relative flex min-h-[100dvh] flex-col items-center overflow-y-auto overflow-x-hidden bg-background px-6 py-10 [-webkit-overflow-scrolling:touch] native:overflow-hidden">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
