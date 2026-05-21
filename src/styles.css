@@ -91,9 +91,11 @@
     font-family: var(--font-sans);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    touch-action: pan-x pan-y;
+    touch-action: pan-y;
     overflow-x: hidden;
-    overscroll-behavior: none;
+    overflow-y: auto;
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
   }
   body {
     background-color: var(--color-background);
@@ -101,8 +103,11 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
+    overflow-y: auto;
+    overscroll-behavior-x: none;
     max-width: 100vw;
+    min-height: 100dvh;
+    -webkit-overflow-scrolling: touch;
     background-image:
       radial-gradient(circle at 0% 0%, oklch(0.32 0.10 295 / 0.20) 0%, transparent 45%),
       radial-gradient(circle at 100% 100%, oklch(0.28 0.08 280 / 0.15) 0%, transparent 50%);

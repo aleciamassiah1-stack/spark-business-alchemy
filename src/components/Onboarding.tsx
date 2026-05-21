@@ -981,6 +981,7 @@ export function Welcome({
   const handleCreate = onCreate ?? (() => navigate({ to: "/signup" }));
   const handleSignIn = onSignIn ?? (() => navigate({ to: "/signin" }));
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
+  const iosNative = isIosNative();
   const tiers = {
     essential: { monthly: "$149", annual: "$1,490" },
     private: { monthly: "$399", annual: "$3,990" },
@@ -988,7 +989,11 @@ export function Welcome({
   } as const;
   const cadence = billing === "annual" ? "/yr" : "/mo";
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center overflow-hidden bg-background px-6 py-10">
+    <div
+      className={`relative flex min-h-[100dvh] flex-col items-center overflow-x-hidden bg-background px-6 py-10 ${
+        iosNative ? "overflow-hidden" : "overflow-y-auto [-webkit-overflow-scrolling:touch]"
+      }`}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -1019,7 +1024,7 @@ export function Welcome({
       {/* Tier preview — front and center. Hidden on iOS native per
           Apple Guideline 3.1.1: no pricing, no tier cards, no link to
           /pricing inside the iOS binary. */}
-      {!isIosNative() && (
+      {!iosNative && (
         <div className="relative mt-10 w-full max-w-[1100px]">
           <div className="mb-3 flex items-center justify-end">
             <Link
