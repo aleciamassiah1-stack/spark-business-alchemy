@@ -12,8 +12,8 @@ type Props = {
 
 export function MobileShell({ children, title, subtitle }: Props) {
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
-      <div className="mx-auto min-h-screen w-full max-w-[430px]">
+    <div className="min-h-[100dvh] w-full overflow-y-auto bg-background text-foreground [-webkit-overflow-scrolling:touch]">
+      <div className="mx-auto min-h-[100dvh] w-full max-w-[430px] pb-28">
         {(title || subtitle) && (
           <header className="px-5 pb-2 pt-6">
             <div className="flex items-start justify-between gap-3">
