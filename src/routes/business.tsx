@@ -1432,240 +1432,156 @@ function InsuranceBlock({
   );
 }
 
-function SuccessionCard({
+function LegacyExitHubCard({
   state,
   update,
 }: {
   state: BusinessState;
   update: (p: (s: BusinessState) => BusinessState) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const s = state.succession;
-  const statusTone =
-    s.status === "Complete"
-      ? "bg-success/15 text-success"
-      : s.status === "In Progress"
-        ? "bg-warning/15 text-warning"
-        : "bg-muted/40 text-muted-foreground";
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+
+  const successionReady = computeSuccessionReadiness(state);
+  const exitReady = computeExitReadiness(state);
+  const combined = Math.round((successionReady + exitReady) / 2);
+  const action = nextTransitionAction(state);
+
+  const started = state.succession.wizardStep && state.succession.wizardStep > 1;
+  const completed = !!state.succession.wizardCompleted;
+  const status = completed ? "Plan complete" : started ? "In progress" : "Not started";
+  const statusTone = completed
+    ? "bg-success/15 text-success"
+    : started
+      ? "bg-warning/15 text-warning"
+      : "bg-muted/40 text-muted-foreground";
+
+  const horizon = dateToHorizon(state.exit.targetDate);
+  const horizonLabel =
+    horizon === "<2y" ? "Within 2 years"
+      : horizon === "3-5y" ? "in 3 – 5 years"
+        : horizon === "5-10y" ? "in 5 – 10 years"
+          : horizon === "10y+" ? "10+ years out"
+            : "Timeline TBD";
+
+  function openWizard(step: number | "documents" | "support") {
+    if (step === "documents") {
+      const el = document.querySelector('[data-section="documents"]');
+      if (el) (el as HTMLElement).scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (step === "support") {
+      window.location.href = "/support";
+      return;
+    }
+    setWizardStep(step);
+    setWizardOpen(true);
+  }
 
   return (
-    <LuxCard className="overflow-hidden" onClick={() => setOpen((v) => !v)}>
-      <div className="p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="label-mono">Succession</p>
-          <span className={`rounded-full px-2 py-0.5 font-mono text-[10px] ${statusTone}`}>
-            {s.status}
-          </span>
-        </div>
-        <p className="font-serif text-base text-foreground">{s.successorName || "No successor"}</p>
-        <p className="text-[11px] text-muted-foreground">{s.successorRole || "—"}</p>
-        <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
-          {s.buySellSigned ? (
-            <CheckCircle2 className="h-3 w-3 text-success" />
-          ) : (
-            <CircleDashed className="h-3 w-3" />
-          )}
-          Buy-sell {s.buySellSigned ? "signed" : "pending"}
-        </div>
-      </div>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div
-              className="space-y-3 border-t border-white/[0.06] px-4 py-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <InlineField label="Status">
-                <select
-                  value={s.status}
-                  onChange={(e) =>
-                    update((st) => ({
-                      ...st,
-                      succession: { ...st.succession, status: e.target.value as BusinessState["succession"]["status"] },
-                    }))
-                  }
-                  className="luxe-input"
-                >
-                  <option>Not Started</option>
-                  <option>In Progress</option>
-                  <option>Complete</option>
-                </select>
-              </InlineField>
-              <InlineField label="Successor">
-                <input
-                  value={s.successorName}
-                  onChange={(e) =>
-                    update((st) => ({
-                      ...st,
-                      succession: { ...st.succession, successorName: e.target.value },
-                    }))
-                  }
-                  className="luxe-input"
-                />
-              </InlineField>
-              <InlineField label="Role">
-                <input
-                  value={s.successorRole}
-                  onChange={(e) =>
-                    update((st) => ({
-                      ...st,
-                      succession: { ...st.succession, successorRole: e.target.value },
-                    }))
-                  }
-                  className="luxe-input"
-                />
-              </InlineField>
-              <InlineField label="Attorney">
-                <input
-                  value={s.attorney}
-                  onChange={(e) =>
-                    update((st) => ({
-                      ...st,
-                      succession: { ...st.succession, attorney: e.target.value },
-                    }))
-                  }
-                  className="luxe-input"
-                />
-              </InlineField>
-              <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={s.buySellSigned}
-                  onChange={(e) =>
-                    update((st) => ({
-                      ...st,
-                      succession: { ...st.succession, buySellSigned: e.target.checked },
-                    }))
-                  }
-                />
-                Buy-sell agreement signed
-              </label>
+    <>
+      <LuxCard className="overflow-hidden">
+        {/* Hero band */}
+        <div className="relative px-5 pt-5 pb-4">
+          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="label-mono">Legacy & Exit</p>
+              <span className={`rounded-full px-2 py-0.5 font-mono text-[10px] ${statusTone}`}>{status}</span>
             </div>
-          </motion.div>
+            <p className="font-serif text-lg leading-tight text-foreground">
+              {completed || started
+                ? <>Your business is <span className="text-gradient-violet">{combined}% ready</span> for a smooth transition</>
+                : <>Plan your transition in <span className="text-gradient-violet">5 quick steps</span></>}
+            </p>
+            {(completed || started) && (
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                {state.exit.strategy ? `${labelForStrategyShort(state.exit.strategy)} · ${horizonLabel}` : horizonLabel}
+              </p>
+            )}
+          </div>
+
+          {/* Readiness rings */}
+          <div className="relative mt-5 flex items-center justify-around">
+            <ReadinessRing value={successionReady} label="Succession" tone="violet" />
+            <ReadinessRing value={exitReady} label="Exit" tone="gold" />
+          </div>
+        </div>
+
+        {/* Summary chips when started */}
+        {(started || completed) && (
+          <div className="grid grid-cols-2 gap-px border-t border-white/[0.04] bg-white/[0.02]">
+            <SummaryChip
+              label="Target"
+              value={state.exit.targetValuation > 0 ? fmtCurrency(state.exit.targetValuation, { compact: true }) : "—"}
+            />
+            <SummaryChip
+              label="Successor"
+              value={state.succession.successorName || "Not chosen"}
+            />
+          </div>
         )}
-      </AnimatePresence>
-    </LuxCard>
+
+        {/* Next action CTA */}
+        <div className="border-t border-white/[0.04] p-4">
+          <button
+            type="button"
+            onClick={() => openWizard(action.target)}
+            className="flex w-full items-center justify-between rounded-2xl gradient-violet px-4 py-3.5 text-left glow-violet"
+          >
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-foreground/70">Next step</p>
+              <p className="truncate text-sm text-foreground">{action.label}</p>
+              <p className="truncate text-[11px] text-foreground/70">{action.helper}</p>
+            </div>
+            <ArrowUpRight className="h-4 w-4 shrink-0 text-foreground" />
+          </button>
+
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => openWizard(started ? 5 : 1)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] py-2.5 text-[11px] text-foreground"
+            >
+              {started ? <><Pencil className="h-3.5 w-3.5" /> Edit plan</> : <><Sparkles className="h-3.5 w-3.5" /> Start the wizard</>}
+            </button>
+            <button
+              type="button"
+              onClick={() => openWizard(5)}
+              className="flex items-center justify-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2.5 text-[11px] text-muted-foreground"
+              disabled={!started && !completed}
+            >
+              Recap
+            </button>
+          </div>
+        </div>
+      </LuxCard>
+
+      <TransitionPlanWizard
+        open={wizardOpen}
+        initialStep={wizardStep}
+        state={state}
+        update={update}
+        onClose={() => setWizardOpen(false)}
+      />
+    </>
   );
 }
 
-function ExitCard({
-  state,
-  update,
-}: {
-  state: BusinessState;
-  update: (p: (s: BusinessState) => BusinessState) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const e = state.exit;
-  const progress = e.targetValuation > 0
-    ? Math.min(100, (state.valuation / e.targetValuation) * 100)
-    : 0;
-  const yearsLeft = e.targetDate
-    ? Math.max(0, Math.ceil((new Date(e.targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365)))
-    : 0;
-
+function SummaryChip({ label, value }: { label: string; value: string }) {
   return (
-    <LuxCard className="overflow-hidden" onClick={() => setOpen((v) => !v)}>
-      <div className="p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="label-mono">Exit Planning</p>
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] text-primary">
-            {e.strategy}
-          </span>
-        </div>
-        <p className="font-serif text-base text-foreground">
-          <MoneyText value={fmtCurrency(e.targetValuation, { compact: true })} />
-        </p>
-        <p className="font-mono text-[10px] text-muted-foreground">target · {yearsLeft}y left</p>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
-          <div className="h-full gradient-violet" style={{ width: `${progress}%` }} />
-        </div>
-        <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>Readiness</span>
-          <span className="font-mono tabular-nums text-foreground">{e.readinessScore}/100</span>
-        </div>
-      </div>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div
-              className="space-y-3 border-t border-white/[0.06] px-4 py-4"
-              onClick={(ev) => ev.stopPropagation()}
-            >
-              <InlineField label="Target valuation">
-                <input
-                  inputMode="numeric"
-                  value={e.targetValuation}
-                  onChange={(ev) =>
-                    update((st) => ({
-                      ...st,
-                      exit: {
-                        ...st.exit,
-                        targetValuation: Number(ev.target.value.replace(/[^0-9]/g, "")) || 0,
-                      },
-                    }))
-                  }
-                  className="luxe-input font-mono"
-                />
-              </InlineField>
-              <InlineField label="Target date">
-                <input
-                  type="date"
-                  value={e.targetDate ? e.targetDate.slice(0, 10) : ""}
-                  onChange={(ev) =>
-                    update((st) => ({ ...st, exit: { ...st.exit, targetDate: ev.target.value } }))
-                  }
-                  className="luxe-input"
-                />
-              </InlineField>
-              <InlineField label="Strategy">
-                <select
-                  value={e.strategy}
-                  onChange={(ev) =>
-                    update((st) => ({
-                      ...st,
-                      exit: { ...st.exit, strategy: ev.target.value as ExitStrategy },
-                    }))
-                  }
-                  className="luxe-input"
-                >
-                  <option>M&A</option>
-                  <option>IPO</option>
-                  <option>Family Transfer</option>
-                  <option>MBO</option>
-                </select>
-              </InlineField>
-              <InlineField label={`Readiness · ${e.readinessScore}/100`}>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={e.readinessScore}
-                  onChange={(ev) =>
-                    update((st) => ({
-                      ...st,
-                      exit: { ...st.exit, readinessScore: Number(ev.target.value) },
-                    }))
-                  }
-                  className="w-full"
-                />
-              </InlineField>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </LuxCard>
+    <div className="bg-background/40 px-4 py-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 truncate text-[13px] text-foreground">{value}</p>
+    </div>
   );
+}
+
+function labelForStrategyShort(s: ExitStrategy): string {
+  if (s === "M&A") return "Sale to another company";
+  if (s === "Family Transfer") return "Pass to family";
+  if (s === "MBO") return "Sell to your team";
+  return "IPO";
 }
 
 function DocumentsBlock({
