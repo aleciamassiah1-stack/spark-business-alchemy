@@ -108,6 +108,8 @@ export type BusinessState = {
     successorRole: string;
     buySellSigned: boolean;
     attorney: string;
+    wizardStep?: number; // last step reached in the transition wizard (1-5)
+    wizardCompleted?: boolean;
   };
   exit: {
     targetValuation: number;
