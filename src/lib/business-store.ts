@@ -396,3 +396,97 @@ export function makeDocument(partial: Partial<BusinessDocument> = {}): BusinessD
     status: partial.status ?? "current",
   };
 }
+
+// ---- Transition (succession + exit) readiness ----------------------------
+// All scores are 0..100. Derived from real data — never self-reported.
+
+export function computeSuccessionReadiness(state: BusinessState): number {
+  const s = state.succession;
+  let score = 0;
+  if (s.successorName.trim().length > 0) score += 25;
+  if (s.successorRole.trim().length > 0) score += 10;
+  if (s.buySellSigned) score += 30;
+  if (s.attorney.trim().length > 0) score += 15;
+  if (s.status === "Complete") score += 20;
+  else if (s.status === "In Progress") score += 10;
+  return Math.min(100, score);
+}
+
+export function computeExitReadiness(state: BusinessState): number {
+  const e = state.exit;
+  let score = 0;
+  if (e.targetDate) score += 20;
+  if (e.strategy) score += 15;
+  if (e.targetValuation > 0 && e.targetValuation >= state.valuation) score += 15;
+  if (computeSuccessionReadiness(state) >= 50) score += 20;
+  if (state.valuation > state.valuationLastYear) score += 10;
+  const cats = new Set(state.documents.map((d) => d.category));
+  if (cats.has("Operating Agreement") && cats.has("Tax Return") && cats.has("Buy-Sell Agreement")) {
+    score += 20;
+  } else {
+    if (cats.has("Operating Agreement")) score += 7;
+    if (cats.has("Tax Return")) score += 7;
+    if (cats.has("Buy-Sell Agreement")) score += 6;
+  }
+  return Math.min(100, score);
+}
+
+export function combinedTransitionReadiness(state: BusinessState): number {
+  return Math.round((computeSuccessionReadiness(state) + computeExitReadiness(state)) / 2);
+}
+
+export type NextAction = {
+  label: string;
+  helper: string;
+  // Which wizard step to jump into (1-5), or "documents" to scroll to docs section.
+  target: number | "documents" | "support";
+};
+
+export function nextTransitionAction(state: BusinessState): NextAction {
+  const s = state.succession;
+  const e = state.exit;
+  if (!e.targetDate) {
+    return { label: "Pick when you want to step away", helper: "Takes 10 seconds", target: 1 };
+  }
+  if (!e.strategy) {
+    return { label: "Choose how you imagine exiting", helper: "Five common paths", target: 2 };
+  }
+  if (e.targetValuation <= 0) {
+    return { label: "Set your target sale price", helper: "We'll suggest a range", target: 3 };
+  }
+  if (!s.successorName.trim()) {
+    return { label: "Name your potential successor", helper: "You can change this anytime", target: 4 };
+  }
+  if (!s.buySellSigned) {
+    return { label: "Sign a buy-sell agreement", helper: "Protects your share if the unexpected happens", target: 4 };
+  }
+  if (!s.attorney.trim()) {
+    return { label: "Add your business attorney", helper: "So we know who to loop in", target: 4 };
+  }
+  const cats = new Set(state.documents.map((d) => d.category));
+  if (!cats.has("Succession Plan")) {
+    return { label: "Upload your succession plan", helper: "Keep it private in your vault", target: "documents" };
+  }
+  return { label: "Review your plan with a concierge advisor", helper: "Free with your membership", target: "support" };
+}
+
+// Convert an ISO target date <-> rough horizon bucket used by the wizard.
+export type ExitHorizon = "<2y" | "3-5y" | "5-10y" | "10y+" | "unsure";
+
+export function dateToHorizon(iso: string | null | undefined): ExitHorizon {
+  if (!iso) return "unsure";
+  const years = (new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365);
+  if (years <= 0) return "unsure";
+  if (years <= 2) return "<2y";
+  if (years <= 5) return "3-5y";
+  if (years <= 10) return "5-10y";
+  return "10y+";
+}
+
+export function horizonToDate(h: ExitHorizon): string {
+  const years = h === "<2y" ? 2 : h === "3-5y" ? 4 : h === "5-10y" ? 8 : h === "10y+" ? 12 : 0;
+  if (years === 0) return "";
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + years);
+  return d.toISOString();
+}
