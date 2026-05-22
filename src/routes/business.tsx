@@ -1452,8 +1452,13 @@ function LegacyExitHubCard({
   const combined = Math.round((successionReady + exitReady) / 2);
   const action = nextTransitionAction(state);
 
-  const started = state.succession.wizardStep && state.succession.wizardStep > 1;
-  const completed = !!state.succession.wizardCompleted;
+  // Drive the status pill from real readiness, not just wizard interaction.
+  // ≥80 combined → plan is effectively complete; 1–79 → in progress; 0 → not started.
+  const completed = combined >= 80 || !!state.succession.wizardCompleted;
+  const started =
+    !completed &&
+    (combined > 0 ||
+      (state.succession.wizardStep && state.succession.wizardStep > 1));
   const status = completed ? "Plan complete" : started ? "In progress" : "Not started";
   const statusTone = completed
     ? "bg-success/15 text-success"
