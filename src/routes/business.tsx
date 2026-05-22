@@ -613,7 +613,7 @@ function BusinessPage() {
         </div>
       </div>
 
-      <div className="mt-8 px-5">
+      <div className="mt-8 px-5" data-section="documents">
         <SectionHeader title="Documents" />
         <div className="space-y-3 pt-3">
           <DocumentsBlock state={state} update={update} />
