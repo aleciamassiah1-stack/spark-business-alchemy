@@ -601,10 +601,9 @@ function BusinessPage() {
       </div>
 
       <div className="mt-8 px-5">
-        <SectionHeader title="Succession & Exit" />
-        <div className="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2">
-          <SuccessionCard state={state} update={update} />
-          <ExitCard state={state} update={update} />
+        <SectionHeader title="Legacy & Exit" />
+        <div className="pt-3">
+          <LegacyExitHubCard state={state} update={update} />
         </div>
       </div>
 
