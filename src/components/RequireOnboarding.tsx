@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAccess } from "@/lib/access-context";
 import { useGuardedNavigate } from "@/lib/use-guarded-navigate";
 import { isIosNative } from "@/lib/native";
+import { TEST_ACCOUNT_EMAILS } from "@/lib/test-account";
 
 /** Routes that an authenticated-but-unpaid user is allowed to reach. */
 const UNPAID_ALLOWED = new Set([
