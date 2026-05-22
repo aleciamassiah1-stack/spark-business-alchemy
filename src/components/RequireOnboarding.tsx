@@ -90,8 +90,12 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
   // Admins (and any internal/comp'd account that resolves to a tier without a
   // paid sub) bypass the localStorage-based onboarding gate. Otherwise an
   // admin signing in on a fresh browser/device gets blocked behind the
-  // Onboarding modal even though their server-side access is fine.
-  if (!access.isAdmin && !onb.onboarded && !SETUP_ALLOWED.has(location.pathname)) {
+  // Onboarding modal even though their server-side access is fine. Test /
+  // reviewer accounts get the same treatment so signing in on a new device
+  // doesn't drop them onto the Biometric Lock onboarding screen.
+  const email = (auth.user?.email ?? "").toLowerCase();
+  const isTestAccount = TEST_ACCOUNT_EMAILS.some((e) => e === email);
+  if (!access.isAdmin && !isTestAccount && !onb.onboarded && !SETUP_ALLOWED.has(location.pathname)) {
     return <Onboarding forceOpen />;
   }
 
