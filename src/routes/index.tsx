@@ -99,17 +99,17 @@ function HomePage() {
 
   const loadAll = useCallback(async () => {
     const [agg, props, ins, est, fam, demo] = await Promise.all([
-      getAggregatedData(),
-      listProperties(),
-      listInsurancePolicies(),
-      listEstateDocuments(),
+      getAggregatedData().catch(() => null),
+      listProperties().catch(() => ({ properties: [] })),
+      listInsurancePolicies().catch(() => ({ policies: [] })),
+      listEstateDocuments().catch(() => ({ documents: [] })),
       listFamilyMembers().catch(() => ({ members: [] as unknown[] })),
       hasDemoData().catch(() => ({ hasDemo: false })),
     ]);
     setAggregated(agg);
-    setProperties((props.properties ?? []) as typeof properties);
-    setPolicies((ins.policies ?? []) as typeof policies);
-    setDocuments((est.documents ?? []) as typeof documents);
+    setProperties((props?.properties ?? []) as typeof properties);
+    setPolicies((ins?.policies ?? []) as typeof policies);
+    setDocuments((est?.documents ?? []) as typeof documents);
     setFamilyCount(((fam as { members?: unknown[] }).members ?? []).length);
     setDemoLoaded(!!(demo as { hasDemo?: boolean }).hasDemo);
   }, []);
