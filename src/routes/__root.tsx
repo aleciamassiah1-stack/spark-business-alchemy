@@ -56,6 +56,7 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: "A private bank in your pocket. Manage investments, insurance, trust, and estate from a single luxury interface." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f6acb342-cc7c-4cfa-b76e-8dab9d59e8a3/id-preview-7576f6af--70e40dda-83f0-429c-bb3e-310f288f91fb.lovable.app-1776981781490.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f6acb342-cc7c-4cfa-b76e-8dab9d59e8a3/id-preview-7576f6af--70e40dda-83f0-429c-bb3e-310f288f91fb.lovable.app-1776981781490.png" },
+      { name: "google-site-verification", content: "0HKp25FrwxgliZbXqOcL1llP24IZ08ZPGR-TgZBY0GY" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
