@@ -77,6 +77,8 @@ export async function seedDemo() {
     baths: 3.5,
     sqft: 4_200,
     last_valued_at: now,
+    image_url:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
   });
 
   await supabaseAdmin.from("insurance_policies").insert({
