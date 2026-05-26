@@ -755,16 +755,21 @@ function PropertyCard({
     <LuxCard delay={delay} className="overflow-hidden">
       {/* Photo */}
       <div className="relative h-40 w-full overflow-hidden bg-white/[0.03]">
-        {property.image_url ? (
-          <img
-            src={property.image_url}
-            alt={property.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <Home className="h-8 w-8 text-muted-foreground" />
+        <img
+          src={
+            property.image_url ||
+            `https://source.unsplash.com/800x400/?luxury,home,architecture&sig=${property.id}`
+          }
+          alt={property.name}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+        {!property.image_url && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Home className="h-8 w-8 text-muted-foreground/40" />
           </div>
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
