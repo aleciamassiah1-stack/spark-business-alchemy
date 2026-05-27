@@ -599,7 +599,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/signin`,
+            // Land users back inside the app authenticated — no manual re-login.
+            // Supabase exchanges the token in the link for a session at this URL,
+            // and RequireOnboarding routes them onward (e.g. /pricing).
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
             },
