@@ -1121,6 +1121,33 @@ export function Welcome({
           <Badge label="FINRA Compliant" />
         </div>
 
+        {!iosNative && (
+          <div className="flex flex-col items-center gap-2 pt-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Also available on iPhone
+            </p>
+            <a
+              href="https://apps.apple.com/us/app/aether-wealth/id6769043741"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Download Æther Wealth on the App Store"
+              className="group inline-flex items-center gap-3 rounded-xl border border-white/[0.12] bg-black px-4 py-2.5 transition-all hover:border-white/[0.25] hover:bg-black/80"
+            >
+              <svg viewBox="0 0 24 24" className="h-7 w-7 text-foreground" fill="currentColor" aria-hidden>
+                <path d="M17.05 12.04c-.03-2.92 2.39-4.33 2.5-4.4-1.36-1.99-3.48-2.26-4.24-2.29-1.8-.18-3.52 1.06-4.44 1.06-.92 0-2.33-1.03-3.83-1-1.97.03-3.79 1.15-4.8 2.91-2.04 3.55-.52 8.81 1.47 11.7.97 1.41 2.13 3 3.65 2.94 1.46-.06 2.02-.95 3.79-.95s2.27.95 3.82.92c1.58-.03 2.58-1.44 3.55-2.86 1.12-1.64 1.58-3.23 1.6-3.31-.03-.02-3.07-1.18-3.1-4.72zM14.13 4.32c.8-.99 1.34-2.35 1.19-3.71-1.15.05-2.55.78-3.38 1.76-.74.87-1.39 2.27-1.22 3.6 1.29.1 2.6-.66 3.41-1.65z"/>
+              </svg>
+              <div className="flex flex-col items-start leading-tight">
+                <span className="font-sans text-[9px] uppercase tracking-wider text-muted-foreground">
+                  Download on the
+                </span>
+                <span className="font-sans text-base font-semibold text-foreground">
+                  App Store
+                </span>
+              </div>
+            </a>
+          </div>
+        )}
+
         <div className="flex flex-col items-center gap-2 pt-5">
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             <Link to="/terms" className="transition-colors hover:text-foreground">
