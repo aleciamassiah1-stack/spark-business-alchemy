@@ -28,13 +28,14 @@ function VerifyEmailRoute() {
     }
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
-  // Poll for confirmation so this tab unlocks the moment the user clicks the
-  // link in their email (in another tab, on their phone, etc.) — no need to
-  // come back here manually.
+  // Detect confirmation the moment it happens — via auth events (session
+  // updates from any tab/device), visibility/focus (user returns to this
+  // tab), and a short polling fallback.
   useEffect(() => {
     if (!auth.ready || !auth.user || auth.emailConfirmed) return;
     let cancelled = false;
-    const tick = async () => {
+
+    const check = async () => {
       try {
         const { data } = await supabase.auth.refreshSession();
         if (cancelled) return;
@@ -45,13 +46,33 @@ function VerifyEmailRoute() {
         // ignore transient errors
       }
     };
-    const id = window.setInterval(tick, 3000);
-    const onFocus = () => void tick();
+
+    // Fast poll so confirmation in another tab/device flips this view quickly.
+    const id = window.setInterval(check, 1500);
+
+    // Realtime: Supabase fires USER_UPDATED / TOKEN_REFRESHED when the session
+    // reflects the new email_confirmed_at — flip immediately.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.email_confirmed_at) {
+        navigate({ to: "/" });
+      }
+    });
+
+    const onFocus = () => void check();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
     window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+
+    void check();
+
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      sub.subscription.unsubscribe();
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [auth.ready, auth.user, auth.emailConfirmed, navigate]);
 
