@@ -64,7 +64,7 @@ function VerifyEmailRoute() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${window.location.origin}/signin` },
+      options: { emailRedirectTo: `${window.location.origin}/` },
     });
     setResending(false);
     setMsg(error ? error.message : "Verification email resent. Check your inbox.");
