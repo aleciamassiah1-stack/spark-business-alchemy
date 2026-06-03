@@ -1,4 +1,5 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 // Attach baseline security headers to every server response (SSR pages,
 // server functions, and server routes). Uses CSP frame-ancestors instead of
@@ -26,5 +27,6 @@ const securityHeaders = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
+  functionMiddleware: [attachSupabaseAuth],
   requestMiddleware: [securityHeaders],
 }));
