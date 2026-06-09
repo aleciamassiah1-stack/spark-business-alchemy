@@ -25,7 +25,8 @@ import { LegalFooter } from "@/components/LegalFooter";
 import logoUrl from "@/assets/aether-logo.png";
 
 const DEMO_MAILTO =
-  "mailto:demo@aetherwealth.co?subject=Schedule%20a%20Private%20Demo&body=Hello%20%C3%86ther%2C%0A%0AI%27d%20like%20to%20schedule%20a%20private%20demo.";
+  "mailto:team@aetherwealth.co?subject=Schedule%20a%20Private%20Demo&body=Hello%20%C3%86ther%2C%0A%0AI%27d%20like%20to%20schedule%20a%20private%20demo.";
+const CONTACT_MAILTO = "mailto:team@aetherwealth.co";
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -298,21 +299,25 @@ function Audiences() {
       icon: Users,
       title: "Families",
       copy: "Keep everything important organized and accessible.",
+      to: "/portals/families" as const,
     },
     {
       icon: Scroll,
       title: "Estate Planning Attorneys",
       copy: "Extend client relationships beyond the estate plan.",
+      to: "/portals/attorneys" as const,
     },
     {
       icon: Briefcase,
       title: "Financial Advisors",
       copy: "Deliver a premium client experience and strengthen retention.",
+      to: "/portals/advisors" as const,
     },
     {
       icon: Landmark,
       title: "Family Offices",
       copy: "Manage complex family information from a single source of truth.",
+      to: "/portals/family-offices" as const,
     },
   ];
 
@@ -328,14 +333,21 @@ function Audiences() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-              className="group gradient-card relative overflow-hidden rounded-2xl border border-white/[0.06] p-7 transition-all hover:border-white/[0.14]"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-105">
-                <c.icon className="h-5 w-5" />
-              </div>
-              <h3 className="mt-5 font-serif text-xl text-foreground">{c.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.copy}</p>
-              <div className="pointer-events-none absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity group-hover:opacity-100" />
+              <Link
+                to={c.to}
+                className="group gradient-card relative block overflow-hidden rounded-2xl border border-white/[0.06] p-7 transition-all hover:border-white/[0.14]"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-105">
+                  <c.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 font-serif text-xl text-foreground">{c.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.copy}</p>
+                <div className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-80 transition-opacity group-hover:opacity-100">
+                  Explore portal <ArrowRight className="h-3 w-3" />
+                </div>
+                <div className="pointer-events-none absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity group-hover:opacity-100" />
+              </Link>
             </motion.div>
           ))}
         </div>
@@ -492,12 +504,12 @@ function Benefits() {
 
 function Partners() {
   const partners = [
-    { icon: Scroll, label: "Estate Planning Attorneys" },
-    { icon: Briefcase, label: "Financial Advisors" },
-    { icon: Landmark, label: "Family Offices" },
-    { icon: Calculator, label: "CPAs" },
-    { icon: Umbrella, label: "Insurance Professionals" },
-    { icon: Building2, label: "Household Managers" },
+    { icon: Scroll, label: "Estate Planning Attorneys", to: "/portals/attorneys" as const },
+    { icon: Briefcase, label: "Financial Advisors", to: "/portals/advisors" as const },
+    { icon: Landmark, label: "Family Offices", to: "/portals/family-offices" as const },
+    { icon: Calculator, label: "CPAs", to: "/portals/cpas" as const },
+    { icon: Umbrella, label: "Insurance Professionals", to: "/portals/insurance" as const },
+    { icon: Building2, label: "Household Managers", to: "/portals/household-managers" as const },
   ];
 
   return (
@@ -515,12 +527,16 @@ function Partners() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
-              className="gradient-card flex flex-col items-center justify-center gap-3 px-6 py-10 text-center"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold">
-                <p.icon className="h-5 w-5" />
-              </div>
-              <p className="font-serif text-base text-foreground">{p.label}</p>
+              <Link
+                to={p.to}
+                className="gradient-card group flex h-full flex-col items-center justify-center gap-3 px-6 py-10 text-center transition-colors hover:bg-white/[0.03]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold transition-transform group-hover:scale-105">
+                  <p.icon className="h-5 w-5" />
+                </div>
+                <p className="font-serif text-base text-foreground">{p.label}</p>
+              </Link>
             </motion.div>
           ))}
         </div>
@@ -561,7 +577,7 @@ function FinalCta() {
                 Request a Private Demo <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href="mailto:hello@aetherwealth.co"
+                href={CONTACT_MAILTO}
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-white/[0.06]"
               >
                 <Mail className="h-4 w-4" /> Contact Æther
