@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { verifyPlaidWebhook } from "@/lib/plaid-webhook-verify.server";
 
 // Plaid Item-level webhooks that signal a re-auth is needed.
 // Docs: https://plaid.com/docs/api/items/#item-webhooks
@@ -13,9 +14,19 @@ export const Route = createFileRoute("/api/public/plaid-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Read raw body for signature verification (must be exact bytes Plaid signed)
+        const rawBody = await request.text();
+
+        const verificationHeader = request.headers.get("Plaid-Verification");
+        const verified = await verifyPlaidWebhook(verificationHeader, rawBody);
+        if (!verified) {
+          console.warn("[plaid-webhook] rejected: invalid or missing Plaid-Verification");
+          return new Response("unauthorized", { status: 401 });
+        }
+
         let payload: Record<string, unknown>;
         try {
-          payload = (await request.json()) as Record<string, unknown>;
+          payload = JSON.parse(rawBody) as Record<string, unknown>;
         } catch {
           return new Response("invalid json", { status: 400 });
         }
