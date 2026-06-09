@@ -504,12 +504,12 @@ function Benefits() {
 
 function Partners() {
   const partners = [
-    { icon: Scroll, label: "Estate Planning Attorneys" },
-    { icon: Briefcase, label: "Financial Advisors" },
-    { icon: Landmark, label: "Family Offices" },
-    { icon: Calculator, label: "CPAs" },
-    { icon: Umbrella, label: "Insurance Professionals" },
-    { icon: Building2, label: "Household Managers" },
+    { icon: Scroll, label: "Estate Planning Attorneys", to: "/portals/attorneys" as const },
+    { icon: Briefcase, label: "Financial Advisors", to: "/portals/advisors" as const },
+    { icon: Landmark, label: "Family Offices", to: "/portals/family-offices" as const },
+    { icon: Calculator, label: "CPAs", to: "/portals/cpas" as const },
+    { icon: Umbrella, label: "Insurance Professionals", to: "/portals/insurance" as const },
+    { icon: Building2, label: "Household Managers", to: "/portals/household-managers" as const },
   ];
 
   return (
@@ -527,12 +527,16 @@ function Partners() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
-              className="gradient-card flex flex-col items-center justify-center gap-3 px-6 py-10 text-center"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold">
-                <p.icon className="h-5 w-5" />
-              </div>
-              <p className="font-serif text-base text-foreground">{p.label}</p>
+              <Link
+                to={p.to}
+                className="gradient-card group flex h-full flex-col items-center justify-center gap-3 px-6 py-10 text-center transition-colors hover:bg-white/[0.03]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold transition-transform group-hover:scale-105">
+                  <p.icon className="h-5 w-5" />
+                </div>
+                <p className="font-serif text-base text-foreground">{p.label}</p>
+              </Link>
             </motion.div>
           ))}
         </div>
