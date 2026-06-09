@@ -20,6 +20,51 @@ function redactEmail(email: string | null | undefined): string {
   return `${localPart[0]}***@${domain}`
 }
 
+// Hostnames allowed to appear inside any URL field of templateData (e.g. actionUrl).
+// Rejects attempts to send branded emails containing attacker-controlled links.
+const ALLOWED_URL_HOSTS: ReadonlyArray<string | RegExp> = [
+  "aetherwealth.co",
+  /\.aetherwealth\.co$/,
+  /\.lovable\.app$/,
+  /\.lovableproject\.com$/,
+]
+
+function isAllowedHost(host: string): boolean {
+  const h = host.toLowerCase()
+  return ALLOWED_URL_HOSTS.some((rule) =>
+    typeof rule === "string" ? h === rule : rule.test(h),
+  )
+}
+
+/**
+ * Walk templateData and reject if any string value parses as an http(s) URL
+ * whose host is not on the allowlist. Prevents authenticated callers from
+ * smuggling phishing links into branded emails.
+ */
+function templateDataContainsDisallowedUrl(data: Record<string, any>): string | null {
+  const stack: unknown[] = [data]
+  while (stack.length) {
+    const v = stack.pop()
+    if (v == null) continue
+    if (typeof v === "string") {
+      const trimmed = v.trim()
+      if (/^https?:\/\//i.test(trimmed)) {
+        try {
+          const u = new URL(trimmed)
+          if (!isAllowedHost(u.hostname)) return u.hostname
+        } catch {
+          return "invalid"
+        }
+      }
+    } else if (Array.isArray(v)) {
+      for (const x of v) stack.push(x)
+    } else if (typeof v === "object") {
+      for (const x of Object.values(v as Record<string, unknown>)) stack.push(x)
+    }
+  }
+  return null
+}
+
 // Generate a cryptographically random 32-byte hex token
 function generateToken(): string {
   const bytes = new Uint8Array(32)
@@ -98,6 +143,41 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
               error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}`,
             },
             { status: 404 }
+          )
+        }
+
+        // Security: templates without a fixed recipient let the caller fully
+        // control where Æther-branded mail is sent. Restrict those to admins.
+        if (!template.to) {
+          const { data: isAdminRole } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin',
+          })
+          if (!isAdminRole) {
+            console.warn('Non-admin attempted open-recipient template', {
+              templateName,
+              user_id: user.id,
+            })
+            return Response.json(
+              { error: 'Forbidden: this template can only be sent by administrators' },
+              { status: 403 }
+            )
+          }
+        }
+
+        // Security: reject any URL in templateData that points outside our
+        // allowed hosts. Prevents authenticated callers from smuggling
+        // phishing links into Æther-branded transactional mail.
+        const badHost = templateDataContainsDisallowedUrl(templateData)
+        if (badHost) {
+          console.warn('Rejected templateData with disallowed URL host', {
+            templateName,
+            host: badHost,
+            user_id: user.id,
+          })
+          return Response.json(
+            { error: `templateData contains a URL pointing to a disallowed host: ${badHost}` },
+            { status: 400 }
           )
         }
 
