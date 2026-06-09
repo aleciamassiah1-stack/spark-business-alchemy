@@ -37,11 +37,11 @@ const primary = [
   { to: "/notifications", label: "Notifications", icon: Bell, exact: false },
 ] as const;
 
-const secondary: NavItem[] = [
-  { to: "/pricing", label: "Pricing", icon: Sparkles },
-  { to: "/support", label: "Support", icon: LifeBuoy },
-  { to: "/more", label: "Settings", icon: Settings },
-];
+const secondary = [
+  { to: "/pricing", label: "Pricing", icon: Sparkles, exact: false },
+  { to: "/support", label: "Support", icon: LifeBuoy, exact: false },
+  { to: "/more", label: "Settings", icon: Settings, exact: false },
+] as const;
 
 export function AppSidebar() {
   const { state } = useSidebar();
