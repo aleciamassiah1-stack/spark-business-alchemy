@@ -146,6 +146,41 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
+        // Security: templates without a fixed recipient let the caller fully
+        // control where Æther-branded mail is sent. Restrict those to admins.
+        if (!template.to) {
+          const { data: isAdminRole } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin',
+          })
+          if (!isAdminRole) {
+            console.warn('Non-admin attempted open-recipient template', {
+              templateName,
+              user_id: user.id,
+            })
+            return Response.json(
+              { error: 'Forbidden: this template can only be sent by administrators' },
+              { status: 403 }
+            )
+          }
+        }
+
+        // Security: reject any URL in templateData that points outside our
+        // allowed hosts. Prevents authenticated callers from smuggling
+        // phishing links into Æther-branded transactional mail.
+        const badHost = templateDataContainsDisallowedUrl(templateData)
+        if (badHost) {
+          console.warn('Rejected templateData with disallowed URL host', {
+            templateName,
+            host: badHost,
+            user_id: user.id,
+          })
+          return Response.json(
+            { error: `templateData contains a URL pointing to a disallowed host: ${badHost}` },
+            { status: 400 }
+          )
+        }
+
         // Resolve effective recipient: template-level `to` takes precedence over
         // the caller-provided recipientEmail. This allows notification templates
         // to always send to a fixed address (e.g., site owner from env var).
