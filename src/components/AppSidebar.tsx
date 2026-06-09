@@ -26,18 +26,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-type NavItem = { to: string; label: string; icon: typeof Home; exact?: boolean };
-
-const primary: NavItem[] = [
+const primary = [
   { to: "/", label: "Overview", icon: Home, exact: true },
-  { to: "/portfolio", label: "Portfolio", icon: TrendingUp },
-  { to: "/business", label: "Business", icon: Briefcase },
-  { to: "/protect", label: "Protect", icon: Shield },
-  { to: "/legacy", label: "Legacy", icon: Scroll },
-  { to: "/family", label: "Family", icon: Users },
-  { to: "/connections", label: "Connections", icon: Link2 },
-  { to: "/notifications", label: "Notifications", icon: Bell },
-];
+  { to: "/portfolio", label: "Portfolio", icon: TrendingUp, exact: false },
+  { to: "/business", label: "Business", icon: Briefcase, exact: false },
+  { to: "/protect", label: "Protect", icon: Shield, exact: false },
+  { to: "/legacy", label: "Legacy", icon: Scroll, exact: false },
+  { to: "/family", label: "Family", icon: Users, exact: false },
+  { to: "/connections", label: "Connections", icon: Link2, exact: false },
+  { to: "/notifications", label: "Notifications", icon: Bell, exact: false },
+] as const;
 
 const secondary: NavItem[] = [
   { to: "/pricing", label: "Pricing", icon: Sparkles },
