@@ -108,7 +108,7 @@ function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
@@ -180,7 +180,7 @@ function HeroMockup() {
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
       className="relative"
     >
       <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-primary/10 blur-3xl" />
@@ -215,7 +215,7 @@ function HeroMockup() {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: "94%" }}
-              transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
               className="h-full gradient-violet"
             />
           </div>
@@ -327,7 +327,7 @@ function Audiences() {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
               className="group gradient-card relative overflow-hidden rounded-2xl border border-white/[0.06] p-7 transition-all hover:border-white/[0.14]"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-105">
