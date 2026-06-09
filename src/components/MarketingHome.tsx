@@ -299,21 +299,25 @@ function Audiences() {
       icon: Users,
       title: "Families",
       copy: "Keep everything important organized and accessible.",
+      to: "/portals/families" as const,
     },
     {
       icon: Scroll,
       title: "Estate Planning Attorneys",
       copy: "Extend client relationships beyond the estate plan.",
+      to: "/portals/attorneys" as const,
     },
     {
       icon: Briefcase,
       title: "Financial Advisors",
       copy: "Deliver a premium client experience and strengthen retention.",
+      to: "/portals/advisors" as const,
     },
     {
       icon: Landmark,
       title: "Family Offices",
       copy: "Manage complex family information from a single source of truth.",
+      to: "/portals/family-offices" as const,
     },
   ];
 
@@ -329,14 +333,21 @@ function Audiences() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-              className="group gradient-card relative overflow-hidden rounded-2xl border border-white/[0.06] p-7 transition-all hover:border-white/[0.14]"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-105">
-                <c.icon className="h-5 w-5" />
-              </div>
-              <h3 className="mt-5 font-serif text-xl text-foreground">{c.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.copy}</p>
-              <div className="pointer-events-none absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity group-hover:opacity-100" />
+              <Link
+                to={c.to}
+                className="group gradient-card relative block overflow-hidden rounded-2xl border border-white/[0.06] p-7 transition-all hover:border-white/[0.14]"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-105">
+                  <c.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 font-serif text-xl text-foreground">{c.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.copy}</p>
+                <div className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-80 transition-opacity group-hover:opacity-100">
+                  Explore portal <ArrowRight className="h-3 w-3" />
+                </div>
+                <div className="pointer-events-none absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity group-hover:opacity-100" />
+              </Link>
             </motion.div>
           ))}
         </div>
