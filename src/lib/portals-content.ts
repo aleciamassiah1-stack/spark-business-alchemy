@@ -208,4 +208,3 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
   },
 };
 
-void Mail;
