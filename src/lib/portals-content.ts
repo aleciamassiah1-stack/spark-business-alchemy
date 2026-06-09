@@ -14,7 +14,6 @@ import {
   FileText,
   HeartHandshake,
   Wallet,
-  Mail,
   type LucideIcon,
 } from "lucide-react";
 import type { PortalContent } from "@/components/AudiencePortal";
