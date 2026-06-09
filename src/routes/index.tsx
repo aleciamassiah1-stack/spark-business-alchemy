@@ -35,10 +35,10 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Æther Wealth — Private Wealth Overview" },
-      { name: "description", content: "A private bank in your pocket. Track investments, insurance, trust and estate from one elegant, secure dashboard." },
-      { property: "og:title", content: "Æther Wealth — Private Wealth Overview" },
-      { property: "og:description", content: "A private bank in your pocket. Track investments, insurance, trust and estate from one elegant, secure dashboard." },
+      { title: "Æther — The Operating System for Family Legacy Management" },
+      { name: "description", content: "Organize your financial, legal, property, insurance, and family information in one secure platform. Built for families, advisors, attorneys, and family offices." },
+      { property: "og:title", content: "Æther — The Operating System for Family Legacy Management" },
+      { property: "og:description", content: "Centralize important information, simplify succession planning, and preserve what matters most." },
       { property: "og:url", content: "https://aetherwealth.co/" },
     ],
     links: [{ rel: "canonical", href: "https://aetherwealth.co/" }],
@@ -47,6 +47,9 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeRoute() {
+  const auth = useAuth();
+  if (!auth.ready) return null;
+  if (!auth.user) return <MarketingHome />;
   return (
     <RequireOnboarding>
       <HomePage />
