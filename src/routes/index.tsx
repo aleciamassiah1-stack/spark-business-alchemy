@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ArrowRight, TrendingUp, Shield, Scroll, Wallet, Plus, RefreshCw, Crown } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { MarketingHome } from "@/components/MarketingHome";
 
 
 import { useAccess } from "@/lib/access-context";
