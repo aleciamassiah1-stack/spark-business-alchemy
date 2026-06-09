@@ -78,6 +78,15 @@
   --input: oklch(0.28 0.03 280);
   --ring: oklch(0.68 0.13 295);
 
+  --sidebar: oklch(0.14 0.02 280);
+  --sidebar-foreground: oklch(0.92 0.01 280);
+  --sidebar-primary: oklch(0.68 0.13 295);
+  --sidebar-primary-foreground: oklch(0.12 0.02 280);
+  --sidebar-accent: oklch(0.24 0.04 290);
+  --sidebar-accent-foreground: oklch(0.96 0.01 280);
+  --sidebar-border: oklch(0.28 0.03 280 / 60%);
+  --sidebar-ring: oklch(0.68 0.13 295);
+
   --font-serif: "Cormorant Garamond", "Times New Roman", serif;
   --font-mono: "JetBrains Mono", "Menlo", monospace;
   --font-sans: "Inter", system-ui, sans-serif;
