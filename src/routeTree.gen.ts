@@ -41,6 +41,13 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortalsInsuranceRouteImport } from './routes/portals.insurance'
+import { Route as PortalsHouseholdManagersRouteImport } from './routes/portals.household-managers'
+import { Route as PortalsFamilyOfficesRouteImport } from './routes/portals.family-offices'
+import { Route as PortalsFamiliesRouteImport } from './routes/portals.families'
+import { Route as PortalsCpasRouteImport } from './routes/portals.cpas'
+import { Route as PortalsAttorneysRouteImport } from './routes/portals.attorneys'
+import { Route as PortalsAdvisorsRouteImport } from './routes/portals.advisors'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
@@ -217,6 +224,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalsInsuranceRoute = PortalsInsuranceRouteImport.update({
+  id: '/portals/insurance',
+  path: '/portals/insurance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalsHouseholdManagersRoute =
+  PortalsHouseholdManagersRouteImport.update({
+    id: '/portals/household-managers',
+    path: '/portals/household-managers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PortalsFamilyOfficesRoute = PortalsFamilyOfficesRouteImport.update({
+  id: '/portals/family-offices',
+  path: '/portals/family-offices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalsFamiliesRoute = PortalsFamiliesRouteImport.update({
+  id: '/portals/families',
+  path: '/portals/families',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalsCpasRoute = PortalsCpasRouteImport.update({
+  id: '/portals/cpas',
+  path: '/portals/cpas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalsAttorneysRoute = PortalsAttorneysRouteImport.update({
+  id: '/portals/attorneys',
+  path: '/portals/attorneys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalsAdvisorsRoute = PortalsAdvisorsRouteImport.update({
+  id: '/portals/advisors',
+  path: '/portals/advisors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -337,6 +380,13 @@ export interface FileRoutesByFullPath {
   '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/portals/advisors': typeof PortalsAdvisorsRoute
+  '/portals/attorneys': typeof PortalsAttorneysRoute
+  '/portals/cpas': typeof PortalsCpasRoute
+  '/portals/families': typeof PortalsFamiliesRoute
+  '/portals/family-offices': typeof PortalsFamilyOfficesRoute
+  '/portals/household-managers': typeof PortalsHouseholdManagersRoute
+  '/portals/insurance': typeof PortalsInsuranceRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -386,6 +436,13 @@ export interface FileRoutesByTo {
   '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/portals/advisors': typeof PortalsAdvisorsRoute
+  '/portals/attorneys': typeof PortalsAttorneysRoute
+  '/portals/cpas': typeof PortalsCpasRoute
+  '/portals/families': typeof PortalsFamiliesRoute
+  '/portals/family-offices': typeof PortalsFamilyOfficesRoute
+  '/portals/household-managers': typeof PortalsHouseholdManagersRoute
+  '/portals/insurance': typeof PortalsInsuranceRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -436,6 +493,13 @@ export interface FileRoutesById {
   '/admin/requests': typeof AdminRequestsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/portals/advisors': typeof PortalsAdvisorsRoute
+  '/portals/attorneys': typeof PortalsAttorneysRoute
+  '/portals/cpas': typeof PortalsCpasRoute
+  '/portals/families': typeof PortalsFamiliesRoute
+  '/portals/family-offices': typeof PortalsFamilyOfficesRoute
+  '/portals/household-managers': typeof PortalsHouseholdManagersRoute
+  '/portals/insurance': typeof PortalsInsuranceRoute
   '/api/public/plaid-retention-sweep': typeof ApiPublicPlaidRetentionSweepRoute
   '/api/public/plaid-webhook': typeof ApiPublicPlaidWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -487,6 +551,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/portals/advisors'
+    | '/portals/attorneys'
+    | '/portals/cpas'
+    | '/portals/families'
+    | '/portals/family-offices'
+    | '/portals/household-managers'
+    | '/portals/insurance'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
@@ -536,6 +607,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/portals/advisors'
+    | '/portals/attorneys'
+    | '/portals/cpas'
+    | '/portals/families'
+    | '/portals/family-offices'
+    | '/portals/household-managers'
+    | '/portals/insurance'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
@@ -585,6 +663,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/checkout/return'
     | '/email/unsubscribe'
+    | '/portals/advisors'
+    | '/portals/attorneys'
+    | '/portals/cpas'
+    | '/portals/families'
+    | '/portals/family-offices'
+    | '/portals/household-managers'
+    | '/portals/insurance'
     | '/api/public/plaid-retention-sweep'
     | '/api/public/plaid-webhook'
     | '/lovable/email/suppression'
@@ -631,6 +716,13 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  PortalsAdvisorsRoute: typeof PortalsAdvisorsRoute
+  PortalsAttorneysRoute: typeof PortalsAttorneysRoute
+  PortalsCpasRoute: typeof PortalsCpasRoute
+  PortalsFamiliesRoute: typeof PortalsFamiliesRoute
+  PortalsFamilyOfficesRoute: typeof PortalsFamilyOfficesRoute
+  PortalsHouseholdManagersRoute: typeof PortalsHouseholdManagersRoute
+  PortalsInsuranceRoute: typeof PortalsInsuranceRoute
   ApiPublicPlaidRetentionSweepRoute: typeof ApiPublicPlaidRetentionSweepRoute
   ApiPublicPlaidWebhookRoute: typeof ApiPublicPlaidWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -868,6 +960,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portals/insurance': {
+      id: '/portals/insurance'
+      path: '/portals/insurance'
+      fullPath: '/portals/insurance'
+      preLoaderRoute: typeof PortalsInsuranceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/household-managers': {
+      id: '/portals/household-managers'
+      path: '/portals/household-managers'
+      fullPath: '/portals/household-managers'
+      preLoaderRoute: typeof PortalsHouseholdManagersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/family-offices': {
+      id: '/portals/family-offices'
+      path: '/portals/family-offices'
+      fullPath: '/portals/family-offices'
+      preLoaderRoute: typeof PortalsFamilyOfficesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/families': {
+      id: '/portals/families'
+      path: '/portals/families'
+      fullPath: '/portals/families'
+      preLoaderRoute: typeof PortalsFamiliesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/cpas': {
+      id: '/portals/cpas'
+      path: '/portals/cpas'
+      fullPath: '/portals/cpas'
+      preLoaderRoute: typeof PortalsCpasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/attorneys': {
+      id: '/portals/attorneys'
+      path: '/portals/attorneys'
+      fullPath: '/portals/attorneys'
+      preLoaderRoute: typeof PortalsAttorneysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portals/advisors': {
+      id: '/portals/advisors'
+      path: '/portals/advisors'
+      fullPath: '/portals/advisors'
+      preLoaderRoute: typeof PortalsAdvisorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -1027,6 +1168,13 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  PortalsAdvisorsRoute: PortalsAdvisorsRoute,
+  PortalsAttorneysRoute: PortalsAttorneysRoute,
+  PortalsCpasRoute: PortalsCpasRoute,
+  PortalsFamiliesRoute: PortalsFamiliesRoute,
+  PortalsFamilyOfficesRoute: PortalsFamilyOfficesRoute,
+  PortalsHouseholdManagersRoute: PortalsHouseholdManagersRoute,
+  PortalsInsuranceRoute: PortalsInsuranceRoute,
   ApiPublicPlaidRetentionSweepRoute: ApiPublicPlaidRetentionSweepRoute,
   ApiPublicPlaidWebhookRoute: ApiPublicPlaidWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
@@ -1040,3 +1188,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

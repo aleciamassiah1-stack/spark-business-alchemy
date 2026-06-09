@@ -25,7 +25,8 @@ import { LegalFooter } from "@/components/LegalFooter";
 import logoUrl from "@/assets/aether-logo.png";
 
 const DEMO_MAILTO =
-  "mailto:demo@aetherwealth.co?subject=Schedule%20a%20Private%20Demo&body=Hello%20%C3%86ther%2C%0A%0AI%27d%20like%20to%20schedule%20a%20private%20demo.";
+  "mailto:team@aetherwealth.co?subject=Schedule%20a%20Private%20Demo&body=Hello%20%C3%86ther%2C%0A%0AI%27d%20like%20to%20schedule%20a%20private%20demo.";
+const CONTACT_MAILTO = "mailto:team@aetherwealth.co";
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
