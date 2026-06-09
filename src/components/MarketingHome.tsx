@@ -562,7 +562,7 @@ function FinalCta() {
                 Request a Private Demo <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href="mailto:hello@aetherwealth.co"
+                href={CONTACT_MAILTO}
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-white/[0.06]"
               >
                 <Mail className="h-4 w-4" /> Contact Æther
