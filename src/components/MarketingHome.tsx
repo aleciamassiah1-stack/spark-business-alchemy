@@ -75,6 +75,8 @@ function Nav() {
           <img src={logoUrl} alt="Æther" className="h-7 w-7" />
           <span className="font-serif text-xl tracking-tight text-foreground">Æther</span>
         </Link>
+
+        {/* Desktop nav */}
         <nav className="hidden items-center gap-8 md:flex">
           <a href="#who" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Who it's for
@@ -85,16 +87,23 @@ function Nav() {
           <a href="#partners" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Partners
           </a>
-          <Link to="/signin" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+        </nav>
+
+        {/* Auth + CTA — always visible */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/signin"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
             Sign in
           </Link>
-        </nav>
-        <a
-          href={DEMO_MAILTO}
-          className="hidden items-center gap-1.5 rounded-full bg-foreground/95 px-4 py-2 text-xs font-medium text-background transition-all hover:bg-foreground md:inline-flex"
-        >
-          Schedule a Demo <ArrowRight className="h-3.5 w-3.5" />
-        </a>
+          <Link
+            to="/signup"
+            className="rounded-full bg-foreground/95 px-4 py-2 text-xs font-medium text-background transition-all hover:bg-foreground"
+          >
+            Get Started
+          </Link>
+        </div>
       </div>
     </header>
   );
