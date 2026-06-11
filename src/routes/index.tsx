@@ -36,9 +36,9 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Æther Wealth — The Operating System for Family Legacy Management" },
+      { title: "Æther Wealth — The Family Office Operating System" },
       { name: "description", content: "Organize your financial, legal, property, insurance, and family information in one secure platform. Built for families, advisors, attorneys, and family offices." },
-      { property: "og:title", content: "Æther Wealth — The Operating System for Family Legacy Management" },
+      { property: "og:title", content: "Æther Wealth — The Family Office Operating System" },
       { property: "og:description", content: "Centralize important information, simplify succession planning, and preserve what matters most." },
       { property: "og:url", content: "https://aetherwealth.co/" },
     ],
