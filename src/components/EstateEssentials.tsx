@@ -83,6 +83,7 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
