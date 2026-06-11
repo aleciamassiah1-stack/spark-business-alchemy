@@ -7,7 +7,7 @@ const content = PORTAL_CONTENT["advisors"];
 export const Route = createFileRoute("/portals/advisors")({
   head: () => ({
     meta: [
-      { title: `${content.title} — Æther` },
+      { title: "For Financial Advisors — Æther Wealth" },
       { name: "description", content: content.subtitle },
       { property: "og:title", content: `Æther — ${content.eyebrow}` },
       { property: "og:description", content: content.subtitle },
