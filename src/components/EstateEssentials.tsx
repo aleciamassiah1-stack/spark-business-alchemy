@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Scroll, Upload, Users, Sparkles, Loader2, ChevronRight, Clock, FileText } from "lucide-react";
+import { Scroll, Upload, Users, Sparkles, Loader2, ChevronRight, Clock, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { LuxCard } from "@/components/LuxCard";
+import { EstatePlanSummaryModal } from "@/components/EstatePlanSummaryModal";
 import { fmtCurrency } from "@/lib/format";
 import {
   listEstateDocuments,
@@ -82,6 +83,7 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -274,6 +276,14 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
                 View current
               </a>
             ) : null}
+            <button
+              type="button"
+              onClick={() => setShowSummary(true)}
+              className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-primary/40 bg-primary/15 px-4 py-2 text-xs font-medium text-primary transition hover:bg-primary/25"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              View summary
+            </button>
             <Link
               to="/legacy"
               className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.06]"
@@ -382,6 +392,7 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
           )}
         </LuxCard>
       </div>
+      {showSummary && <EstatePlanSummaryModal onClose={() => setShowSummary(false)} />}
     </div>
   );
 }

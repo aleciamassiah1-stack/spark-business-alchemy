@@ -202,13 +202,14 @@ function loadPlaidScript(): Promise<void> {
   });
 }
 
-type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity" | "rules";
+type Tab = "accounts" | "properties" | "insurance" | "estate" | "documents" | "activity" | "rules";
 
 const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "accounts", label: "Accounts", icon: Building2 },
   { key: "properties", label: "Property", icon: Home },
   { key: "insurance", label: "Insurance", icon: Shield },
   { key: "estate", label: "Estate", icon: Scroll },
+  { key: "documents", label: "Documents", icon: ListChecks },
   { key: "activity", label: "Activity", icon: Receipt },
   { key: "rules", label: "Rules", icon: Tag },
 ];
@@ -605,6 +606,14 @@ function ConnectionsPage() {
               await deleteEstateDocument({ data: { id } });
               await loadAll();
             }}
+          />
+        )}
+        {tab === "documents" && (
+          <DocumentsTab
+            estateDocs={estateDocs}
+            policies={policies}
+            onGoEstate={() => setTab("estate")}
+            onGoInsurance={() => setTab("insurance")}
           />
         )}
         {tab === "activity" && (
@@ -1989,7 +1998,193 @@ function statusStyle(status: string) {
   return "bg-destructive/15 text-destructive";
 }
 
-// =================== Activity Tab ===================
+// =================== Documents Tab (Unified) ===================
+type UnifiedDoc = {
+  id: string;
+  source: "estate" | "insurance";
+  title: string;
+  subtitle: string;
+  status: string;
+  document_path: string | null;
+  document_url: string | null;
+};
+
+const RECOMMENDED_ESTATE: { type: string; label: string }[] = [
+  { type: "will", label: "Last will & testament" },
+  { type: "trust", label: "Living trust" },
+  { type: "power_of_attorney", label: "Power of attorney" },
+  { type: "healthcare_directive", label: "Healthcare directive" },
+];
+
+const RECOMMENDED_INSURANCE: { type: string; label: string }[] = [
+  { type: "life", label: "Life insurance" },
+  { type: "home", label: "Homeowners insurance" },
+  { type: "auto", label: "Auto insurance" },
+  { type: "umbrella", label: "Umbrella policy" },
+  { type: "disability", label: "Disability insurance" },
+];
+
+function DocumentsTab({
+  estateDocs,
+  policies,
+  onGoEstate,
+  onGoInsurance,
+}: {
+  estateDocs: EstateDoc[];
+  policies: Policy[];
+  onGoEstate: () => void;
+  onGoInsurance: () => void;
+}) {
+  const unified: UnifiedDoc[] = [
+    ...estateDocs.map((d) => ({
+      id: `e-${d.id}`,
+      source: "estate" as const,
+      title: d.title,
+      subtitle: d.document_type.replace(/_/g, " "),
+      status: d.status,
+      document_path: d.document_path,
+      document_url: d.document_url,
+    })),
+    ...policies.map((p) => ({
+      id: `i-${p.id}`,
+      source: "insurance" as const,
+      title: `${p.insurer_name} · ${p.policy_type}`,
+      subtitle: "Insurance policy",
+      status: p.document_url || p.document_path ? "current" : "needs_review",
+      document_path: p.document_path,
+      document_url: p.document_url,
+    })),
+  ];
+
+  const haveEstate = new Set(estateDocs.map((d) => d.document_type));
+  const havePolicy = new Set(policies.map((p) => p.policy_type.toLowerCase()));
+  const missingEstate = RECOMMENDED_ESTATE.filter((r) => !haveEstate.has(r.type));
+  const missingInsurance = RECOMMENDED_INSURANCE.filter((r) => !havePolicy.has(r.type));
+  const totalRecommended = RECOMMENDED_ESTATE.length + RECOMMENDED_INSURANCE.length;
+  const completed = totalRecommended - missingEstate.length - missingInsurance.length;
+  const pct = Math.round((completed / totalRecommended) * 100);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <LuxCard className="p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="label-mono">Vault completeness</p>
+            <p className="mt-1 font-serif text-2xl text-foreground">
+              {completed}/{totalRecommended}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              {unified.length} document{unified.length === 1 ? "" : "s"} on file
+            </p>
+            <p className="font-mono text-xs text-primary">{pct}% complete</p>
+          </div>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
+          <div className="h-full gradient-violet transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      </LuxCard>
+
+      {(missingEstate.length > 0 || missingInsurance.length > 0) && (
+        <div>
+          <p className="label-mono mb-2">Still missing</p>
+          <LuxCard className="p-4">
+            <div className="flex flex-col gap-2">
+              {missingEstate.map((m) => (
+                <button
+                  key={`me-${m.type}`}
+                  onClick={onGoEstate}
+                  className="flex items-center justify-between rounded-xl bg-white/[0.03] p-3 text-left transition hover:bg-white/[0.06]"
+                >
+                  <div className="flex items-center gap-3">
+                    <Circle className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-foreground">{m.label}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Estate</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[10px] font-medium text-primary">Upload</span>
+                </button>
+              ))}
+              {missingInsurance.map((m) => (
+                <button
+                  key={`mi-${m.type}`}
+                  onClick={onGoInsurance}
+                  className="flex items-center justify-between rounded-xl bg-white/[0.03] p-3 text-left transition hover:bg-white/[0.06]"
+                >
+                  <div className="flex items-center gap-3">
+                    <Circle className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-foreground">{m.label}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Insurance</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[10px] font-medium text-primary">Upload</span>
+                </button>
+              ))}
+            </div>
+          </LuxCard>
+        </div>
+      )}
+
+      <div>
+        <p className="label-mono mb-2">All uploaded documents</p>
+        {unified.length === 0 ? (
+          <LuxCard className="p-6 text-center">
+            <ListChecks className="mx-auto h-6 w-6 text-primary" />
+            <p className="mt-3 font-serif text-lg text-foreground">No documents yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Upload your estate docs and insurance policies for a fully operational vault.
+            </p>
+          </LuxCard>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {unified.map((d) => (
+              <LuxCard key={d.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      d.source === "estate" ? "gradient-gold" : "bg-primary/15"
+                    }`}
+                  >
+                    {d.source === "estate" ? (
+                      <Scroll className="h-4 w-4 text-background" />
+                    ) : (
+                      <Shield className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-serif text-sm text-foreground">{d.title}</p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${statusStyle(d.status)}`}
+                      >
+                        {d.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    <p className="text-[11px] capitalize text-muted-foreground">{d.subtitle}</p>
+                  </div>
+                  {(d.document_path || d.document_url) && (
+                    <DocumentLink
+                      documentPath={d.document_path}
+                      fallbackUrl={d.document_url}
+                      ariaLabel="Open document"
+                      className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[10px] font-medium text-foreground hover:bg-white/[0.06]"
+                    >
+                      View
+                    </DocumentLink>
+                  )}
+                </div>
+              </LuxCard>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ActivityTab({
   transactions,
   rules,
