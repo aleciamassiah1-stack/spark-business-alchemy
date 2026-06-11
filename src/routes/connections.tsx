@@ -202,13 +202,14 @@ function loadPlaidScript(): Promise<void> {
   });
 }
 
-type Tab = "accounts" | "properties" | "insurance" | "estate" | "activity" | "rules";
+type Tab = "accounts" | "properties" | "insurance" | "estate" | "documents" | "activity" | "rules";
 
 const TABS: { key: Tab; label: string; icon: typeof Building2 }[] = [
   { key: "accounts", label: "Accounts", icon: Building2 },
   { key: "properties", label: "Property", icon: Home },
   { key: "insurance", label: "Insurance", icon: Shield },
   { key: "estate", label: "Estate", icon: Scroll },
+  { key: "documents", label: "Documents", icon: ListChecks },
   { key: "activity", label: "Activity", icon: Receipt },
   { key: "rules", label: "Rules", icon: Tag },
 ];
