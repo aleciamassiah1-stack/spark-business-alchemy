@@ -109,6 +109,8 @@ function FamilyPage() {
   const [hasSsn4OnFile, setHasSsn4OnFile] = useState(false);
   const [showDobEdit, setShowDobEdit] = useState(false);
   const [selfNetWorth, setSelfNetWorth] = useState(0);
+  const [estateTotal, setEstateTotal] = useState(0);
+  const [beneficiaryCount, setBeneficiaryCount] = useState(0);
 
   const partnersTotal = partners.reduce((s, p) => s + Number(p.net_worth || 0), 0);
   const manualTotal = members.reduce((s, m) => s + Number(m.net_worth || 0), 0);
