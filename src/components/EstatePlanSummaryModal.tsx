@@ -322,10 +322,10 @@ export function EstatePlanSummaryModal({ onClose }: { onClose: () => void }) {
             </LuxCard>
           </div>
 
-          {/* Dying wishes / notes */}
+          {/* Final wishes / notes */}
           <div>
             <p className="label-mono mb-2 flex items-center gap-1.5">
-              <Heart className="h-3 w-3 text-primary" /> Dying wishes &amp; notes
+              <Heart className="h-3 w-3 text-primary" /> Final wishes &amp; notes
             </p>
             <LuxCard className="p-4">
               {wishes.length === 0 ? (
