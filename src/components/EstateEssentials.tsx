@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Scroll, Upload, Users, Sparkles, Loader2, ChevronRight, Clock, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { LuxCard } from "@/components/LuxCard";
