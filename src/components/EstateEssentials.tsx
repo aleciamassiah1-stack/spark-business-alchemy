@@ -77,7 +77,7 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export function EstateEssentials() {
+export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: number, beneficiaryCount: number) => void } = {}) {
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +141,10 @@ export function EstateEssentials() {
   }, [policies]);
 
   const totalEstate = beneficiaries.reduce((s, b) => s + b.total, 0);
+
+  useEffect(() => {
+    onTotalChange?.(totalEstate, beneficiaries.length);
+  }, [totalEstate, beneficiaries.length, onTotalChange]);
 
   async function handleUploadWill(file: File) {
     if (file.size > 15 * 1024 * 1024) {
