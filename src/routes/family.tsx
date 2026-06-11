@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronDown, Pencil, Trash2, X, UserPlus, Check, Clock, ShieldCheck, Unlink } from "lucide-react";
+import { Plus, ChevronDown, Pencil, Trash2, X, UserPlus, Check, Clock, ShieldCheck, Unlink, Scroll, Users, ChevronRight } from "lucide-react";
 import { z } from "zod";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
