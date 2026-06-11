@@ -49,7 +49,7 @@ function MorePage() {
     try {
       await signOut();
       toast.success("Signed out");
-      navigate({ to: "/signin" });
+      navigate({ to: "/" });
     } catch {
       toast.error("Could not sign out");
     }
