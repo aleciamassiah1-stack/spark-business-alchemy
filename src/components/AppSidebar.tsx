@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import logoUrl from "@/assets/aether-logo.png";
 
 const primary = [
   { to: "/", label: "Overview", icon: Home, exact: true },
