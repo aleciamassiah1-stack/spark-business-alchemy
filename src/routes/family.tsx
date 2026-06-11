@@ -240,7 +240,7 @@ function FamilyPage() {
   };
 
   return (
-    <MobileShell title="Family Vault" subtitle="Linked households">
+    <MobileShell title="Family Vault" subtitle="Will, beneficiaries & linked households">
       <div className="px-5">
         <LuxCard className="gradient-hero p-5">
           <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-3xl" />
@@ -252,6 +252,45 @@ function FamilyPage() {
             </p>
           </div>
         </LuxCard>
+      </div>
+
+      {/* Will & Beneficiaries — surfaced first */}
+      <div className="mt-5 px-5">
+        <p className="label-mono mb-2">Estate essentials</p>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Link to="/legacy" className="group">
+            <LuxCard className="relative h-full p-4 transition hover:border-primary/30">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Scroll className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-serif text-base text-foreground">Will & estate plan</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    Documents, trustees, and final wishes in one place.
+                  </p>
+                </div>
+                <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+              </div>
+            </LuxCard>
+          </Link>
+          <Link to="/beneficiaries" className="group">
+            <LuxCard className="relative h-full p-4 transition hover:border-primary/30">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-serif text-base text-foreground">Beneficiaries</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    See who inherits what across every account and policy.
+                  </p>
+                </div>
+                <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+              </div>
+            </LuxCard>
+          </Link>
+        </div>
       </div>
 
       {/* Linked accounts (cross-account requests) */}
