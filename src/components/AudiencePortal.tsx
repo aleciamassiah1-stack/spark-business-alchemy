@@ -37,7 +37,7 @@ export function AudiencePortal({ content }: { content: PortalContent }) {
       <header className="relative z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={logoUrl} alt="Æther" className="h-7 w-7" />
+            <img src={logoUrl} alt="Æther wealth management logo" className="h-7 w-7" />
             <span className="font-serif text-xl tracking-tight text-foreground">Æther</span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
