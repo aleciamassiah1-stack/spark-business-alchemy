@@ -546,6 +546,21 @@ function FamilyPage() {
         )}
       </div>
 
+      {/* Combined family net worth — summary at the bottom */}
+      <div className="mt-5 px-5 pb-6">
+        <LuxCard className="gradient-hero p-5">
+          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-3xl" />
+          <div className="relative">
+            <p className="label-mono">Combined family net worth</p>
+            <p className="mt-1 font-serif text-4xl text-foreground">{fmtCurrency(total, { compact: true })}</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              {partners.length > 0 ? "you + " : ""}{partners.length} linked · {members.length} manual
+            </p>
+          </div>
+        </LuxCard>
+      </div>
+
+
       <MemberFormDialog
         open={showForm}
         onOpenChange={setShowForm}
