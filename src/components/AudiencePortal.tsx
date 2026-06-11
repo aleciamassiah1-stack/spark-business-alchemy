@@ -37,8 +37,8 @@ export function AudiencePortal({ content }: { content: PortalContent }) {
       <header className="relative z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={logoUrl} alt="Æther wealth management logo" className="h-7 w-7" />
-            <span className="font-serif text-xl tracking-tight text-foreground">Æther</span>
+            <img src={logoUrl} alt="Æther Wealth wealth management logo" className="h-7 w-7" />
+            <span className="font-serif text-xl tracking-tight text-foreground">Æther Wealth</span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
             <Link to="/" hash="who" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -118,7 +118,7 @@ export function AudiencePortal({ content }: { content: PortalContent }) {
               transition={{ duration: 0.6, ease }}
               className="mx-auto max-w-2xl text-center font-serif text-[30px] leading-[1.1] tracking-tight text-foreground md:text-[42px]"
             >
-              What Æther unlocks
+              What Æther Wealth unlocks
             </motion.h2>
 
             <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.04] md:grid-cols-2 lg:grid-cols-3">
@@ -190,7 +190,7 @@ export function AudiencePortal({ content }: { content: PortalContent }) {
                   <ShieldCheck className="h-5 w-5 text-gold" />
                 </div>
                 <h2 className="mt-6 font-serif text-[34px] leading-[1.05] tracking-tight text-foreground md:text-[48px]">
-                  See Æther in your practice
+                  See Æther Wealth in your practice
                 </h2>
                 <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-foreground/80 md:text-lg">
                   A private walkthrough tailored to how you serve families and stewards.
@@ -206,7 +206,7 @@ export function AudiencePortal({ content }: { content: PortalContent }) {
                     href={CONTACT_MAILTO}
                     className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-white/[0.06]"
                   >
-                    <Mail className="h-4 w-4" /> Contact Æther
+                    <Mail className="h-4 w-4" /> Contact Æther Wealth
                   </a>
                 </div>
               </div>

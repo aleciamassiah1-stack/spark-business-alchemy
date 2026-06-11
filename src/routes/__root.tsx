@@ -44,7 +44,7 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Æther" },
+      { name: "apple-mobile-web-app-title", content: "Æther Wealth" },
       { title: "Æther Wealth — Private Wealth Management" },
       { name: "description", content: "A private bank in your pocket. Manage investments, insurance, trust, and estate from a single luxury interface." },
       { name: "author", content: "Æther Wealth" },

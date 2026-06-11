@@ -9,7 +9,7 @@ export const Route = createFileRoute("/portals/advisors")({
     meta: [
       { title: "For Financial Advisors — Æther Wealth" },
       { name: "description", content: content.subtitle },
-      { property: "og:title", content: `Æther — ${content.eyebrow}` },
+      { property: "og:title", content: `Æther Wealth — ${content.eyebrow}` },
       { property: "og:description", content: content.subtitle },
       { property: "og:url", content: "https://aetherwealth.co/portals/advisors" },
     ],

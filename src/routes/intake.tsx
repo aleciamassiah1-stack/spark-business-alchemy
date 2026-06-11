@@ -252,7 +252,7 @@ function IntakePage() {
               <LuxCard className="p-6">
                 <p className="label-mono">Your priority</p>
                 <h2 className="mt-1 font-serif text-2xl text-foreground">
-                  What brought you to Æther?
+                  What brought you to Æther Wealth?
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   We'll surface the tools that fit this goal first.

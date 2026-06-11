@@ -10,7 +10,7 @@ export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — Æther Wealth" },
-      { name: "description", content: "Choose how Æther reaches you." },
+      { name: "description", content: "Choose how Æther Wealth reaches you." },
     ],
   }),
   component: () => (
@@ -54,7 +54,7 @@ function NotificationsPage() {
           <div className="mt-2 flex items-start gap-2 rounded-lg bg-white/[0.03] px-3 py-2.5">
             <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              Email alerts are encrypted with your account key. Only you can decrypt them — Æther
+              Email alerts are encrypted with your account key. Only you can decrypt them — Æther Wealth
               cannot read their contents.
             </p>
           </div>

@@ -62,7 +62,7 @@ function SigninRoute() {
         </h1>
         <AuthForm mode="signin" />
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          New to Æther?{" "}
+          New to Æther Wealth?{" "}
           <Link to="/signup" className="text-primary hover:underline">
             Create an account
           </Link>

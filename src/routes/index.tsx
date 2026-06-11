@@ -36,9 +36,9 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Æther — The Operating System for Family Legacy Management" },
+      { title: "Æther Wealth — The Operating System for Family Legacy Management" },
       { name: "description", content: "Organize your financial, legal, property, insurance, and family information in one secure platform. Built for families, advisors, attorneys, and family offices." },
-      { property: "og:title", content: "Æther — The Operating System for Family Legacy Management" },
+      { property: "og:title", content: "Æther Wealth — The Operating System for Family Legacy Management" },
       { property: "og:description", content: "Centralize important information, simplify succession planning, and preserve what matters most." },
       { property: "og:url", content: "https://aetherwealth.co/" },
     ],
@@ -427,7 +427,7 @@ function HomePage() {
               <div className="flex-1">
                 <p className="label-mono">Your Advisor</p>
                 <p className="font-serif text-lg text-foreground">Eleanor Whitfield</p>
-                <p className="text-xs text-muted-foreground">Senior Wealth Advisor · Æther Private Office</p>
+                <p className="text-xs text-muted-foreground">Senior Wealth Advisor · Æther Wealth Private Office</p>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">

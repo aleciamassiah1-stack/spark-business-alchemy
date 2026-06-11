@@ -147,7 +147,7 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
         }
 
         // Security: templates without a fixed recipient let the caller fully
-        // control where Æther-branded mail is sent. Restrict those to admins.
+        // control where Æther Wealth-branded mail is sent. Restrict those to admins.
         if (!template.to) {
           const { data: isAdminRole } = await supabase.rpc('has_role', {
             _user_id: user.id,
@@ -167,7 +167,7 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
 
         // Security: reject any URL in templateData that points outside our
         // allowed hosts. Prevents authenticated callers from smuggling
-        // phishing links into Æther-branded transactional mail.
+        // phishing links into Æther Wealth-branded transactional mail.
         const badHost = templateDataContainsDisallowedUrl(templateData)
         if (badHost) {
           console.warn('Rejected templateData with disallowed URL host', {
