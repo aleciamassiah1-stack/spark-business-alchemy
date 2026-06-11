@@ -127,7 +127,7 @@ function ConciergeChat({ open, onClose }: { open: boolean; onClose: () => void }
     {
       role: "assistant",
       content:
-        "Good day. I'm your Æther concierge. You can ask me anything — about Æther Wealth, your membership, planning workflows, or general questions — and I'll help or route you to our team when needed.",
+        "Good day. I'm your Æther Wealth concierge. You can ask me anything — about Æther Wealth, your membership, planning workflows, or general questions — and I'll help or route you to our team when needed.",
     },
   ]);
   const [input, setInput] = useState("");

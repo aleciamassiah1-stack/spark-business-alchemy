@@ -81,7 +81,7 @@ function UpgradeWall() {
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            This space is reserved for Æther Family Office members — ultra-high-net-worth families
+            This space is reserved for Æther Wealth Family Office members — ultra-high-net-worth families
             with multi-entity structures, trustees, and dedicated wealth counsel.
           </p>
           <Link

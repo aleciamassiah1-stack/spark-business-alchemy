@@ -107,7 +107,7 @@ export function InstallPwaButton({ className }: { className?: string }) {
             </li>
             <li className="flex items-start gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs text-primary">3</span>
-              <span>Tap <strong>Add</strong> — Æther will appear on your home screen.</span>
+              <span>Tap <strong>Add</strong> — Æther Wealth will appear on your home screen.</span>
             </li>
           </ol>
         </DialogContent>

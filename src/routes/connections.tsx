@@ -1222,7 +1222,7 @@ function AccountsTab({
             </li>
             <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
-              <span><span className="text-foreground">Read-only access</span> — Æther can never move money, only view it.</span>
+              <span><span className="text-foreground">Read-only access</span> — Æther Wealth can never move money, only view it.</span>
             </li>
             <li className="flex items-start gap-2.5 text-[12px] leading-relaxed text-muted-foreground">
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />

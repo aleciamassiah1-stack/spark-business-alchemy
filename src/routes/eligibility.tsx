@@ -437,7 +437,7 @@ function EligibilityPage() {
           {step === 2 && (
             <StepCard
               key="2"
-              title="How will you use Æther?"
+              title="How will you use Æther Wealth?"
               subtitle="This shapes which collaboration features we surface."
             >
               <div className="space-y-2">
@@ -1249,7 +1249,7 @@ function RequestAccessDialog({
       const subject = `[${form.companyName || "Your Company"}] Production access request — ${meta.name}`;
       const body = `Hi ${meta.name} team,
 
-I'm ${form.contactName || "[Your Name]"}, ${form.role || "Founder"} at ${form.companyName || "[Company]"}. We're building a wealth aggregation platform on Æther and would like to request production credentials for ${meta.name}.
+I'm ${form.contactName || "[Your Name]"}, ${form.role || "Founder"} at ${form.companyName || "[Company]"}. We're building a wealth aggregation platform on Æther Wealth and would like to request production credentials for ${meta.name}.
 
 Company snapshot
 • Company: ${form.companyName || "[Company]"}

@@ -72,8 +72,8 @@ function Nav() {
     <header className="relative z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoUrl} alt="Æther wealth management logo" className="h-7 w-7" />
-          <span className="font-serif text-xl tracking-tight text-foreground">Æther</span>
+          <img src={logoUrl} alt="Æther Wealth wealth management logo" className="h-7 w-7" />
+          <span className="font-serif text-xl tracking-tight text-foreground">Æther Wealth</span>
         </Link>
 
         {/* Desktop nav */}
@@ -138,7 +138,7 @@ function Hero() {
           </p>
 
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-            Æther helps families, advisors, attorneys, and family offices centralize important
+            Æther Wealth helps families, advisors, attorneys, and family offices centralize important
             information, simplify succession planning, and preserve what matters most.
           </p>
 
@@ -333,7 +333,7 @@ function Audiences() {
   return (
     <section id="who" className="relative px-6 py-24 md:px-10 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <SectionHead eyebrow="Who Æther Serves" title="Built for the people who steward legacy." />
+        <SectionHead eyebrow="Who Æther Wealth Serves" title="Built for the people who steward legacy." />
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {cards.map((c, i) => (
             <motion.div
@@ -575,7 +575,7 @@ function FinalCta() {
               Protect What Matters Most
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-foreground/80 md:text-lg">
-              Æther provides a secure foundation for your family's financial, legal, and legacy
+              Æther Wealth provides a secure foundation for your family's financial, legal, and legacy
               information.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -589,7 +589,7 @@ function FinalCta() {
                 href={CONTACT_MAILTO}
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-white/[0.06]"
               >
-                <Mail className="h-4 w-4" /> Contact Æther
+                <Mail className="h-4 w-4" /> Contact Æther Wealth
               </a>
             </div>
           </div>

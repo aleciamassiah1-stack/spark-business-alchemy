@@ -856,7 +856,7 @@ function InviteLinkDialog({
         <DialogHeader>
           <DialogTitle>Send link request</DialogTitle>
           <DialogDescription>
-            Combine net worth with a spouse or family member. They'll need to accept and Æther
+            Combine net worth with a spouse or family member. They'll need to accept and Æther Wealth
             management will review before the link goes live.
           </DialogDescription>
         </DialogHeader>

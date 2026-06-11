@@ -43,7 +43,7 @@ export const HouseholdInviteEmail = ({
     ? `You now have access to ${profile}`
     : `${inviter} invited you to Æther Wealth`
   const intro = hasAccount
-    ? `${inviter} just granted you member access to "${profile}" in their Æther Family Office. Sign in to see the consolidated view.`
+    ? `${inviter} just granted you member access to "${profile}" in their Æther Wealth Family Office. Sign in to see the consolidated view.`
     : `${inviter} would like to share access to "${profile}" with you on Æther Wealth — a private wealth platform for principals and families. Create your account with this email address to accept.`
   const cta = hasAccount ? 'Open Æther Wealth' : 'Create your account'
 

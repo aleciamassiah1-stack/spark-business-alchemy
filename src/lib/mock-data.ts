@@ -22,7 +22,7 @@ export const recentActivity = [
 export const advisor = {
   name: "Eleanor Whitfield",
   title: "Senior Wealth Advisor",
-  firm: "Æther Private Office",
+  firm: "Æther Wealth Private Office",
   nextMeeting: "Tue, May 6 · 10:30 AM",
   initials: "EW",
 };

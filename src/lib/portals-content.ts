@@ -43,7 +43,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Keep your family's legacy organized.",
     subtitle: "One secure place for everything that matters across generations.",
     intro:
-      "Æther helps families centralize estate documents, insurance, property, and key contacts — so the people you trust always know what to do, and where to look.",
+      "Æther Wealth helps families centralize estate documents, insurance, property, and key contacts — so the people you trust always know what to do, and where to look.",
     icon: Users,
     capabilities: [
       { icon: Lock, title: "Family Legacy Vault", copy: "Wills, trusts, directives, and account credentials in encrypted storage." },
@@ -67,7 +67,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Extend the value of every estate plan you draft.",
     subtitle: "Stay connected with clients long after signing — without adding admin overhead.",
     intro:
-      "Æther gives your clients a private place to live with their plan. Documents stay current, beneficiaries stay aligned, and you stay relevant year after year.",
+      "Æther Wealth gives your clients a private place to live with their plan. Documents stay current, beneficiaries stay aligned, and you stay relevant year after year.",
     icon: Scroll,
     capabilities: [
       { icon: FileText, title: "Plan Storage & Versions", copy: "Wills, trusts, POAs and directives kept alongside ancillary documents." },
@@ -91,7 +91,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Deliver a premium client experience your competitors can't.",
     subtitle: "Move beyond portfolios into true family wealth stewardship.",
     intro:
-      "Æther helps you understand your clients' full picture — assets, documents, insurance, and people — so you can advise from a position of complete context.",
+      "Æther Wealth helps you understand your clients' full picture — assets, documents, insurance, and people — so you can advise from a position of complete context.",
     icon: Briefcase,
     capabilities: [
       { icon: Wallet, title: "Full Net-Worth Picture", copy: "See investments, real estate, business equity, and liabilities together." },
@@ -115,7 +115,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "A single source of truth for complex families.",
     subtitle: "Manage the operating system behind multi-generational wealth.",
     intro:
-      "Æther centralizes the documents, assets, entities, and people behind every family you serve — with the controls and audit trails serious offices require.",
+      "Æther Wealth centralizes the documents, assets, entities, and people behind every family you serve — with the controls and audit trails serious offices require.",
     icon: Landmark,
     capabilities: [
       { icon: Landmark, title: "Multi-Entity Structure", copy: "Trusts, LLCs, holding companies, and operating businesses in one map." },
@@ -139,7 +139,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Plan and file with the full picture in view.",
     subtitle: "Bring tax planning closer to estate, business, and personal balance sheets.",
     intro:
-      "Æther gives you and your clients shared visibility into the documents and assets that drive tax outcomes — without endless email threads at year end.",
+      "Æther Wealth gives you and your clients shared visibility into the documents and assets that drive tax outcomes — without endless email threads at year end.",
     icon: Calculator,
     capabilities: [
       { icon: FileText, title: "Document Hub", copy: "Returns, K-1s, and supporting docs organized by year and entity." },
@@ -163,7 +163,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Keep coverage aligned with the lives it protects.",
     subtitle: "Bring policies into the same place as the family's plan and assets.",
     intro:
-      "Æther helps you and your clients see coverage in context — across life, property, liability, and business — so gaps and stale beneficiaries surface early.",
+      "Æther Wealth helps you and your clients see coverage in context — across life, property, liability, and business — so gaps and stale beneficiaries surface early.",
     icon: Umbrella,
     capabilities: [
       { icon: Umbrella, title: "Policy Inventory", copy: "All policies, carriers, and coverage amounts in one place." },
@@ -187,7 +187,7 @@ export const PORTAL_CONTENT: Record<PortalKey, PortalContent> = {
     title: "Run the household with everything documented.",
     subtitle: "Vendors, properties, schedules, and key contacts — in one private hub.",
     intro:
-      "Æther gives household managers a structured place to record what's needed to keep a principal's life running smoothly, with handoff continuity built in.",
+      "Æther Wealth gives household managers a structured place to record what's needed to keep a principal's life running smoothly, with handoff continuity built in.",
     icon: Building2,
     capabilities: [
       { icon: HomeIcon, title: "Property Records", copy: "Residences, vehicles, warranties, and maintenance schedules." },

@@ -288,7 +288,7 @@ function PricingPage() {
         <div className="text-center">
           <p className="label-mono">Pricing</p>
           <h1 className="mt-2 font-serif text-[36px] leading-[1.05] text-foreground">
-            Æther Pricing: Quiet confidence,
+            Æther Wealth Pricing: Quiet confidence,
             <br />
             <span className="text-gradient-violet">priced accordingly.</span>
           </h1>

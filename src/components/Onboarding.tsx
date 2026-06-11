@@ -267,7 +267,7 @@ function ScreenBiometric({ onNext }: { onNext: () => void }) {
         <div className="pt-4">
           <p className="label-mono mb-3">Biometric Lock</p>
           <h2 className="font-serif text-[34px] leading-tight text-foreground">
-            Unlock Æther with
+            Unlock Æther Wealth with
             <br />
             <span className="text-gradient-violet">your face.</span>
           </h2>

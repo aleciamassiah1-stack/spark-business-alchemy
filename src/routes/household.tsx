@@ -371,7 +371,7 @@ function MembersPanel({ profileId }: { profileId: string }) {
         </Button>
       </div>
       <p className="text-[10px] text-muted-foreground">
-        We'll email them an invite. If they don't have an Æther account yet,
+        We'll email them an invite. If they don't have an Æther Wealth account yet,
         they'll get a sign-up link.
       </p>
     </div>

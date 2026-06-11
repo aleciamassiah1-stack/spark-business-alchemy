@@ -216,7 +216,7 @@ export function TransitionPlanWizard({ open, initialStep = 1, state, update, onC
                   >
                     <p className="mt-3 rounded-2xl bg-white/[0.03] p-3 text-[12px] leading-relaxed text-muted-foreground">
                       A clear transition plan protects your family, your team, and the value you've built.
-                      Most owners delay it because it feels heavy — Æther breaks it into five quick questions.
+                      Most owners delay it because it feels heavy — Æther Wealth breaks it into five quick questions.
                       Everything stays private to you.
                     </p>
                   </motion.div>
