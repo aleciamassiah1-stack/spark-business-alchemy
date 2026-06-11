@@ -5,6 +5,7 @@ import { Plus, ChevronDown, Pencil, Trash2, X, UserPlus, Check, Clock, ShieldChe
 import { z } from "zod";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
+import { EstateEssentials } from "@/components/EstateEssentials";
 import { RequireOnboarding } from "@/components/RequireOnboarding";
 import { fmtCurrency } from "@/lib/format";
 import { listFamilyMembers, upsertFamilyMember, deleteFamilyMember } from "@/lib/family.functions";
