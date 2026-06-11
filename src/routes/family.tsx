@@ -450,18 +450,167 @@ function FamilyPage() {
         )}
       </div>
 
-      {/* Combined family net worth — summary at the bottom */}
-      <div className="mt-5 px-5 pb-6">
-        <LuxCard className="gradient-hero p-5">
-          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-3xl" />
+      {/* Household net worth + connected accounts */}
+      <div className="mt-6 px-5">
+        <p className="label-mono">Household net worth</p>
+      </div>
+      <div className="mt-2 px-5">
+        <LuxCard className="relative overflow-hidden gradient-hero p-5">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-3xl" />
           <div className="relative">
-            <p className="label-mono">Combined family net worth</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Combined family net worth
+            </p>
             <p className="mt-1 font-serif text-4xl text-foreground">{fmtCurrency(total, { compact: true })}</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
+            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
               {partners.length > 0 ? "you + " : ""}{partners.length} linked · {members.length} manual
             </p>
           </div>
         </LuxCard>
+      </div>
+
+      {/* Linked accounts (cross-account requests) */}
+      <div className="mt-5 flex items-center justify-between px-5">
+        <p className="label-mono">Linked accounts</p>
+        <button
+          onClick={() => setShowInvite(true)}
+          className="flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/25"
+        >
+          <UserPlus className="h-3 w-3" /> Send link request
+        </button>
+      </div>
+
+      <div className="mt-2 flex flex-col gap-2 px-5 pb-6">
+        <button
+          onClick={() => setShowDobEdit(true)}
+          className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left text-[11px] text-muted-foreground hover:bg-white/[0.04]"
+        >
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="h-3 w-3" />
+            Identity on file (DOB · SSN last 4)
+          </span>
+          <span className="font-mono text-foreground">
+            {dobOnFile && hasSsn4OnFile
+              ? `${dobOnFile} · ••••`
+              : "Not set — tap to add"}
+          </span>
+        </button>
+
+        {linksLoading ? (
+          <p className="px-2 py-4 text-center text-xs text-muted-foreground">Loading…</p>
+        ) : (
+          <>
+            {incoming
+              .filter((r) => r.status === "pending_recipient")
+              .map((r) => {
+                const who = requesterNames[r.requester_user_id];
+                return (
+                  <LuxCard key={r.id} className="p-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-primary">Incoming request</p>
+                      <p className="mt-0.5 font-serif text-base text-foreground">{who?.name ?? "Someone"}</p>
+                      <p className="text-[11px] text-muted-foreground">{who?.email}</p>
+                      {r.message && <p className="mt-2 text-xs italic text-muted-foreground">"{r.message}"</p>}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" onClick={() => handleRespond(r.id, "accept")} className="flex-1">
+                        <Check className="h-3 w-3 mr-1" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRespond(r.id, "decline")}
+                        className="flex-1"
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </LuxCard>
+                );
+              })}
+
+            {partners.map((p, i) => (
+              <LuxCard key={p.user_id} delay={i * 0.05} className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full gradient-violet text-sm font-medium text-foreground glow-violet">
+                    {(p.name || "?")
+                      .trim()
+                      .split(/\s+/)
+                      .slice(0, 2)
+                      .map((s) => s[0]?.toUpperCase())
+                      .join("")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-base text-foreground truncate">{p.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">Linked · {p.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-sm tabular-nums text-foreground">
+                      {fmtCurrency(Number(p.net_worth || 0), { compact: true })}
+                    </p>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      {p.accounts.length} account{p.accounts.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                </div>
+                {p.accounts.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-1.5">
+                    {p.accounts.map((a, idx) => (
+                      <div
+                        key={`${a.name}-${idx}`}
+                        className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2"
+                      >
+                        <p className="text-xs text-foreground truncate">{a.name}</p>
+                        <p className="font-mono text-xs tabular-nums text-foreground">
+                          {fmtCurrency(Number(a.balance || 0), { compact: true })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => handleUnlink(p.user_id)}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-[11px] font-medium text-destructive hover:bg-destructive/20"
+                >
+                  <Unlink className="h-3 w-3" /> Unlink
+                </button>
+              </LuxCard>
+            ))}
+
+            {outgoing
+              .filter((r) => r.status === "pending_recipient" || r.status === "pending_admin")
+              .map((r) => (
+                <LuxCard key={r.id} className="p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {r.status === "pending_recipient" ? "Awaiting recipient" : "Awaiting admin review"}
+                      </p>
+                      <p className="text-sm text-foreground truncate">{r.recipient_email}</p>
+                    </div>
+                    <button
+                      onClick={() => handleCancel(r.id)}
+                      className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </LuxCard>
+              ))}
+
+            {!incoming.some((r) => r.status === "pending_recipient") &&
+              partners.length === 0 &&
+              outgoing.length === 0 && (
+                <LuxCard className="p-5 text-center">
+                  <p className="font-serif text-sm text-foreground">No linked accounts yet</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Send a request to a spouse or family member with their own account to combine net worth.
+                  </p>
+                </LuxCard>
+              )}
+          </>
+        )}
       </div>
 
 
