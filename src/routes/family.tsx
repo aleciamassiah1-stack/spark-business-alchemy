@@ -245,9 +245,52 @@ function FamilyPage() {
   };
 
   return (
-    <MobileShell title="Family Vault" subtitle="Will, beneficiaries & linked households">
-      {/* Will & Beneficiaries — surfaced first */}
-      <EstateEssentials />
+    <MobileShell title="Family Vault" subtitle="Legacy, beneficiaries & household">
+      {/* Hero — Total Wealth Passed On */}
+      <div className="px-5 pt-1">
+        <LuxCard className="relative overflow-hidden gradient-hero p-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-gold/15 blur-3xl" />
+          <div className="relative">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-gold" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/90">
+                Total Wealth Passed On
+              </p>
+            </div>
+            <p className="mt-3 font-serif text-[44px] leading-[1.05] tracking-tight text-foreground">
+              {fmtCurrency(estateTotal, { compact: true })}
+            </p>
+            <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-muted-foreground">
+              The amount your loved ones will inherit through your insurance policies and estate
+              today, split across {beneficiaryCount} {beneficiaryCount === 1 ? "beneficiary" : "beneficiaries"}.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                to="/beneficiaries"
+                className="inline-flex items-center gap-1.5 rounded-full bg-foreground/95 px-4 py-2 text-xs font-medium text-background transition hover:bg-foreground"
+              >
+                Manage beneficiaries <ChevronRight className="h-3 w-3" />
+              </Link>
+              <Link
+                to="/legacy"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.08]"
+              >
+                <Scroll className="h-3 w-3" /> Estate plan
+              </Link>
+            </div>
+          </div>
+        </LuxCard>
+      </div>
+
+      {/* Will & Beneficiaries */}
+      <EstateEssentials
+        onTotalChange={(t, c) => {
+          setEstateTotal(t);
+          setBeneficiaryCount(c);
+        }}
+      />
+
 
 
       {/* Linked accounts (cross-account requests) */}
