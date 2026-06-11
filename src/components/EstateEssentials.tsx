@@ -142,6 +142,10 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
 
   const totalEstate = beneficiaries.reduce((s, b) => s + b.total, 0);
 
+  useEffect(() => {
+    onTotalChange?.(totalEstate, beneficiaries.length);
+  }, [totalEstate, beneficiaries.length, onTotalChange]);
+
   async function handleUploadWill(file: File) {
     if (file.size > 15 * 1024 * 1024) {
       toast.error("File too large (max 15MB)");
