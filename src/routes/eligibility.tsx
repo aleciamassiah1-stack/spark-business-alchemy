@@ -49,6 +49,8 @@ export const Route = createFileRoute("/eligibility")({
         name: "description",
         content: "See which integrations are available for your country, accounts, and goals.",
       },
+      { property: "og:title", content: "Integration Eligibility — Æther Wealth" },
+      { property: "og:description", content: "Check which financial integrations and aggregators are available for your country, accounts, and goals." },
     ],
   }),
   component: EligibilityPage,

@@ -18,6 +18,8 @@ export const Route = createFileRoute("/support")({
     meta: [
       { title: "Concierge Support — Æther Wealth" },
       { name: "description", content: "Reach your private concierge team — chat with AI 24/7 or email our team." },
+      { property: "og:title", content: "Concierge Support — Æther Wealth" },
+      { property: "og:description", content: "Reach your private concierge team for instant AI assistance or direct email support." },
     ],
   }),
   component: () => (

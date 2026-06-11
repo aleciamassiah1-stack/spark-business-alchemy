@@ -31,9 +31,12 @@ export function MobileShell({ children, title, subtitle }: Props) {
             <div className="min-w-0 flex-1">
               {subtitle && <p className="label-mono !text-[10px]">{subtitle}</p>}
               {title && (
-                <h1 className="truncate font-serif text-xl leading-tight text-foreground">
+                <p
+                  aria-hidden="true"
+                  className="truncate font-serif text-xl leading-tight text-foreground"
+                >
                   {title}
-                </h1>
+                </p>
               )}
             </div>
             <ProfileSwitcher />

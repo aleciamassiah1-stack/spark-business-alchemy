@@ -756,6 +756,8 @@ function DemoModal({ onClose }: { onClose: () => void }) {
         className="relative w-full max-w-md overflow-hidden rounded-3xl border border-gold/30 gradient-card p-6 shadow-elevated"
       >
         <button
+          type="button"
+          aria-label="Close"
           onClick={onClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground hover:text-foreground"
         >

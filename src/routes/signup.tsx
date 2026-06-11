@@ -17,6 +17,8 @@ export const Route = createFileRoute("/signup")({
     meta: [
       { title: "Create Account — Æther Wealth" },
       { name: "description", content: "Open your private Æther Wealth vault in under a minute — estate, investments and insurance in one secure place." },
+      { property: "og:title", content: "Create Account — Æther Wealth" },
+      { property: "og:description", content: "Open your private Æther Wealth vault in under a minute to manage your family legacy in one secure place." },
     ],
   }),
   component: SignupRoute,
