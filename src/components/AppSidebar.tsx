@@ -61,7 +61,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate font-serif text-base leading-tight text-foreground">Æther Wealth</p>
-              <p className="label-mono !text-[9px]">Wealth</p>
+              <p className="label-mono !text-[9px]">Private Vault</p>
             </div>
           )}
         </Link>
