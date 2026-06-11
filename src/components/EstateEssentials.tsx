@@ -392,6 +392,7 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
           )}
         </LuxCard>
       </div>
+      {showSummary && <EstatePlanSummaryModal onClose={() => setShowSummary(false)} />}
     </div>
   );
 }
