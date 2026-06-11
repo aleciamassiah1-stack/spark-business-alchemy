@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import logoUrl from "@/assets/aether-logo.png";
 
 const primary = [
   { to: "/", label: "Overview", icon: Home, exact: true },
@@ -55,9 +56,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-white/[0.06]">
       <SidebarHeader>
         <Link to="/" className="flex items-center gap-2.5 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-violet glow-violet">
-            <span className="font-serif text-lg leading-none text-foreground">Æ</span>
-          </div>
+          <img src={logoUrl} alt="Æther Wealth" width={32} height={32} className="h-8 w-8 shrink-0" />
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate font-serif text-base leading-tight text-foreground">Æther Wealth</p>
