@@ -72,7 +72,7 @@ function Nav() {
     <header className="relative z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoUrl} alt="Æther Wealth wealth management logo" className="h-7 w-7" />
+          <img src={logoUrl} alt="Æther Wealth wealth management logo" width={28} height={28} fetchPriority="high" className="h-7 w-7" />
           <span className="font-serif text-xl tracking-tight text-foreground">Æther Wealth</span>
         </Link>
 
