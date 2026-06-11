@@ -608,6 +608,14 @@ function ConnectionsPage() {
             }}
           />
         )}
+        {tab === "documents" && (
+          <DocumentsTab
+            estateDocs={estateDocs}
+            policies={policies}
+            onGoEstate={() => setTab("estate")}
+            onGoInsurance={() => setTab("insurance")}
+          />
+        )}
         {tab === "activity" && (
           <ActivityTab
             transactions={transactions}
