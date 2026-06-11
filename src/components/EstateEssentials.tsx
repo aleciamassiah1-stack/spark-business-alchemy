@@ -77,7 +77,7 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export function EstateEssentials() {
+export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: number, beneficiaryCount: number) => void } = {}) {
   const [docs, setDocs] = useState<EstateDoc[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
