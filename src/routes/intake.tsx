@@ -13,7 +13,9 @@ export const Route = createFileRoute("/intake")({
   head: () => ({
     meta: [
       { title: "Tell us about you — Æther Wealth" },
-      { name: "description", content: "A few quick questions to personalize your private office." },
+      { name: "description", content: "A few quick questions to personalize your private Æther Wealth office and tailor your dashboard to what matters most to your family." },
+      { property: "og:title", content: "Tell us about you — Æther Wealth" },
+      { property: "og:description", content: "Quick intake to personalize your private Æther Wealth office to your family's situation." },
       { name: "robots", content: "noindex" },
     ],
   }),

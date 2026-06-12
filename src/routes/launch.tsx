@@ -31,10 +31,10 @@ export const Route = createFileRoute("/launch")({
   head: () => ({
     meta: [
       { title: "Launch Readiness — Æther Wealth" },
-      {
-        name: "description",
-        content: "The critical checklist to ship Æther Wealth to live customers.",
-      },
+      { name: "description", content: "The critical checklist to ship Æther Wealth to live customers — payments, data connections, auth, security and monitoring." },
+      { property: "og:title", content: "Launch Readiness — Æther Wealth" },
+      { property: "og:description", content: "Internal checklist covering payments, data connections, auth, security and monitoring before shipping live." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   errorComponent: ({ error, reset }) => (
