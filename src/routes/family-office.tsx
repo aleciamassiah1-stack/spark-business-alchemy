@@ -25,18 +25,12 @@ export const Route = createFileRoute("/family-office")({
   head: () => ({
     meta: [
       { title: "Family Office — Æther Wealth" },
-      {
-        name: "description",
-        content:
-          "Your dedicated Family Office hub: on-call wealth manager, multi-entity rollups, governance calendar, trustee & advisor seats.",
-      },
+      { name: "description", content: "Your dedicated Family Office hub: on-call wealth manager, multi-entity rollups, governance calendar, trustee & advisor seats." },
       { property: "og:title", content: "Family Office — Æther Wealth" },
-      {
-        property: "og:description",
-        content:
-          "On-call wealth management, white-glove aggregation, governance and consolidated reporting for ultra-high-net-worth families.",
-      },
+      { property: "og:description", content: "On-call wealth management, white-glove aggregation, governance and consolidated reporting for ultra-high-net-worth families." },
+      { property: "og:url", content: "https://aetherwealth.co/family-office" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/family-office" }],
   }),
   component: () => (
     <RequireOnboarding>

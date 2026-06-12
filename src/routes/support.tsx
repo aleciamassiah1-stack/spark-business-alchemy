@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/support" }],
     meta: [
       { title: "Concierge Support — Æther Wealth" },
       { name: "description", content: "Reach your private concierge team — chat with AI 24/7 or email our team." },

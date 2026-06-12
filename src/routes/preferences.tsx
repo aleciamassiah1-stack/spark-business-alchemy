@@ -16,8 +16,12 @@ export const Route = createFileRoute("/preferences")({
   head: () => ({
     meta: [
       { title: "Preferences — Æther Wealth" },
-      { name: "description", content: "Personalize your private office." },
+      { name: "description", content: "Personalize your private Æther Wealth office — display options, default currency, household visibility and concierge behavior." },
+      { property: "og:title", content: "Preferences — Æther Wealth" },
+      { property: "og:description", content: "Tailor display, currency, household visibility and concierge behavior for your private Æther Wealth office." },
+      { property: "og:url", content: "https://aetherwealth.co/preferences" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/preferences" }],
   }),
   component: () => (
     <RequireOnboarding>

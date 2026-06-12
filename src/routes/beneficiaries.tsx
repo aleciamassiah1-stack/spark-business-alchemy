@@ -15,8 +15,12 @@ export const Route = createFileRoute("/beneficiaries")({
   head: () => ({
     meta: [
       { title: "Beneficiaries — Æther Wealth" },
-      { name: "description", content: "Unified beneficiary view across all accounts." },
+      { name: "description", content: "A unified beneficiary view across every account, policy, trust and estate document so your wishes stay current in one secure place." },
+      { property: "og:title", content: "Beneficiaries — Æther Wealth" },
+      { property: "og:description", content: "See and manage every beneficiary across accounts, insurance and estate documents in one private vault." },
+      { property: "og:url", content: "https://aetherwealth.co/beneficiaries" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/beneficiaries" }],
   }),
   component: () => (
     <RequireOnboarding>

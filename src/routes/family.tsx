@@ -37,7 +37,9 @@ export const Route = createFileRoute("/family")({
       { name: "description", content: "Securely link accounts for every member of your family and manage your combined household net worth, wills, and beneficiaries in one private vault." },
       { property: "og:title", content: "Family Vault — Æther Wealth" },
       { property: "og:description", content: "Securely link accounts for your family members and track your household net worth, wills, and beneficiaries in one private vault." },
+      { property: "og:url", content: "https://aetherwealth.co/family" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/family" }],
   }),
   component: () => (
     <RequireOnboarding>

@@ -29,8 +29,12 @@ export const Route = createFileRoute("/more")({
   head: () => ({
     meta: [
       { title: "More — Æther Wealth" },
-      { name: "description", content: "Settings and additional tools." },
+      { name: "description", content: "Account settings, billing, security, household access and additional tools for managing your private Æther Wealth office." },
+      { property: "og:title", content: "More — Æther Wealth" },
+      { property: "og:description", content: "Settings, billing, security and additional tools for your private Æther Wealth office." },
+      { property: "og:url", content: "https://aetherwealth.co/more" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/more" }],
   }),
   component: () => (
     <RequireOnboarding>

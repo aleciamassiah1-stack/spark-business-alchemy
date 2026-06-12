@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Æther Wealth — The Family Office Operating System" },
-      { name: "description", content: "Organize your financial, legal, property, insurance, and family information in one secure platform. Built for families, advisors, attorneys, and family offices." },
+      { name: "description", content: "Centralize family financial, legal, property, insurance and estate information in one secure platform — built for families and advisors." },
       { property: "og:title", content: "Æther Wealth — The Family Office Operating System" },
       { property: "og:description", content: "Centralize important information, simplify succession planning, and preserve what matters most." },
       { property: "og:url", content: "https://aetherwealth.co/" },
@@ -243,7 +243,7 @@ function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="label-mono">Good morning</p>
-            <h1 className="font-serif text-2xl text-foreground">{displayName}</h1>
+            <h1 className="font-serif text-2xl text-foreground">Welcome, {displayName} — Your Wealth Dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
             <button

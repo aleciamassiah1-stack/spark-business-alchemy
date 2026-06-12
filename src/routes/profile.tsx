@@ -15,8 +15,12 @@ export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
       { title: "Profile — Æther Wealth" },
-      { name: "description", content: "Your private account, plan, and billing." },
+      { name: "description", content: "Manage your private Æther Wealth account, subscription plan, billing details and connected sign-in providers in one secure place." },
+      { property: "og:title", content: "Profile — Æther Wealth" },
+      { property: "og:description", content: "Account, plan, billing and connected sign-in providers for your private Æther Wealth profile." },
+      { property: "og:url", content: "https://aetherwealth.co/profile" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/profile" }],
   }),
   component: () => (
     <RequireOnboarding>

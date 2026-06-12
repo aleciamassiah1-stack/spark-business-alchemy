@@ -89,8 +89,12 @@ export const Route = createFileRoute("/business")({
   head: () => ({
     meta: [
       { title: "Business — Æther Wealth" },
-      { name: "description", content: "Your business — valuation, financials, ownership and exit, in one private view." },
+      { name: "description", content: "Your business — valuation, financials, ownership and exit planning, in one private view." },
+      { property: "og:title", content: "Business — Æther Wealth" },
+      { property: "og:description", content: "Valuation, financials, ownership and exit planning for your business — in one private view." },
+      { property: "og:url", content: "https://aetherwealth.co/business" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/business" }],
   }),
   component: BusinessRoute,
 });

@@ -10,8 +10,12 @@ export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — Æther Wealth" },
-      { name: "description", content: "Choose how Æther Wealth reaches you." },
+      { name: "description", content: "Choose how Æther Wealth reaches you across email, push and in-app alerts for sync activity, security events and family updates." },
+      { property: "og:title", content: "Notifications — Æther Wealth" },
+      { property: "og:description", content: "Control email, push and in-app alerts for sync activity, security events and family updates." },
+      { property: "og:url", content: "https://aetherwealth.co/notifications" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/notifications" }],
   }),
   component: () => (
     <RequireOnboarding>

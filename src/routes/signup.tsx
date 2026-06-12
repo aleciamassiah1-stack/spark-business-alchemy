@@ -14,6 +14,7 @@ export const Route = createFileRoute("/signup")({
     view: search.view === "form" ? "form" : undefined,
   }),
   head: () => ({
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/signup" }],
     meta: [
       { title: "Create Account — Æther Wealth" },
       { name: "description", content: "Open your private Æther Wealth vault in under a minute — estate, investments and insurance in one secure place." },

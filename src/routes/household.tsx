@@ -25,12 +25,12 @@ export const Route = createFileRoute("/household")({
   head: () => ({
     meta: [
       { title: "Household profiles — Æther Wealth" },
-      {
-        name: "description",
-        content:
-          "Create and manage household profiles, and invite spouse or family logins to share access.",
-      },
+      { name: "description", content: "Create and manage household profiles, and invite spouse or family logins to share access to your private Æther Wealth vault." },
+      { property: "og:title", content: "Household profiles — Æther Wealth" },
+      { property: "og:description", content: "Manage household profiles and invite spouse or family logins to share access to your private vault." },
+      { property: "og:url", content: "https://aetherwealth.co/household" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/household" }],
   }),
   component: () => (
     <RequireOnboarding>
