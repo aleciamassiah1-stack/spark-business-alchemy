@@ -281,7 +281,7 @@ export function EstateEssentials({ onTotalChange }: { onTotalChange?: (total: nu
               onClick={() => setShowSummary(true)}
               className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.06]"
             >
-              Manage estate plan
+              Summary of Will and Testament
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
