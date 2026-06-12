@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /intake
+Disallow: /launch
+Disallow: /more
+Disallow: /oauth-callback
+Disallow: /checkout/return
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /unsubscribe
+Disallow: /api/
+
+Sitemap: https://aetherwealth.co/sitemap.xml
