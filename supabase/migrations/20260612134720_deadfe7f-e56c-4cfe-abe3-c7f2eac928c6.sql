@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated read app_settings" ON public.app_settings;
