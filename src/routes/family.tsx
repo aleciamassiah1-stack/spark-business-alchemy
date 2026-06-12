@@ -272,12 +272,6 @@ function FamilyPage() {
               >
                 Manage beneficiaries <ChevronRight className="h-3 w-3" />
               </Link>
-              <Link
-                to="/legacy"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-xs font-medium text-foreground transition hover:bg-white/[0.08]"
-              >
-                <Scroll className="h-3 w-3" /> Estate plan
-              </Link>
             </div>
           </div>
         </LuxCard>
