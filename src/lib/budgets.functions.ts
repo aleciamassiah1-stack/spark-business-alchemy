@@ -55,18 +55,27 @@ const PLAID_DETAILED_TO_CATEGORY: Record<string, string> = {
   FOOD_AND_DRINK_FAST_FOOD: "Dining",
   FOOD_AND_DRINK_COFFEE: "Dining",
   FOOD_AND_DRINK_BEER_WINE_AND_LIQUOR: "Dining",
+  FOOD_AND_DRINK_VENDING_MACHINES: "Dining",
+  FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK: "Dining",
   TRANSPORTATION_GAS: "Gas & Transport",
   TRANSPORTATION_PARKING: "Gas & Transport",
   TRANSPORTATION_TAXIS_AND_RIDE_SHARES: "Gas & Transport",
   TRANSPORTATION_PUBLIC_TRANSIT: "Gas & Transport",
   TRANSPORTATION_TOLLS: "Gas & Transport",
+  TRANSPORTATION_BIKES_AND_SCOOTERS: "Gas & Transport",
+  TRANSPORTATION_OTHER_TRANSPORTATION: "Gas & Transport",
   RENT_AND_UTILITIES_GAS_AND_ELECTRICITY: "Utilities",
   RENT_AND_UTILITIES_INTERNET_AND_CABLE: "Utilities",
   RENT_AND_UTILITIES_WATER: "Utilities",
   RENT_AND_UTILITIES_TELEPHONE: "Utilities",
   RENT_AND_UTILITIES_SEWAGE_AND_WASTE_MANAGEMENT: "Utilities",
+  RENT_AND_UTILITIES_OTHER_UTILITIES: "Utilities",
   ENTERTAINMENT_TV_AND_MOVIES: "Subscriptions",
   ENTERTAINMENT_MUSIC_AND_AUDIO: "Subscriptions",
+  ENTERTAINMENT_VIDEO_GAMES: "Entertainment",
+  ENTERTAINMENT_CASINOS_AND_GAMBLING: "Entertainment",
+  ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS: "Entertainment",
+  ENTERTAINMENT_OTHER_ENTERTAINMENT: "Entertainment",
   MEDICAL_PRIMARY_CARE: "Healthcare",
   MEDICAL_DENTAL_CARE: "Healthcare",
   MEDICAL_EYE_CARE: "Healthcare",
@@ -74,6 +83,29 @@ const PLAID_DETAILED_TO_CATEGORY: Record<string, string> = {
   MEDICAL_PHARMACIES_AND_SUPPLEMENTS: "Healthcare",
   MEDICAL_OTHER_MEDICAL: "Healthcare",
   MEDICAL_VETERINARY_SERVICES: "Healthcare",
+  TRAVEL_FLIGHTS: "Travel",
+  TRAVEL_LODGING: "Travel",
+  TRAVEL_RENTAL_CARS: "Travel",
+  TRAVEL_CRUISES: "Travel",
+  TRAVEL_OTHER_TRAVEL: "Travel",
+  GENERAL_MERCHANDISE_SUPERSTORES: "Shopping",
+  GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES: "Shopping",
+  GENERAL_MERCHANDISE_ELECTRONICS: "Shopping",
+  GENERAL_MERCHANDISE_ONLINE_MARKETPLACES: "Shopping",
+  GENERAL_MERCHANDISE_DEPARTMENT_STORES: "Shopping",
+  GENERAL_MERCHANDISE_SPORTING_GOODS: "Shopping",
+  GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS: "Shopping",
+  GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES: "Shopping",
+  GENERAL_MERCHANDISE_CONVENIENCE_STORES: "Shopping",
+  GENERAL_MERCHANDISE_DISCOUNT_STORES: "Shopping",
+  GENERAL_MERCHANDISE_PET_SUPPLIES: "Shopping",
+  GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE: "Shopping",
+  PERSONAL_CARE_HAIR_AND_BEAUTY: "Shopping",
+  PERSONAL_CARE_LAUNDRY_AND_DRY_CLEANING: "Shopping",
+  PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS: "Healthcare",
+  HOME_IMPROVEMENT_HARDWARE: "Shopping",
+  HOME_IMPROVEMENT_FURNITURE: "Shopping",
+  HOME_IMPROVEMENT_REPAIR_AND_MAINTENANCE: "Shopping",
 };
 
 const PLAID_PRIMARY_TO_CATEGORY: Record<string, string> = {
@@ -87,6 +119,95 @@ const PLAID_PRIMARY_TO_CATEGORY: Record<string, string> = {
   RENT_AND_UTILITIES: "Utilities",
   MEDICAL: "Healthcare",
 };
+
+// Default merchant rules seeded once per user. The "[Starter]" prefix in the
+// rule name acts as a sentinel so we only seed once and never trample edits.
+const STARTER_MERCHANT_RULES: { merchant: string; category: string }[] = [
+  // Groceries
+  { merchant: "whole foods", category: "Groceries" },
+  { merchant: "trader joe", category: "Groceries" },
+  { merchant: "safeway", category: "Groceries" },
+  { merchant: "kroger", category: "Groceries" },
+  { merchant: "publix", category: "Groceries" },
+  { merchant: "wegmans", category: "Groceries" },
+  { merchant: "aldi", category: "Groceries" },
+  { merchant: "sprouts", category: "Groceries" },
+  { merchant: "heb", category: "Groceries" },
+  { merchant: "instacart", category: "Groceries" },
+  { merchant: "costco", category: "Groceries" },
+  { merchant: "sam's club", category: "Groceries" },
+  // Dining
+  { merchant: "starbucks", category: "Dining" },
+  { merchant: "chipotle", category: "Dining" },
+  { merchant: "mcdonald", category: "Dining" },
+  { merchant: "doordash", category: "Dining" },
+  { merchant: "uber eats", category: "Dining" },
+  { merchant: "grubhub", category: "Dining" },
+  { merchant: "postmates", category: "Dining" },
+  { merchant: "panera", category: "Dining" },
+  { merchant: "sweetgreen", category: "Dining" },
+  { merchant: "dunkin", category: "Dining" },
+  // Gas & Transport
+  { merchant: "shell oil", category: "Gas & Transport" },
+  { merchant: "chevron", category: "Gas & Transport" },
+  { merchant: "exxon", category: "Gas & Transport" },
+  { merchant: "mobil", category: "Gas & Transport" },
+  { merchant: "arco", category: "Gas & Transport" },
+  { merchant: "valero", category: "Gas & Transport" },
+  { merchant: "uber", category: "Gas & Transport" },
+  { merchant: "lyft", category: "Gas & Transport" },
+  // Shopping
+  { merchant: "amazon", category: "Shopping" },
+  { merchant: "amzn", category: "Shopping" },
+  { merchant: "target", category: "Shopping" },
+  { merchant: "walmart", category: "Shopping" },
+  { merchant: "best buy", category: "Shopping" },
+  { merchant: "home depot", category: "Shopping" },
+  { merchant: "lowe's", category: "Shopping" },
+  { merchant: "ikea", category: "Shopping" },
+  // Subscriptions
+  { merchant: "apple.com/bill", category: "Subscriptions" },
+  { merchant: "netflix", category: "Subscriptions" },
+  { merchant: "spotify", category: "Subscriptions" },
+  { merchant: "hulu", category: "Subscriptions" },
+  { merchant: "disney plus", category: "Subscriptions" },
+  { merchant: "disney+", category: "Subscriptions" },
+  { merchant: "hbo", category: "Subscriptions" },
+  { merchant: "youtube premium", category: "Subscriptions" },
+  { merchant: "icloud", category: "Subscriptions" },
+  { merchant: "google storage", category: "Subscriptions" },
+  { merchant: "dropbox", category: "Subscriptions" },
+  { merchant: "adobe", category: "Subscriptions" },
+  { merchant: "chatgpt", category: "Subscriptions" },
+  { merchant: "openai", category: "Subscriptions" },
+  // Utilities
+  { merchant: "comcast", category: "Utilities" },
+  { merchant: "xfinity", category: "Utilities" },
+  { merchant: "verizon", category: "Utilities" },
+  { merchant: "at&t", category: "Utilities" },
+  { merchant: "t-mobile", category: "Utilities" },
+  { merchant: "pg&e", category: "Utilities" },
+  { merchant: "con edison", category: "Utilities" },
+  // Travel
+  { merchant: "airbnb", category: "Travel" },
+  { merchant: "marriott", category: "Travel" },
+  { merchant: "hilton", category: "Travel" },
+  { merchant: "delta air", category: "Travel" },
+  { merchant: "united airlines", category: "Travel" },
+  { merchant: "southwest air", category: "Travel" },
+  { merchant: "american airlines", category: "Travel" },
+  { merchant: "expedia", category: "Travel" },
+  { merchant: "booking.com", category: "Travel" },
+  // Healthcare
+  { merchant: "cvs", category: "Healthcare" },
+  { merchant: "walgreens", category: "Healthcare" },
+  { merchant: "kaiser", category: "Healthcare" },
+  // Entertainment
+  { merchant: "amc theatres", category: "Entertainment" },
+  { merchant: "regal cinemas", category: "Entertainment" },
+  { merchant: "ticketmaster", category: "Entertainment" },
+  { merchant: "stubhub", category: "Entertainment" },
+];
 
 function plaidToCategoryName(
   detailed: string | null | undefined,
@@ -117,6 +238,31 @@ async function seedIfEmpty(userId: string) {
       is_starter: true,
     })),
   );
+}
+
+async function seedDefaultRulesIfEmpty(userId: string) {
+  // Sentinel: only seed once per user. "[Starter]" name prefix marks them.
+  const { data: existing } = await supabaseAdmin
+    .from("transaction_rules")
+    .select("id")
+    .eq("user_id", userId)
+    .ilike("name", "[Starter]%")
+    .limit(1);
+  if (existing && existing.length > 0) return;
+
+  const rows = STARTER_MERCHANT_RULES.map((r) => ({
+    user_id: userId,
+    name: `[Starter] ${r.merchant} → ${r.category}`,
+    category: r.category,
+    priority: 500, // lower priority than user-created rules (default 100)
+    merchant_pattern: r.merchant,
+    match_type: "contains" as const,
+    enabled: true,
+  }));
+  const { error } = await supabaseAdmin.from("transaction_rules").insert(rows);
+  if (error) return;
+  // Re-categorize existing transactions immediately.
+  await supabaseAdmin.rpc("apply_transaction_rules", {});
 }
 
 export const listCategories = createServerFn({ method: "GET" }).handler(async () => {
