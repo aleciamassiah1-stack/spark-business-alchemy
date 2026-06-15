@@ -394,6 +394,7 @@ export const listBudgetsWithSpend = createServerFn({ method: "GET" }).handler(as
   const userId = await getCurrentUserId();
   if (!userId) return { items: [] as BudgetWithSpend[] };
   await seedIfEmpty(userId);
+  await seedDefaultRulesIfEmpty(userId);
 
   const [budgetsRes, catsRes] = await Promise.all([
     supabaseAdmin
