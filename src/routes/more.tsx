@@ -14,6 +14,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Rocket,
+  Wallet,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -144,6 +145,7 @@ function MorePage() {
           <>
             <NavGroup title="Wealth tools">
               <NavRow to="/timeline" icon={BarChart3} label="Net Worth Timeline" desc="Wealth over time" />
+              <NavRow to="/budgets" icon={Wallet} label="Budgets" desc="Monthly spending caps" />
               <NavRow to="/beneficiaries" icon={Users} label="Beneficiaries" desc="Who inherits what" />
               <NavRow to="/family" icon={Users} label="Family Vault" desc="Linked household accounts" />
             </NavGroup>

@@ -18,6 +18,7 @@ import { listFamilyMembers } from "@/lib/family.functions";
 import { hasDemoData } from "@/lib/demo.functions";
 import { DemoSeederCard } from "@/components/DemoSeederCard";
 import { NetWorthProjection } from "@/components/NetWorthProjection";
+import { BudgetsCard } from "@/components/BudgetsCard";
 
 import { useWealth } from "@/lib/wealth-context";
 import { recentActivity as demoActivity } from "@/lib/mock-data";
@@ -472,6 +473,10 @@ function HomePage() {
             </div>
           )}
         </LuxCard>
+      </div>
+
+      <div className="px-5 pt-6">
+        <BudgetsCard />
       </div>
 
       <div className="px-5 pt-6">
