@@ -269,6 +269,7 @@ export const listCategories = createServerFn({ method: "GET" }).handler(async ()
   const userId = await getCurrentUserId();
   if (!userId) return { categories: [] as BudgetCategory[] };
   await seedIfEmpty(userId);
+  await seedDefaultRulesIfEmpty(userId);
   const { data } = await supabaseAdmin
     .from("budget_categories")
     .select("*")
