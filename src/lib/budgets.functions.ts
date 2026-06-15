@@ -45,6 +45,62 @@ const STARTER_CATEGORIES: { name: string; color: string; icon: string }[] = [
   { name: "Other", color: "#94a3b8", icon: "circle" },
 ];
 
+// Maps Plaid Personal Finance Category codes (detailed first, then primary)
+// to the user-facing starter category names. Used as a fallback when a
+// transaction has no user-set custom_category. Exact-match wins; otherwise
+// the primary category is matched.
+const PLAID_DETAILED_TO_CATEGORY: Record<string, string> = {
+  FOOD_AND_DRINK_GROCERIES: "Groceries",
+  FOOD_AND_DRINK_RESTAURANT: "Dining",
+  FOOD_AND_DRINK_FAST_FOOD: "Dining",
+  FOOD_AND_DRINK_COFFEE: "Dining",
+  FOOD_AND_DRINK_BEER_WINE_AND_LIQUOR: "Dining",
+  TRANSPORTATION_GAS: "Gas & Transport",
+  TRANSPORTATION_PARKING: "Gas & Transport",
+  TRANSPORTATION_TAXIS_AND_RIDE_SHARES: "Gas & Transport",
+  TRANSPORTATION_PUBLIC_TRANSIT: "Gas & Transport",
+  TRANSPORTATION_TOLLS: "Gas & Transport",
+  RENT_AND_UTILITIES_GAS_AND_ELECTRICITY: "Utilities",
+  RENT_AND_UTILITIES_INTERNET_AND_CABLE: "Utilities",
+  RENT_AND_UTILITIES_WATER: "Utilities",
+  RENT_AND_UTILITIES_TELEPHONE: "Utilities",
+  RENT_AND_UTILITIES_SEWAGE_AND_WASTE_MANAGEMENT: "Utilities",
+  ENTERTAINMENT_TV_AND_MOVIES: "Subscriptions",
+  ENTERTAINMENT_MUSIC_AND_AUDIO: "Subscriptions",
+  MEDICAL_PRIMARY_CARE: "Healthcare",
+  MEDICAL_DENTAL_CARE: "Healthcare",
+  MEDICAL_EYE_CARE: "Healthcare",
+  MEDICAL_NURSING_CARE: "Healthcare",
+  MEDICAL_PHARMACIES_AND_SUPPLEMENTS: "Healthcare",
+  MEDICAL_OTHER_MEDICAL: "Healthcare",
+  MEDICAL_VETERINARY_SERVICES: "Healthcare",
+};
+
+const PLAID_PRIMARY_TO_CATEGORY: Record<string, string> = {
+  FOOD_AND_DRINK: "Dining",
+  TRANSPORTATION: "Gas & Transport",
+  TRAVEL: "Travel",
+  ENTERTAINMENT: "Entertainment",
+  GENERAL_MERCHANDISE: "Shopping",
+  PERSONAL_CARE: "Shopping",
+  HOME_IMPROVEMENT: "Shopping",
+  RENT_AND_UTILITIES: "Utilities",
+  MEDICAL: "Healthcare",
+};
+
+function plaidToCategoryName(
+  detailed: string | null | undefined,
+  primary: string | null | undefined,
+): string | null {
+  if (detailed && PLAID_DETAILED_TO_CATEGORY[detailed]) {
+    return PLAID_DETAILED_TO_CATEGORY[detailed];
+  }
+  if (primary && PLAID_PRIMARY_TO_CATEGORY[primary]) {
+    return PLAID_PRIMARY_TO_CATEGORY[primary];
+  }
+  return null;
+}
+
 async function seedIfEmpty(userId: string) {
   const { data: existing } = await supabaseAdmin
     .from("budget_categories")
