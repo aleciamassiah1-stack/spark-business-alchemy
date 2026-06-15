@@ -1,58 +1,67 @@
-# Æther — Full Desktop Dashboard View
+## What you'll get
 
-Goal: make the app look and feel like a true desktop wealth dashboard at ≥ md, while preserving the existing mobile experience on small screens. One responsive codebase, no separate mobile/desktop forks.
+A new **Budgets** section where you can set a monthly spending cap per category (e.g. $300 Groceries, $150 Gas, $400 Shopping). Spending is calculated from your connected bank/card transactions. Progress shows on the home dashboard, and the weekly digest email flags any budget that's over or pacing over.
 
-## 1. New responsive shell
+## Categories
 
-Create `src/components/AppShell.tsx` that replaces `MobileShell` for authenticated pages.
+A starter list is created for each user on first visit:
 
-- Mobile (< md): renders today's layout — `max-w-[430px]`, title block, `BottomNav`, `LegalFooter`.
-- Desktop (≥ md): renders a two-column layout
-  - Left: persistent `AppSidebar` (shadcn `Sidebar`, `collapsible="icon"`) with Æther wordmark, profile switcher, primary nav (Home, Portfolio, Business, Legacy, Family, Connections, Notifications, More) and a secondary group (Pricing, Support, Sign out).
-  - Right: `SidebarInset` with a slim top bar (page title, search, profile menu, sidebar trigger) and a centered `max-w-[1400px]` content area with generous padding.
-- Same `title` / `subtitle` props as `MobileShell` so existing pages don't need rewrites.
-- Uses `var(--sidebar-width)` syntax to avoid the Tailwind 4 sidebar overlap bug.
-- `BottomNav` only renders below `md`; sidebar only renders at `md+`.
+- Groceries, Dining, Gas & Transport, Shopping, Subscriptions, Utilities, Entertainment, Travel, Healthcare, Other
 
-Add `src/components/AppSidebar.tsx` for the sidebar contents using `useRouterState` to highlight the active route.
+You can:
+- **Add** a new category (name + optional color/icon)
+- **Rename** or **delete** any category (yours or starter)
+- **Merge** a category's matching rules into an existing one when deleting
 
-## 2. Page migration
+Categories reuse the existing `transaction_rules` engine — so any transaction already auto-categorized (e.g. "Whole Foods" → Groceries) automatically counts toward that budget. You can also map merchants to categories from the Budgets page.
 
-Swap `MobileShell` → `AppShell` in every authenticated route:
-`portfolio.tsx`, `business.tsx`, `legacy.tsx`, `family.tsx`, `family-office.tsx`, `household.tsx`, `connections.tsx`, `beneficiaries.tsx`, `notifications.tsx`, `more.tsx`, `profile.tsx`, `preferences.tsx`, `timeline.tsx`, `intake.tsx`, `support.tsx`, `launch.tsx`, `eligibility.tsx`, `pricing.tsx`, `protect.tsx`, admin pages.
+## Budget rules
 
-No business-logic changes. Just the wrapper.
+- One budget = one category + monthly limit (USD)
+- Period resets on the 1st of each month
+- Spend = sum of `amount` from `aggregated_transactions` where (category or custom_category) matches, in the current month, across all linked accounts
+- Income / transfers / refunds are excluded
 
-## 3. Content widening at desktop
+## Where it shows up
 
-Inside pages, the existing single-column card stacks currently inherit `max-w-[430px]`. After the shell change they will sit in a wide area, so apply light responsive tweaks where the page is clearly a dashboard:
+1. **Budgets page** (`/budgets`, in the More menu) — list of budgets with progress bars, edit/add/delete, category manager
+2. **Home dashboard** — compact "This month's budgets" card with the top 3 + an "over budget" badge count
+3. **Weekly digest email** — new section "Budget check-in" listing any budget ≥80% used or over, with $ over/under
 
-- `portfolio.tsx`: hero card + Financial Health Score side-by-side on `lg`; holdings list becomes a two-column grid on `xl`.
-- `business.tsx`: KPI cards row uses `md:grid-cols-3`, body splits into main column + right rail on `lg`.
-- `legacy.tsx`, `family.tsx`, `connections.tsx`: cards flow into `md:grid-cols-2 xl:grid-cols-3`.
-- Other pages: keep single column but allow up to `max-w-3xl` so they don't look stranded.
+## Technical details
 
-All edits are presentation-only (Tailwind classes / wrapper grids). No data or logic changes.
+**New tables (migration):**
 
-## 4. Marketing site desktop pass
+- `budget_categories` — `id`, `user_id`, `name`, `color`, `icon`, `is_starter`, timestamps. RLS scoped to `auth.uid()`. Seeded on first read via server fn (not a DB trigger, so it stays in app code).
+- `budgets` — `id`, `user_id`, `category_id` (FK), `amount_cents` (int), `period` ('monthly'), `active` (bool), timestamps. RLS scoped to `auth.uid()`. Unique `(user_id, category_id)` where `active=true`.
 
-`MarketingHome.tsx` and the seven `portals.*.tsx` pages already use desktop-friendly grids but are tuned around a narrower hero. Light touch:
+Both follow the project's GRANT/RLS conventions (authenticated + service_role grants, policies on `auth.uid() = user_id`).
 
-- Bump hero/section `max-w` from current value to `max-w-7xl` and increase horizontal padding at `lg`.
-- Audience and partner card grids use `lg:grid-cols-4` so all four tiles sit on one row at desktop.
-- Sticky top nav gets right-aligned secondary links (Pricing, Sign in, Request Demo) at `md+`.
-- No copy changes, no new sections.
+**Server functions (`src/lib/budgets.functions.ts`):**
 
-## 5. Out of scope
+- `listBudgetsWithSpend()` — returns `{ budget, category, spent_cents, pct }[]` for current month
+- `upsertBudget({ category_id, amount_cents })`
+- `deleteBudget({ id })`
+- `listCategories()` — auto-seeds starter set if user has none
+- `upsertCategory({ id?, name, color, icon })` (Zod-validated: name 1–40 chars, trimmed)
+- `deleteCategory({ id, reassign_to? })` — reassigns any `transaction_rules.category` rows to the target
 
-- No new features, data sources, or routes.
-- No changes to auth, RLS, server functions, or backend.
-- No redesign of individual card visuals beyond layout grids.
+Spend calc: SQL aggregate on `aggregated_transactions` filtered by `coalesce(custom_category, category) = category.name`, `date >= date_trunc('month', now())`, `amount > 0` (debits in this codebase), excluding `category in ('Income','Transfer')`.
 
-## Technical notes
+**UI:**
 
-- New files: `src/components/AppShell.tsx`, `src/components/AppSidebar.tsx`.
-- Edited files: every authenticated route + `MarketingHome.tsx` + portal routes (className-only edits).
-- Uses existing shadcn `Sidebar` primitives in `src/components/ui/sidebar.tsx`; no new dependencies.
-- Tailwind class fix: always `w-[var(--sidebar-width)]`, never `w-[--sidebar-width]`.
-- `MobileShell` stays in place as a thin re-export of `AppShell` so any unmigrated import keeps working during the swap.
+- `src/routes/budgets.tsx` — list + add/edit dialog using existing `Dialog`, `Input`, `Progress` components and the design tokens (no custom colors)
+- `src/components/BudgetsCard.tsx` — dashboard card, added to `src/routes/index.tsx` under the existing wealth cards
+- Category manager section on the same page (rename/add/delete + reassign-on-delete dropdown)
+
+**Weekly digest:**
+
+- Extend the existing digest template (under `src/lib/email-templates/`) with a "Budget check-in" block rendered from the same `listBudgetsWithSpend` data, only showing budgets at ≥80%.
+
+**Out of scope for this build (call out if you want them next):**
+
+- Weekly budgets (currently monthly only)
+- Per-account budgets ("$300 groceries on Chase only")
+- Household roll-up across linked spouse accounts
+- Real-time push notifications at 80%/100%
+- Rollover of unused budget into next month
