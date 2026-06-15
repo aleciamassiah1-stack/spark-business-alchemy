@@ -269,19 +269,23 @@ export const listBudgetsWithSpend = createServerFn({ method: "GET" }).handler(as
 
   const { data: txs } = await supabaseAdmin
     .from("aggregated_transactions")
-    .select("amount, category, custom_category")
+    .select("amount, category, category_detailed, custom_category")
     .eq("user_id", userId)
     .gte("date", startStr)
     .gt("amount", 0); // Plaid: positive = outflow
 
   const spendByCategory = new Map<string, number>();
   for (const t of txs ?? []) {
-    const cat = (t.custom_category ?? t.category ?? "").toString();
-    if (!cat) continue;
-    if (cat === "Income" || cat === "Transfer") continue;
+    // Priority: user's custom_category (rule-applied) → Plaid detailed → Plaid primary
+    const custom = (t.custom_category ?? "").toString();
+    const primary = (t.category ?? "").toString();
+    if (primary === "Income" || primary === "Transfer" || primary === "TRANSFER_IN" || primary === "TRANSFER_OUT") continue;
+    const resolved =
+      custom || plaidToCategoryName(t.category_detailed, t.category) || null;
+    if (!resolved) continue;
     const cents = Math.round(Number(t.amount) * 100);
     if (!Number.isFinite(cents)) continue;
-    spendByCategory.set(cat, (spendByCategory.get(cat) ?? 0) + cents);
+    spendByCategory.set(resolved, (spendByCategory.get(resolved) ?? 0) + cents);
   }
 
   const catById = new Map(cats.map((c) => [c.id, c]));
