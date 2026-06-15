@@ -38,6 +38,7 @@ import { Route as FamilyRouteImport } from './routes/family'
 import { Route as EligibilityRouteImport } from './routes/eligibility'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as BeneficiariesRouteImport } from './routes/beneficiaries'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -209,6 +210,11 @@ const BusinessRoute = BusinessRouteImport.update({
   path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BudgetsRoute = BudgetsRouteImport.update({
+  id: '/budgets',
+  path: '/budgets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BeneficiariesRoute = BeneficiariesRouteImport.update({
   id: '/beneficiaries',
   path: '/beneficiaries',
@@ -345,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
+  '/budgets': typeof BudgetsRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
+  '/budgets': typeof BudgetsRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/beneficiaries': typeof BeneficiariesRoute
+  '/budgets': typeof BudgetsRoute
   '/business': typeof BusinessRoute
   '/connections': typeof ConnectionsRoute
   '/eligibility': typeof EligibilityRoute
@@ -516,6 +525,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/beneficiaries'
+    | '/budgets'
     | '/business'
     | '/connections'
     | '/eligibility'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/beneficiaries'
+    | '/budgets'
     | '/business'
     | '/connections'
     | '/eligibility'
@@ -628,6 +639,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/beneficiaries'
+    | '/budgets'
     | '/business'
     | '/connections'
     | '/eligibility'
@@ -685,6 +697,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   BeneficiariesRoute: typeof BeneficiariesRoute
+  BudgetsRoute: typeof BudgetsRoute
   BusinessRoute: typeof BusinessRoute
   ConnectionsRoute: typeof ConnectionsRoute
   EligibilityRoute: typeof EligibilityRoute
@@ -939,6 +952,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/budgets': {
+      id: '/budgets'
+      path: '/budgets'
+      fullPath: '/budgets'
+      preLoaderRoute: typeof BudgetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/beneficiaries': {
       id: '/beneficiaries'
       path: '/beneficiaries'
@@ -1137,6 +1157,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   BeneficiariesRoute: BeneficiariesRoute,
+  BudgetsRoute: BudgetsRoute,
   BusinessRoute: BusinessRoute,
   ConnectionsRoute: ConnectionsRoute,
   EligibilityRoute: EligibilityRoute,
