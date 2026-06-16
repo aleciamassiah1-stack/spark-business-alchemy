@@ -257,6 +257,7 @@ function HomePage() {
     ? transactions.slice(0, 5).map((t) => ({
         id: t.id,
         title: t.name,
+        category: resolveCategory(t),
         date: new Date(t.date).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
@@ -265,7 +266,7 @@ function HomePage() {
         amount: -t.amount, // Plaid: positive = outflow
       }))
     : isTestAccount
-      ? demoActivity
+      ? demoActivity.map((a) => ({ ...a, category: null as string | null }))
       : [];
 
   return (
