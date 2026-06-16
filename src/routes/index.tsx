@@ -488,7 +488,10 @@ function HomePage() {
             <div key={a.id} className="flex items-center justify-between px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-foreground">{a.title}</p>
-                <p className="font-mono text-[11px] text-muted-foreground">{a.date}</p>
+                <p className="font-mono text-[11px] text-muted-foreground">
+                  {a.date}
+                  {a.category ? <> · <span className="text-foreground/70">{a.category}</span></> : null}
+                </p>
               </div>
               {a.amount !== 0 && (
                 <p className={`font-mono text-sm tabular-nums ${a.amount > 0 ? "text-success" : "text-muted-foreground"}`}>
