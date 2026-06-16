@@ -77,7 +77,38 @@ type TransactionRow = {
   name: string;
   amount: number;
   date: string;
+  category: string | null;
+  category_detailed: string | null;
+  custom_category: string | null;
 };
+
+const PLAID_PRIMARY_LABEL: Record<string, string> = {
+  FOOD_AND_DRINK: "Dining",
+  TRANSPORTATION: "Gas & Transport",
+  TRAVEL: "Travel",
+  ENTERTAINMENT: "Entertainment",
+  GENERAL_MERCHANDISE: "Shopping",
+  PERSONAL_CARE: "Shopping",
+  HOME_IMPROVEMENT: "Shopping",
+  RENT_AND_UTILITIES: "Utilities",
+  MEDICAL: "Healthcare",
+  LOAN_PAYMENTS: "Loan Payment",
+  BANK_FEES: "Fees",
+  GENERAL_SERVICES: "Services",
+  GOVERNMENT_AND_NON_PROFIT: "Government",
+  TRANSFER_IN: "Transfer",
+  TRANSFER_OUT: "Transfer",
+  INCOME: "Income",
+};
+
+function resolveCategory(t: Pick<TransactionRow, "category" | "category_detailed" | "custom_category">): string | null {
+  if (t.custom_category) return t.custom_category;
+  const detailed = t.category_detailed ?? "";
+  if (detailed.includes("_GROCERIES")) return "Groceries";
+  if (detailed.includes("_GAS")) return "Gas & Transport";
+  if (t.category && PLAID_PRIMARY_LABEL[t.category]) return PLAID_PRIMARY_LABEL[t.category];
+  return t.category ?? null;
+}
 
 function HomePage() {
   const [aggregated, setAggregated] = useState<Awaited<ReturnType<typeof getAggregatedData>> | null>(
