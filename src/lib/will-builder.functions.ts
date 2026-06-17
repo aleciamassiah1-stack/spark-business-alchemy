@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireUserId } from "@/integrations/supabase/auth-helper";
+import { resolveActiveProfileId } from "./active-profile.server";
 
 export type WillData = {
   testator?: {
@@ -51,6 +52,15 @@ export type WillData = {
   };
 };
 
+export type WillSeedData = {
+  familyMembers: Array<{
+    name: string;
+    relationship: string;
+    age: number | null;
+  }>;
+  insuranceBeneficiaries: string[];
+};
+
 export const getWillDraft = createServerFn({ method: "GET" }).handler(async () => {
   const userId = await requireUserId();
   const { data, error } = await supabaseAdmin
@@ -62,6 +72,51 @@ export const getWillDraft = createServerFn({ method: "GET" }).handler(async () =
     .maybeSingle();
   if (error) return { draft: null, error: error.message };
   return { draft: data, error: null };
+});
+
+export const getWillSeedData = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await requireUserId();
+  const profileId = await resolveActiveProfileId(userId);
+
+  // Fetch family members
+  const { data: familyData, error: familyError } = await supabaseAdmin
+    .from("family_members")
+    .select("name, relationship, age")
+    .eq("user_id", profileId)
+    .order("created_at", { ascending: true });
+  if (familyError) {
+    console.error("getWillSeedData family error", familyError);
+  }
+
+  // Fetch insurance policies to extract beneficiaries
+  const { data: policyData, error: policyError } = await supabaseAdmin
+    .from("insurance_policies")
+    .select("beneficiaries")
+    .eq("user_id", profileId);
+  if (policyError) {
+    console.error("getWillSeedData policy error", policyError);
+  }
+
+  const familyMembers = (familyData ?? []).map((m) => ({
+    name: String(m.name ?? "").trim(),
+    relationship: String(m.relationship ?? "").trim(),
+    age: m.age ?? null,
+  }));
+
+  const beniSet = new Set<string>();
+  for (const p of policyData ?? []) {
+    const list = Array.isArray(p.beneficiaries)
+      ? (p.beneficiaries as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+      : [];
+    for (const name of list) {
+      beniSet.add(name);
+    }
+  }
+
+  return {
+    familyMembers,
+    insuranceBeneficiaries: Array.from(beniSet),
+  } as WillSeedData;
 });
 
 export const saveWillDraft = createServerFn({ method: "POST" })
@@ -93,3 +148,4 @@ export const saveWillDraft = createServerFn({ method: "POST" })
       .single();
     return { ok: !error, id: inserted?.id ?? null, error: error?.message ?? null };
   });
+
