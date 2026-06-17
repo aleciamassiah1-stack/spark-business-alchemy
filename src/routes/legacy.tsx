@@ -218,6 +218,7 @@ function LegacyPage() {
 
       {/* Real estate — properties with photos and AI valuations */}
       <div className="px-5">
+        <div className="mb-2 flex items-center justify-between">
           <p className="label-mono">
             Real estate {properties.length > 0 ? `· ${fmtCurrency(totalRealEstateValue, { compact: true })}` : ""}
           </p>
