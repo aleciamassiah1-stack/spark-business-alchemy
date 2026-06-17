@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Trash2, Loader2, Sparkles, FileDown, Save, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, Loader2, Sparkles, FileDown, Save, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { LuxCard } from "@/components/LuxCard";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { getWillDraft, saveWillDraft, type WillData } from "@/lib/will-builder.functions";
+import { getWillDraft, saveWillDraft, getWillSeedData, type WillData, type WillSeedData } from "@/lib/will-builder.functions";
 import { generateWillPdf } from "@/lib/will-pdf";
 import { upsertEstateDocument, uploadWealthDocument } from "@/lib/wealth.functions";
 
