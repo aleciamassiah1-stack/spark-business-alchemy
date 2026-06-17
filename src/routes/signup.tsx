@@ -73,7 +73,7 @@ function SignupRoute() {
           </p>
         </div>
         <h1 className="mb-6 font-serif text-[32px] leading-tight text-foreground">
-          Open your <span className="text-gradient-violet">private vault.</span>
+          Create your <span className="text-gradient-violet">Æther Wealth account</span>
         </h1>
         <AuthForm mode="signup" />
         <p className="mt-6 text-center text-xs text-muted-foreground">
