@@ -187,9 +187,37 @@ function LegacyPage() {
 
   return (
     <MobileShell title="Legacy" subtitle="Trust & Estate">
+      {/* Will Builder CTA */}
+      <div className="mb-5 px-5">
+        <Link to="/will-builder" className="block">
+          <LuxCard className="relative overflow-hidden p-5">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gold/20 blur-3xl" />
+            <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-primary/20 blur-3xl" />
+            <div className="relative flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full gradient-gold">
+                <Scroll className="h-5 w-5 text-background" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-serif text-lg text-foreground">Will Builder</p>
+                  <span className="rounded-full bg-gold/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-gold">
+                    New
+                  </span>
+                </div>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  Guided template — name executors, guardians and beneficiaries, then generate a printable PDF in minutes.
+                </p>
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
+                  Start your will <ChevronRight className="h-3 w-3" />
+                </div>
+              </div>
+            </div>
+          </LuxCard>
+        </Link>
+      </div>
+
       {/* Real estate — properties with photos and AI valuations */}
       <div className="px-5">
-        <div className="mb-2 flex items-center justify-between">
           <p className="label-mono">
             Real estate {properties.length > 0 ? `· ${fmtCurrency(totalRealEstateValue, { compact: true })}` : ""}
           </p>
