@@ -344,6 +344,13 @@ function WillBuilderPage() {
           <Progress value={progress} className="h-1.5" />
         </div>
 
+        {seeded && (
+          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-[11px] text-primary">
+            <Users className="h-3.5 w-3.5 shrink-0" />
+            <span>Pre-filled from your Family Vault &amp; insurance beneficiaries. Review and adjust as needed.</span>
+          </div>
+        )}
+
         {step === 0 && (
           <LuxCard className="p-5">
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
