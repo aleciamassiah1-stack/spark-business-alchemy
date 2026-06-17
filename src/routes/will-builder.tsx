@@ -83,6 +83,71 @@ function fileToFingerprint(d: WillData) {
   return JSON.stringify(d);
 }
 
+function applySeedData(seed: WillSeedData): Partial<WillData> {
+  const patch: Partial<WillData> = {};
+
+  const spouse = seed.familyMembers.find((m) =>
+    /spouse|wife|husband|partner/i.test(m.relationship),
+  );
+  if (spouse) {
+    patch.testator = {
+      ...patch.testator,
+      maritalStatus: "married",
+      spouseName: spouse.name,
+    };
+  }
+
+  const childKeywords = /son|daughter|child|kid/i;
+  const minorChildren = seed.familyMembers.filter(
+    (m) => (m.age !== null && m.age < 18) || childKeywords.test(m.relationship),
+  );
+  if (minorChildren.length > 0) {
+    patch.guardian = {
+      hasMinorChildren: true,
+      children: minorChildren.map((c) => ({ name: c.name })),
+    };
+  }
+
+  const beneficiaryMap = new Map<string, { name: string; relation?: string }>();
+  for (const name of seed.insuranceBeneficiaries) {
+    const familyMatch = seed.familyMembers.find(
+      (m) => m.name.toLowerCase() === name.toLowerCase(),
+    );
+    beneficiaryMap.set(name.toLowerCase(), {
+      name,
+      relation: familyMatch?.relationship,
+    });
+  }
+  for (const m of seed.familyMembers) {
+    if (!beneficiaryMap.has(m.name.toLowerCase())) {
+      beneficiaryMap.set(m.name.toLowerCase(), {
+        name: m.name,
+        relation: m.relationship,
+      });
+    }
+  }
+
+  const beneficiaries = Array.from(beneficiaryMap.values());
+  if (beneficiaries.length > 0) {
+    const share = Math.floor(100 / beneficiaries.length);
+    const remainder = 100 - share * beneficiaries.length;
+    patch.beneficiaries = beneficiaries.map((b, i) => ({
+      name: b.name,
+      relation: b.relation,
+      sharePercent: share + (i === 0 ? remainder : 0),
+    }));
+  }
+
+  if (spouse) {
+    patch.executor = {
+      name: spouse.name,
+      relation: spouse.relationship,
+    };
+  }
+
+  return patch;
+}
+
 function WillBuilderPage() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
@@ -92,18 +157,32 @@ function WillBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [lastSavedFingerprint, setLastSavedFingerprint] = useState("");
+  const [seeded, setSeeded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    getWillDraft()
-      .then((res) => {
+    Promise.all([getWillDraft(), getWillSeedData()])
+      .then(([draftRes, seedRes]) => {
         if (!mounted) return;
-        if (res.draft) {
-          setDraftId(res.draft.id);
-          const merged = { ...blankData(), ...(res.draft.data as WillData) };
+        if (draftRes.draft) {
+          setDraftId(draftRes.draft.id);
+          const merged = { ...blankData(), ...(draftRes.draft.data as WillData) };
           setData(merged);
-          setStep(Math.min(res.draft.step ?? 0, STEPS.length - 1));
+          setStep(Math.min(draftRes.draft.step ?? 0, STEPS.length - 1));
           setLastSavedFingerprint(fileToFingerprint(merged));
+        } else {
+          // No existing draft — apply seed data from Family Vault + insurance
+          const seededData = applySeedData(seedRes);
+          if (seededData && (seededData.beneficiaries?.length || seededData.guardian?.children?.length || seededData.testator?.spouseName)) {
+            const merged = { ...blankData(), ...seededData };
+            setData(merged);
+            setSeeded(true);
+            setLastSavedFingerprint(fileToFingerprint(merged));
+            // Auto-save the seeded draft silently
+            saveWillDraft({ data: { data: merged, step: 0, status: "draft" } }).then((res) => {
+              if (res.id) setDraftId(res.id);
+            }).catch(() => { /* ignore */ });
+          }
         }
       })
       .finally(() => mounted && setLoaded(true));
