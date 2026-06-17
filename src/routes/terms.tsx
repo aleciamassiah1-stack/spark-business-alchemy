@@ -5,10 +5,12 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms of Service — Æther Wealth" },
-      { name: "description", content: "Read the terms of service governing your use of Æther Wealth and our commitment to safeguarding your private financial data." },
+      { name: "description", content: "Terms governing your use of Æther Wealth and our commitment to safeguarding your private financial data." },
       { property: "og:title", content: "Terms of Service — Æther Wealth" },
-      { property: "og:description", content: "Read the terms of service governing your use of Æther Wealth and our commitment to safeguarding your private financial data." },
+      { property: "og:description", content: "Terms governing your use of Æther Wealth and our commitment to safeguarding your private financial data." },
+      { property: "og:url", content: "https://aetherwealth.co/terms" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/terms" }],
   }),
   component: TermsPage,
 });

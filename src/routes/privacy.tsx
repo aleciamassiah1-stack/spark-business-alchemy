@@ -5,10 +5,12 @@ export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
       { title: "Privacy Policy — Æther Wealth" },
-      { name: "description", content: "How Æther Wealth collects, uses and protects your data." },
+      { name: "description", content: "How Æther Wealth collects, uses and protects your personal and financial data across our private wealth platform." },
       { property: "og:title", content: "Privacy Policy — Æther Wealth" },
-      { property: "og:description", content: "How Æther Wealth collects, uses and protects your data." },
+      { property: "og:description", content: "How Æther Wealth collects, uses and protects your personal and financial data across our private wealth platform." },
+      { property: "og:url", content: "https://aetherwealth.co/privacy" },
     ],
+    links: [{ rel: "canonical", href: "https://aetherwealth.co/privacy" }],
   }),
   component: PrivacyPage,
 });

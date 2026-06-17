@@ -1602,7 +1602,7 @@ function PropertiesTab({
                   <div className="relative aspect-[16/10] w-full overflow-hidden">
                     <img
                       src={p.image_url}
-                      alt={p.name}
+                      alt={`Photo of linked property ${p.name}`}
                       loading="lazy"
                       className="h-full w-full object-cover"
                     />
@@ -2406,7 +2406,7 @@ function PropertyFormModal({
         <p className="label-mono mb-1.5">Photo (optional)</p>
         {imageUrl ? (
           <div className="relative overflow-hidden rounded-xl">
-            <img src={imageUrl} alt="Property" className="aspect-[16/10] w-full object-cover" />
+            <img src={imageUrl} alt="Uploaded property photo preview" className="aspect-[16/10] w-full object-cover" />
             <button
               onClick={() => setImageUrl(null)}
               className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md"

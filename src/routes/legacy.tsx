@@ -789,7 +789,7 @@ function PropertyCard({
             property.image_url ||
             `https://source.unsplash.com/800x400/?luxury,home,architecture&sig=${property.id}`
           }
-          alt={property.name}
+          alt={`Exterior photo of ${property.name}${property.address ? `, ${property.address}` : ""}`}
           className="h-full w-full object-cover"
           loading="lazy"
           onError={(e) => {
