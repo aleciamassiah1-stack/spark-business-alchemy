@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WillBuilderRouteImport } from './routes/will-builder'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TimelineRouteImport } from './routes/timeline'
@@ -65,6 +66,11 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicWebhooksRevenuecatRouteImport } from './routes/api/public/webhooks/revenuecat'
 
+const WillBuilderRoute = WillBuilderRouteImport.update({
+  id: '/will-builder',
+  path: '/will-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/will-builder': typeof WillBuilderRoute
   '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -438,6 +445,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/will-builder': typeof WillBuilderRoute
   '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -496,6 +504,7 @@ export interface FileRoutesById {
   '/timeline': typeof TimelineRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/will-builder': typeof WillBuilderRoute
   '/admin/chats': typeof AdminChatsRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
   '/admin/property-image-test': typeof AdminPropertyImageTestRoute
@@ -555,6 +564,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/will-builder'
     | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
@@ -612,6 +622,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/will-builder'
     | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
@@ -669,6 +680,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/unsubscribe'
     | '/verify-email'
+    | '/will-builder'
     | '/admin/chats'
     | '/admin/email-preview'
     | '/admin/property-image-test'
@@ -727,6 +739,7 @@ export interface RootRouteChildren {
   TimelineRoute: typeof TimelineRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  WillBuilderRoute: typeof WillBuilderRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   PortalsAdvisorsRoute: typeof PortalsAdvisorsRoute
@@ -749,6 +762,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/will-builder': {
+      id: '/will-builder'
+      path: '/will-builder'
+      fullPath: '/will-builder'
+      preLoaderRoute: typeof WillBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify-email': {
       id: '/verify-email'
       path: '/verify-email'
@@ -1187,6 +1207,7 @@ const rootRouteChildren: RootRouteChildren = {
   TimelineRoute: TimelineRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  WillBuilderRoute: WillBuilderRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   PortalsAdvisorsRoute: PortalsAdvisorsRoute,

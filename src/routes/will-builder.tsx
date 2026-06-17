@@ -179,7 +179,8 @@ function WillBuilderPage() {
       const stateCode = data.testator?.state || "";
       const bytes = await generateWillPdf(data, stateCode);
       // Trigger local download
-      const blob = new Blob([bytes], { type: "application/pdf" });
+      const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      const blob = new Blob([ab], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const fileName = `Last-Will-${(data.testator?.fullName ?? "Draft").replace(/\s+/g, "-")}.pdf`;
