@@ -6,6 +6,10 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /checkout/
 Disallow: /intake
+Disallow: /launch
+Disallow: /more
+Disallow: /notifications
+Disallow: /oauth-callback
 Disallow: /reset-password
 Disallow: /verify-email
 
