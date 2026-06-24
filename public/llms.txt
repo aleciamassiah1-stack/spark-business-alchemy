@@ -1,18 +1,47 @@
 # Æther Wealth
 
-> A private bank in your pocket. Æther Wealth unifies investments, insurance, trust and estate planning in a single luxury mobile dashboard for individuals, advisors and family offices.
+> Æther Wealth is a private-bank-grade wealth platform that unifies banking, investments, real estate, insurance, business holdings, and trust & estate planning into a single luxury mobile dashboard for individuals, advisors, attorneys, CPAs, and family offices.
+
+Æther Wealth ("Aether Wealth") gives high-net-worth households a complete, real-time picture of net worth and an integrated workspace for the professionals around them. The platform connects bank, brokerage, and credit accounts via Plaid; tracks real estate equity using live property valuations; ingests insurance policies and estate documents via an AI document parser; and produces estate-plan summaries, beneficiary maps, budgets, and readiness scoring. A built-in Will Builder generates a formatted Last Will & Testament from existing household data. Audience portals serve Advisors, Attorneys, CPAs, Insurance professionals, Household Managers, Families, and Family Offices.
 
 ## Pages
 
-- [Overview](/): Private wealth dashboard — net worth, accounts, activity.
-- [Investments](/portfolio): Holdings, allocation and performance across your portfolio.
-- [Insurance](/protect): Life, property and liability coverage in one private vault.
-- [Trust & Estate](/legacy): Wills, trusts, healthcare directives and beneficiaries.
-- [Pricing](/pricing): Essential, Private and Family Office tiers.
-- [Sign In](/signin): Access your private wealth vault.
-- [Sign Up](/signup): Create your private wealth vault.
+- [Overview](/): Private wealth dashboard — net worth, financial health score, recent activity, budgets.
+- [Investments](/portfolio): Holdings, allocation, and performance across connected brokerage accounts.
+- [Real Estate & Legacy](/legacy): Properties, equity, wills, trusts, healthcare directives, beneficiaries.
+- [Insurance](/protect): Life, property, umbrella, and liability coverage with beneficiary tracking.
+- [Family Vault](/family): Household members, estate plan summary, total wealth passed on.
+- [Business](/business): Business entity valuation, P&L, formation and EIN document vault.
+- [Connections](/connections): Bank / brokerage links (Plaid), property data, unified document vault.
+- [Budgets](/budgets): Monthly category budgets auto-linked to live transactions.
+- [Will Builder](/will-builder): Guided 10-step wizard that drafts and saves a Last Will & Testament PDF.
+- [Pricing](/pricing): Essential, Private, and Family Office tiers.
+- [Sign Up](/signup): Create a private wealth vault.
+- [Sign In](/signin): Access an existing vault.
+
+## Audience portals
+
+- [For Advisors](/portals/advisors): RIA and wealth-advisor workflows, household oversight, white-label.
+- [For Attorneys](/portals/attorneys): Estate-planning attorney workspace and document review.
+- [For CPAs](/portals/cpas): Tax-return review, basis tracking, year-end packets.
+- [For Insurance Professionals](/portals/insurance): Coverage gap analysis and beneficiary review.
+- [For Household Managers](/portals/household-managers): Day-to-day household operations.
+- [For Families](/portals/families): Multi-generational shared household view.
+- [For Family Offices](/portals/family-offices): Trustee and advisor seats, governance.
+
+## Key capabilities
+
+- Real-time net worth across banking, brokerage, real estate, insurance cash value, and business equity.
+- AI document parser for insurance policies, wills, trusts, healthcare directives, and tax returns.
+- Estate plan summary: beneficiary percentages, property allocations, final wishes & notes.
+- Will Builder wizard with auto-populated family, executor, guardian, and beneficiary data.
+- Plaid-powered transaction sync with auto-categorization and budget tracking.
+- RentCast property valuations with auto-fetched street-view imagery.
+- Concierge AI for portfolio, estate, and tax questions.
+- Bank-grade security: TLS 1.2+, AES-256 at rest, MFA, HIBP breach screening, Row-Level Security on every table.
 
 ## Optional
 
 - [Terms](/terms): Terms of service.
-- [Privacy](/privacy): Privacy policy.
+- [Privacy](/privacy): Privacy policy and data handling.
+- [Support](/support): Help and contact.
