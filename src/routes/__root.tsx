@@ -72,13 +72,33 @@ export const Route = createRootRoute({
             {
               "@type": "Organization",
               name: "Æther Wealth",
+              alternateName: ["Aether Wealth", "AetherWealth"],
               url: "https://aetherwealth.co",
               logo: "https://aetherwealth.co/icon-512.png",
+              description:
+                "Private-bank-grade wealth platform unifying banking, investments, real estate, insurance, business and trust & estate planning in one luxury mobile dashboard.",
+              sameAs: ["https://aetherwealth.co"],
             },
             {
               "@type": "WebSite",
               name: "Æther Wealth",
               url: "https://aetherwealth.co",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://aetherwealth.co/?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            },
+            {
+              "@type": "SoftwareApplication",
+              name: "Æther Wealth",
+              alternateName: "Aether Wealth",
+              applicationCategory: "FinanceApplication",
+              operatingSystem: "Web, iOS",
+              url: "https://aetherwealth.co",
+              description:
+                "Private wealth dashboard with net worth tracking, estate planning, beneficiary management, insurance vault, will builder, and audience portals for advisors, attorneys, CPAs and family offices.",
+              offers: { "@type": "Offer", priceCurrency: "USD" },
             },
           ],
         }),
